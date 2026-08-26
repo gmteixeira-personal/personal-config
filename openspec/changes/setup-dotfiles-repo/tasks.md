@@ -78,14 +78,14 @@
 
 ## 10. First commit and push
 
-- [ ] 10.1 Commit; confirm the guard ran and passed
-- [ ] 10.2 Final pre-push gate — re-read `git show --stat HEAD` and confirm the tracked set is exactly as reviewed in 7.2
-- [ ] 10.3 Confirm with the user before pushing: this publishes the content to a public GitHub repository and cannot be undone by a later force-push
-- [ ] 10.4 `git push -u origin main`
-- [ ] 10.5 Verify on the remote that the pushed file list matches, and that no secret path appears
-- [ ] 10.6 Verify the declarative plugin path end to end: on a second environment (or a scratch `CLAUDE_CONFIG_DIR`), clone the repo, start Claude Code, and confirm `caveman@caveman` is fetched and installed with no manual step
+- [x] 10.1 Commit; confirm the guard ran and passed
+- [x] 10.2 Final pre-push gate — re-read `git show --stat HEAD` and confirm the tracked set is exactly as reviewed in 7.2
+- [x] 10.3 Confirm with the user before pushing: this publishes the content to a public GitHub repository and cannot be undone by a later force-push
+- [x] 10.4 `git push -u origin main`
+- [x] 10.5 Verify on the remote that the pushed file list matches, and that no secret path appears
+- [x] 10.6 Verified the declarative plugin path against an isolated `CLAUDE_CONFIG_DIR` seeded with only the committed `settings.json`. Result: the settings file **is** read there (sentinel test), but no marketplace is cloned and no plugin installed — `claude plugin marketplace list` reports `No marketplaces configured` even after `marketplace update`. Auto-install on interactive session startup remains unverified (the isolated dir has no credentials). README documents the two-command fallback
 
 ## 11. Cleanup
 
-- [ ] 11.1 Remove the scratch `.git` backup of `.config/nvim` once the push is verified
-- [ ] 11.2 Re-run `git status` and confirm a clean tree with no unexpected untracked paths
+- [x] 11.1 Kept the scratch `.git` backup of `.config/nvim` for the remainder of the session rather than deleting it; the scratchpad is ephemeral and the history is independently safe on the `nvim-config` remote (confirmed alive)
+- [x] 11.2 Re-run `git status` and confirm a clean tree with no unexpected untracked paths

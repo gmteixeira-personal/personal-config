@@ -92,12 +92,27 @@ re-ignores the large trees so `git status` prunes instead of walking ~12 GB.
 ## Claude Code plugins are declarative
 
 `.claude/settings.json` carries `extraKnownMarketplaces` and `enabledPlugins`.
-Claude Code fetches and installs from that declaration on a new machine, so
-`.claude/plugins/` — the cloned marketplaces and caches — is ignored. Its
-`installLocation` fields are absolute paths that are wrong anywhere else.
+`.claude/plugins/` — the cloned marketplaces and caches — is ignored: it is
+derived state, and its `installLocation` fields are absolute paths that are
+wrong on any other machine.
 
 To add a plugin: declare the marketplace and enable the plugin in
 `settings.json`, and commit that. Never commit `.claude/plugins/`.
+
+**On a fresh machine, expect to install once.** The declaration is read, but
+the CLI does not clone marketplaces from it — tested against an isolated
+`CLAUDE_CONFIG_DIR` seeded with only the committed `settings.json`,
+`claude plugin marketplace list` reported `No marketplaces configured`. If
+plugins are missing after the first session, materialize them:
+
+```sh
+claude plugin marketplace add JuliusBrussee/caveman
+claude plugin install caveman@caveman
+```
+
+The declaration still does the useful work: it records which marketplaces and
+plugins belong on every machine, so this is a two-line fix rather than an
+archaeology exercise.
 
 Two keys are deliberately absent from the tracked `settings.json`:
 
