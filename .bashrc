@@ -89,6 +89,23 @@ xterm*|rxvt*)
     ;;
 esac
 
+# Hand the terminal's own cursor shape to every command before it runs.
+#
+# ~/.inputrc puts readline in vi mode and reports that mode through the cursor,
+# a blinking beam while typing. Readline repaints the shape on a mode switch and
+# never on hand-off, so a command inherits whatever was showing when Enter was
+# pressed -- always the beam, since a fresh prompt starts in insert mode. A
+# full-screen program that sets no cursor of its own then runs with the beam for
+# its whole session; `claude` is one, its binary carrying no DECSCUSR sequence at
+# all, so nothing in it can override what it was handed.
+#
+# PS0 is printed after the command line is read and before it is executed, which
+# is that hand-off. \e[0 q is DECSCUSR "default" rather than a hard-coded block,
+# so the shape comes from the terminal profile. Programs that manage their own
+# cursor, nvim among them, set theirs after this and are unaffected; the beam
+# comes back with the next prompt, so the vi mode indicator still works.
+PS0=$'\e[0 q'
+
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
