@@ -1,0 +1,12 @@
+# Keep the system-wide readline defaults; readline reads only one init file.
+$include /etc/inputrc
+
+# Vi editing mode
+set editing-mode vi
+
+# Report the mode through the cursor shape: the terminal's own default shape
+# (an empty box here) in normal mode, blinking beam in insert mode.
+# \1 and \2 mark the escapes as non-printing.
+set show-mode-in-prompt on
+set vi-ins-mode-string \1\e[5 q\2
+set vi-cmd-mode-string \1\e[0 q\2

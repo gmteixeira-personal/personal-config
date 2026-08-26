@@ -44,6 +44,7 @@
 !/.bashrc
 !/.profile
 !/.bash_logout
+!/.inputrc
 
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential
