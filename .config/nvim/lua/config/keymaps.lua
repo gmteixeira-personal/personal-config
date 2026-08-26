@@ -7,6 +7,67 @@ local function map(mode, lhs, rhs, desc)
   vim.keymap.set(mode, lhs, rhs, { desc = desc })
 end
 
+-- Line boundaries on H and L, in two steps outward: H to the first non-blank character and then to
+-- column zero, L to the last non-blank character and then past any trailing whitespace to the true
+-- end of the line. Shift plus the h/l that already mean left and right, because the ends of a line
+-- are wanted constantly and ^, 0, g_ and $ are all awkward to reach.
+--
+-- The stock screen-top/screen-bottom motions these displace are GIVEN UP, not rehomed anywhere. M
+-- still reaches the middle of the screen and zt/zz/zb still position the view; nothing here should
+-- quietly put H and L back. H and L also stop being jump commands, so '' no longer returns from one.
+--
+-- Expression mappings that RETURN a built-in motion, rather than functions that move the cursor
+-- themselves. Everything that makes a motion a motion then comes for free: an operator consumes it
+-- (dL deletes to the end of the line, dH at the first non-blank deletes the indent), a visual
+-- selection extends by it, visual-block $ keeps its ragged right edge, and $ sets curswant so a
+-- following j stays at the end of each line. nvim_win_set_cursor loses all four.
+--
+-- The step is chosen from where the cursor IS, not from a press counter. No press is counted and no
+-- state is carried, so the rule reads identically in all three modes -- operator-pending has no
+-- "again" to count -- and ^ followed by H reaches column zero exactly as H followed by H does.
+--
+-- <Home> rather than "0" for column zero: a returned digit fuses with a count typed before the key,
+-- so 3H would offer Vim a 3 and a 0 and mean a count of thirty with no motion at all. <Home> is the
+-- same exclusive motion to column one and cannot be read as part of a count.
+--
+-- vim.fn.match rather than a Lua %S pattern, compared in bytes because bytes are what
+-- nvim_win_get_cursor reports. Vim's regex is character-aware, so \S\ze\s*$ yields the FIRST byte of
+-- the last non-blank character; the Lua equivalent yields its last byte, which never equals the
+-- cursor column on a multibyte character and would leave L unable to reach its second step.
+--
+-- Modes are n/x/o, not v: v is visual AND select, and select mode must keep replacing the selection
+-- with a typed H or L -- that is how a snippet placeholder is overwritten.
+--
+-- A negative match is a line with no non-blank character on it at all. There is no inner step to
+-- stop at, so the two steps collapse into one: on an empty line neither key moves, and on an
+-- all-whitespace line each reaches its real end in a single press.
+local function line_start()
+  local col = vim.fn.match(vim.api.nvim_get_current_line(), [[\S]])
+  if col < 0 or col == vim.api.nvim_win_get_cursor(0)[2] then
+    return "<Home>"
+  end
+  return "^"
+end
+
+local function line_end()
+  local col = vim.fn.match(vim.api.nvim_get_current_line(), [[\S\ze\s*$]])
+  if col < 0 or col == vim.api.nvim_win_get_cursor(0)[2] then
+    return "$"
+  end
+  return "g_"
+end
+
+vim.keymap.set({ "n", "x", "o" }, "H", line_start, {
+  expr = true,
+  replace_keycodes = true,
+  desc = "First non-blank, then column zero",
+})
+vim.keymap.set({ "n", "x", "o" }, "L", line_end, {
+  expr = true,
+  replace_keycodes = true,
+  desc = "Last non-blank, then end of line",
+})
+
 -- Window focus. Unprefixed, because focus is adjusted constantly and a <C-w> per press is the
 -- cost this set exists to remove. Normal mode only: insert-mode <C-h> stays backspace, and
 -- <C-l>'s redraw remains reachable as :redraw!.
