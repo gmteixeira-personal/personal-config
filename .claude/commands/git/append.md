@@ -1,5 +1,6 @@
 ---
 description: Fold the current changes into the last commit, updating its message
+model: opus
 effort: medium
 allowed-tools: Bash(git:*), Read
 ---
@@ -32,3 +33,5 @@ Stop on the first that fails:
 ## Report
 
 Name the commit that absorbed the changes, the paths added, whether the message changed, and whether the result was pushed. State any dirty path left behind.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

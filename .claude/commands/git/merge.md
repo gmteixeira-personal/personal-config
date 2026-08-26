@@ -27,3 +27,5 @@ Merge `$ARGUMENTS` — the source branch — into the current branch, ending on 
 ## Report
 
 Name the source branch, the current branch, and the result — fast-forward, merge commit, or already up to date. Say that the merge is not pushed and mention `/git:push`.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

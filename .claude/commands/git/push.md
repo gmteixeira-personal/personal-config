@@ -1,5 +1,6 @@
 ---
 description: Commit and push the current branch, creating its upstream if needed
+model: sonnet
 effort: medium
 allowed-tools: Bash(git:*), Read
 argument-hint: "[all]"
@@ -39,3 +40,5 @@ Commit and push on the current branch. `$ARGUMENTS` is either empty or the word 
 ## Report
 
 Name the branch, the remote, the new commit, and the paths committed. State any dirty path deliberately left behind.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

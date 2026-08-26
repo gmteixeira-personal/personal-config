@@ -35,3 +35,5 @@ Committing does not need a branch, so a detached HEAD is not a reason to stop. M
 ## Report
 
 Name the branch, the new commit, and the paths committed. State any dirty path deliberately left behind. Mention `/git:push` as the way to publish the commit.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

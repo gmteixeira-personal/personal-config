@@ -24,3 +24,5 @@ Fetch from the `origin` remote. Nothing else: no `--all`, no `--prune`, no pull.
 Summarize what arrived: new commits on the current branch's upstream, new remote branches, and remote branches that are gone. If nothing came in, say everything is already up to date.
 
 If the current branch is now behind its upstream, say so and mention `/git:pull`. If remote branches disappeared, mention `/git:cleanup`.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

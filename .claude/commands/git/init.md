@@ -32,3 +32,5 @@ Initialize a git repository in the current working directory. `$ARGUMENTS` optio
 ## Report
 
 Name the repository path and the initial branch, and the remote URL if one was registered. Mention `/git:push` as the way to make and publish the first commit.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

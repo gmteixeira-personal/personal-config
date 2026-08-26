@@ -1,5 +1,6 @@
 ---
 description: Squash the last N commits into one with a regenerated message
+model: opus
 effort: high
 allowed-tools: Bash(git:*), Read
 argument-hint: "N | *"
@@ -34,3 +35,5 @@ Check all of these before touching history, and stop on the first that fails:
 ## Report
 
 Name how many commits were squashed, the new commit, and the new subject. Say whether the result was pushed.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

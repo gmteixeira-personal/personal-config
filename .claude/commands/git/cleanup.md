@@ -1,6 +1,6 @@
 ---
 description: Propose and delete local and remote branches whose work has already landed
-model: sonnet
+model: opus
 effort: high
 allowed-tools: Bash(git:*), Read
 ---
@@ -41,3 +41,5 @@ If no branch qualifies, report that there is nothing to clean and delete nothing
 ## Report
 
 List what was deleted, grouped local and remote; what was kept and why; and any deletion git refused, with its reason.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

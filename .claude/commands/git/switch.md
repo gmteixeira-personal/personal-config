@@ -30,3 +30,5 @@ End with `$ARGUMENTS` — the branch name — checked out, whether it exists loc
 ## Report
 
 Name the branch and which case applied: checked out an existing local branch, created a local branch tracking a remote one, or created a new branch. For a new branch, say that it is not yet published and mention `/git:push`.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

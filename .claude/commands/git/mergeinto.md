@@ -1,6 +1,6 @@
 ---
 description: Merge the current branch into another branch, ending on that branch
-model: sonnet
+model: opus
 effort: high
 allowed-tools: Bash(git:*), Read
 argument-hint: "BRANCH"
@@ -29,3 +29,5 @@ Merge the current branch into `$ARGUMENTS` — the target branch — and finish 
 ## Report
 
 Name the source branch, the target branch, the result, and — explicitly — that the target branch is now the checked-out branch. Mention `/git:push` as the way to publish the merge.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.

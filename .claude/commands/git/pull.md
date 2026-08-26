@@ -26,3 +26,5 @@ Bring the current branch up to date with its matching remote branch.
 ## Report
 
 Summarize what arrived — commits, and the files they touched — or say the branch was already up to date. On a stop, quote the decisive line of git's output and name the next step.
+
+Then close a successful run with the status block, as **Closing status** in the conventions describes. It goes last, after this report, and is not printed at all when the command stopped.
