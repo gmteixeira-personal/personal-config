@@ -99,6 +99,7 @@
 # a false negative costs a published key.
 id_*
 !*.pub
+adbkey*
 *.pem
 *.key
 *.p12
@@ -178,6 +179,8 @@ id_*
 .claude/.caveman-nudge-shown
 
 # -- bulk: caches, package stores, toolchains, editor server state --
+# .android/ also holds adbkey, an RSA private key (see the patterns above).
+.android/
 .cache/
 .npm/
 .nuget/
