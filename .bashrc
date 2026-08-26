@@ -10,6 +10,15 @@ case ":$PATH:" in
     *) export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH" ;;
 esac
 
+# Neovim (installed by bob). Set before the non-interactive early return below
+# so scripts and tool runners that spawn $EDITOR find it too.
+case ":$PATH:" in
+    *":$HOME/.local/share/bob/nvim-bin:"*) ;;
+    *) export PATH="$HOME/.local/share/bob/nvim-bin:$PATH" ;;
+esac
+export EDITOR="nvim"
+export VISUAL="nvim"
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -131,4 +140,3 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"
