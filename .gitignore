@@ -1,0 +1,193 @@
+# =============================================================================
+# $HOME as a git repository — deny by default.
+#
+# Git applies LAST MATCH WINS. This file is ordered in four blocks so that each
+# one overrides the block above it:
+#
+#   1. ignore everything
+#   2. keep directories traversable        (overrides 1)
+#   3. allowlist — the only tracked paths  (overrides 2)
+#   4. denylist — secrets and bulk         (overrides 3)
+#
+# To find out why a path is ignored:  git check-ignore -v <path>
+# To track something new: add a block 3 entry, then `git add <path>` by name.
+# Never loosen block 4 to make a file stage — add a narrow block 3 exception.
+# =============================================================================
+
+
+# --- BLOCK 1: ignore everything ----------------------------------------------
+# Nothing is tracked unless a block 3 entry names it. This also implements the
+# rule that every root entry not starting with "." is ignored.
+*
+
+# --- BLOCK 2: keep directories traversable -----------------------------------
+# Git will not re-include a file whose parent directory is excluded. Without
+# this line, a nested entry like `!/.claude/settings.json` is silently inert.
+# Block 4 re-ignores the heavy directories so the tree is still pruned.
+!*/
+
+# `!*/` above re-includes EVERY directory, which would defeat the rule that
+# root entries not starting with "." are ignored (block 1 covers root files,
+# but not root directories once `!*/` has run). Close that hole here, so
+# `repos/` and friends are pruned. Block 3 re-includes `openspec/` explicitly.
+/[!.]*/
+
+
+# --- BLOCK 3: allowlist ------------------------------------------------------
+# The complete set of tracked paths. Directory entries need `/**` — `!/dir/`
+# re-includes only the directory, not the files inside it.
+
+# this file
+!/.gitignore
+
+# shell
+!/.bashrc
+!/.profile
+!/.bash_logout
+
+# git
+# NOTE: .gitconfig is deliberately NOT tracked — identity and credential
+# helpers differ per machine and per user. Set those locally instead.
+!/.githooks/**
+
+# tool configs
+!/.config/lazygit/config.yml
+!/.config/gh/config.yml
+
+# claude code — declaration only; the install tree is derived (see block 4)
+!/.claude/settings.json
+!/.claude/statusline-command.sh
+!/.claude/commands/**
+!/.claude/skills/**
+!/.claude/agents/**
+!/.claude/hooks/**
+
+# neovim
+!/.config/nvim/**
+
+# README — stated exception to the "non-dot root entries are ignored" rule,
+# so GitHub renders the bootstrap instructions on the repository page.
+!/README.md
+
+# openspec — stated exception to the "non-dot root entries are ignored" rule.
+# Two lines: the first re-includes the directory (git will not descend into an
+# excluded directory), the second re-includes its contents.
+!/openspec/
+!/openspec/**
+
+
+# --- BLOCK 4: denylist -------------------------------------------------------
+# Overrides block 3. A block 3 entry can never re-include anything matched here.
+# The two `!` lines inside this block are narrow repairs to an over-broad
+# pattern on the line just above them — they are part of the denylist, not
+# escapes from it.
+
+# -- secrets: named paths present in this $HOME --
+.ssh/
+.config/gh/hosts.yml
+.claude/.credentials.json
+.ghtoken
+.claude.json
+.bash_history
+.psql_history
+.viminfo
+
+# -- secrets: patterns, for whatever appears later --
+# Deliberately over-broad. A false positive costs one line of deliberation;
+# a false negative costs a published key.
+id_*
+!*.pub
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+.env
+.env.*
+*_history
+*.history
+*credential*
+*secret*
+*token*
+.netrc
+.npmrc
+.pypirc
+
+# -- git configuration: per-machine identity and credential helpers --
+# Never tracked. Identity lives in .git/config (repo-local, uncommitted).
+# Listed here as well as omitted from block 3, so that no directory allowlist
+# entry can reintroduce one at any depth.
+.gitconfig
+.gitconfig.*
+.gitconfig-*
+**/.gitconfig
+.config/git/
+**/.git-credentials
+.git-credentials
+
+# -- telemetry and per-install identifiers --
+# Machine-scoped analytics state. Publishing an "anonymous" id deanonymizes it,
+# and syncing one makes every machine report as the same install.
+.config/openspec/config.json
+**/telemetry.json
+**/.telemetry
+**/machine-id
+**/*machine-id*
+.config/**/anonymousId
+
+# -- WSL alternate-data-stream leftovers --
+*:Zone.Identifier
+
+# -- derived state: track the declaration, ignore what the tool rebuilds --
+# .claude/settings.json carries extraKnownMarketplaces + enabledPlugins;
+# Claude Code reconstructs .claude/plugins/ from it. The files here also record
+# installLocation as absolute paths into this machine's home directory.
+.claude/plugins/
+
+# -- claude code: session and machine-local state --
+.claude/projects/
+.claude/sessions/
+.claude/session-env/
+.claude/file-history/
+.claude/shell-snapshots/
+.claude/paste-cache/
+.claude/backups/
+.claude/cache/
+.claude/downloads/
+.claude/daemon/
+.claude/jobs/
+.claude/tasks/
+.claude/plans/
+.claude/ide/
+.claude/history.jsonl
+.claude/daemon.log
+.claude/*.jsonl
+.claude/*.json
+!.claude/settings.json
+.claude/settings.json.doctor-backup
+
+# Machine-local settings layer. Merges over the tracked settings.json, and is
+# where anything machine- or employer-specific belongs (autoMode.environment
+# in particular) so the tracked file stays portable and publishable.
+.claude/settings.local.json
+.claude/.last-cleanup
+.claude/.caveman-active
+.claude/.caveman-nudge-shown
+
+# -- bulk: caches, package stores, toolchains, editor server state --
+.cache/
+.npm/
+.nuget/
+.cargo/
+.dotnet/
+.nvm/
+.vscode-server/
+.ServiceHub/
+.local/
+.aspnet/
+.templateengine/
+.landscape/
+.copilot/
+.wget-hsts
+.motd_shown

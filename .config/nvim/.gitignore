@@ -1,0 +1,3 @@
+# lazy.nvim / runtime artifacts
+.luarc.json
+*.log

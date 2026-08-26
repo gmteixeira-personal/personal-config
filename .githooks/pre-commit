@@ -1,0 +1,102 @@
+#!/bin/sh
+# pre-commit — last barrier between $HOME and a public remote.
+#
+# The .gitignore denylist guards filenames. It does not stop `git add -f`, and
+# it cannot see a token pasted inside an otherwise-wanted file. This hook does
+# both: check A screens staged PATHS, check B screens staged CONTENT.
+#
+# Activate in a fresh clone (git clones neither hooks nor repo-local config):
+#   git config core.hooksPath .githooks
+
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+[ -z "$staged" ] && exit 0
+
+reject() {
+  fail=1
+  printf 'BLOCKED  %s\n         %s\n' "$1" "$2" >&2
+}
+
+# --- check A: staged paths against the secret denylist -----------------------
+# Mirrors the secret half of .gitignore block 4. Bulk-exclusion patterns are
+# deliberately absent: committing a cache file is untidy, not dangerous.
+for path in $staged; do
+  base=${path##*/}
+  case "$path" in
+    .ssh/*|*/.ssh/*)                 reject "$path" "ssh directory" ;;
+    .config/gh/hosts.yml)            reject "$path" "gh oauth token store" ;;
+    .claude.json|*/.claude.json)     reject "$path" "claude code state" ;;
+    .claude/.credentials.json)       reject "$path" "claude code credentials" ;;
+    .claude/plugins/*)               reject "$path" "derived plugin state; declare in .claude/settings.json instead" ;;
+    .git-credentials|*/.git-credentials) reject "$path" "git credential store" ;;
+  esac
+  case "$base" in
+    .ghtoken|.netrc|.npmrc|.pypirc)  reject "$path" "credential file" ;;
+    .env|.env.*)                     reject "$path" "environment file" ;;
+    *.pem|*.key|*.p12|*.pfx)         reject "$path" "key or certificate" ;;
+    *_history|*.history)             reject "$path" "shell or client history" ;;
+    .viminfo)                        reject "$path" "vim state (holds file contents)" ;;
+    .gitconfig|.gitconfig.*|.gitconfig-*)
+                                     reject "$path" "per-machine git config; identity belongs in .git/config" ;;
+    *:Zone.Identifier)               reject "$path" "windows alternate data stream" ;;
+    id_*)
+      case "$base" in
+        *.pub) ;;
+        *)                           reject "$path" "looks like a private key" ;;
+      esac ;;
+    *credential*|*secret*|*token*)   reject "$path" "name suggests a credential" ;;
+  esac
+done
+
+# --- check B: staged content -------------------------------------------------
+# The filename is innocent; the contents are not. Reads the staged blob, not
+# the worktree file, so a partially-staged change is judged on what will land.
+for path in $staged; do
+  blob=$(git show ":$path" 2>/dev/null) || continue
+
+  printf '%s' "$blob" | grep -qE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----' \
+    && reject "$path" "contains a private key block"
+
+  printf '%s' "$blob" | grep -qE -- '(^|[^A-Za-z0-9])(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}' \
+    && reject "$path" "contains a github token"
+
+  printf '%s' "$blob" | grep -qE -- 'github_pat_[A-Za-z0-9_]{22,}' \
+    && reject "$path" "contains a github fine-grained token"
+
+  printf '%s' "$blob" | grep -qE -- '(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]{20,}' \
+    && reject "$path" "contains an api key (sk- prefix)"
+
+  printf '%s' "$blob" | grep -qE -- '(^|[^A-Za-z0-9])(AKIA|ASIA)[A-Z0-9]{16}' \
+    && reject "$path" "contains an aws access key id"
+
+  printf '%s' "$blob" | grep -qE -- '(^|[^A-Za-z0-9])xox[baprs]-[A-Za-z0-9-]{10,}' \
+    && reject "$path" "contains a slack token"
+
+  printf '%s' "$blob" | grep -qE -- '"(private_key|client_secret)"[[:space:]]*:' \
+    && reject "$path" "contains a service-account private key or client secret"
+
+  # autoMode is user-scope and machine-specific: it names the trusted repo,
+  # its branch policy, and its layout. It has no place on a public remote.
+  case "$path" in
+    .claude/settings.json)
+      printf '%s' "$blob" | grep -qE -- '"autoMode"[[:space:]]*:' \
+        && reject "$path" "contains autoMode (machine-specific; delete the key before committing)" ;;
+  esac
+done
+
+if [ "$fail" -ne 0 ]; then
+  cat >&2 <<'MSG'
+
+Commit refused. The remote for this repository is public.
+
+  unstage:   git reset HEAD <path>
+  see rule:  git check-ignore -v <path>
+
+If a match is a false positive, narrow the .gitignore allowlist for that one
+path and record why. Do not bypass with --no-verify.
+MSG
+  exit 1
+fi
+
+exit 0

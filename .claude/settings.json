@@ -1,0 +1,40 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "frontend-design@claude-plugins-official": false
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "syntaxHighlightingDisabled": false,
+  "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "tap"
+  },
+  "theme": "auto",
+  "inputNeededNotifEnabled": false,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
+}

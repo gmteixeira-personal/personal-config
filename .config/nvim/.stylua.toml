@@ -1,0 +1,7 @@
+# Pins the formatting conform runs on write (lua/plugins/conform.lua maps lua -> stylua). Without
+# this file stylua defaults to tabs, which silently rewrites a file's indentation the first time it
+# is saved -- the rest of this config is two-space, so the two would drift file by file.
+# column_width is left at stylua's default: it bounds code only, and the long trailing comments
+# throughout lua/ are not reflowed by it.
+indent_type = "Spaces"
+indent_width = 2
