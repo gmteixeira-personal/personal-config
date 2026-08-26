@@ -7,6 +7,7 @@ Everyday git work in Claude Code is repetitive and error-prone to drive by hand:
 - Add a `git` command namespace under `.claude/commands/git/`, invoked as `/git:<command>`, available in any repository.
 - `/git:init [REPO]` — initialize a git repository in the working directory, and when `REPO` is given as an HTTP(S) or SSH URL, register it as the `origin` remote.
 - `/git:fetch` — fetch from `origin`, reporting what moved.
+- `/git:status` — show the uncommitted changes as a directory tree, one icon per entry marking untracked, staged, modified, deleted, renamed, or conflicted. Read-only.
 - `/git:commit [all]` — stage and commit without pushing, using the same scope rule as `/git:push`: with no argument only the paths touched in the present session, with `all` every dirty path.
 - `/git:push [all]` — stage, commit, and push to the current branch, creating the upstream on first push. With no argument it stages only the paths touched in the present session; with `all` it stages every dirty path in the repository.
 - `/git:pull` — pull the current branch from its matching remote branch, reporting cleanly when there is no upstream, when the tree is dirty, or when the merge conflicts.
@@ -22,7 +23,7 @@ Everyday git work in Claude Code is repetitive and error-prone to drive by hand:
 ## Capabilities
 
 ### New Capabilities
-- `git-slash-commands`: The `/git:*` command suite — the behavior of each command, repository initialization and remote registration, how session-scoped staging is determined, commit message generation, upstream creation, and the safety rules for history rewriting and merging.
+- `git-slash-commands`: The `/git:*` command suite — the behavior of each command, repository initialization and remote registration, how the working tree is reported, how session-scoped staging is determined, commit message generation, upstream creation, and the safety rules for history rewriting and merging.
 
 ### Modified Capabilities
 
@@ -33,6 +34,6 @@ Everyday git work in Claude Code is repetitive and error-prone to drive by hand:
 
 ## Impact
 
-- New files: `.claude/commands/git/init.md`, `fetch.md`, `cleanup.md`, `commit.md`, `push.md`, `pull.md`, `switch.md`, `squash.md`, `append.md`, `merge.md`, `mergeinto.md`.
+- New files: `.claude/commands/git/init.md`, `fetch.md`, `status.md`, `cleanup.md`, `commit.md`, `push.md`, `pull.md`, `switch.md`, `squash.md`, `append.md`, `merge.md`, `mergeinto.md`.
 - No change to `.gitignore`, `.claude/settings.json`, or the commit guard — `.claude/commands/` is already an allowlisted, tracked directory.
 - Commands are prompt files only; they add no runtime dependency beyond `git` itself, and they inherit whatever permission mode the session runs in.

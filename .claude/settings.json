@@ -24,7 +24,7 @@
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-opus-5": {
-      "effortLevel": "xhigh"
+      "effortLevel": "high"
     }
   },
   "tui": "fullscreen",
@@ -33,6 +33,7 @@
     "mode": "tap"
   },
   "theme": "auto",
+  "editorMode": "vim",
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,

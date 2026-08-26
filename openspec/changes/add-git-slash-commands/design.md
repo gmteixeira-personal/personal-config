@@ -76,6 +76,54 @@ Not contacting the remote is deliberate — the common case is a repository just
 
 Running inside an existing repository never reinitializes: `git init` there is nearly a no-op but the intent is ambiguous, so the command reports the existing root instead, and offers to add `origin` if that is the part that is missing. An `origin` that already points elsewhere is a conflict the user must settle, not one to overwrite.
 
+### Status is a tree, and the fence carries the colour
+
+`/git:status` reads `git status --porcelain=v1 -uall --branch` plus the two `--numstat` diffs, merges the paths into a directory tree, and prints one row per entry inside a single ```diff fenced block.
+
+A tree rather than porcelain's flat list because the flat list repeats the same directory prefix on every line, which is exactly the part that carries no information; nesting says it once. Single-child directories are collapsed into their parent (`.claude/commands/git/`) so a deep, narrow path does not cost four lines of indent to say one thing.
+
+The fenced block is the colour mechanism, and it was chosen empirically rather than by preference. Command output reaches the user through the assistant's own rendered markdown. ANSI escape sequences do not survive that trip — they were tested both bare and inside an `ansi`-tagged fence, and neither produced colour — so a colour written as an escape code is a colour that does not arrive. A ```diff fence does produce colour, because the renderer syntax-highlights it. That makes the diff grammar the palette, and it offers exactly four buckets, selected by the first non-space character of the line: `+` green, `-` red, `@@ … @@` dark grey, everything else default. Leading whitespace does not defeat the match, which is what makes an indented tree possible at all; had it required column 0, the marker and the tree structure would have been competing for the same character.
+
+Grey is available but goes unused, and that is a decision rather than an oversight. It exists only inside `@@ … @@`, so anything grey wears its delimiters on screen. Both candidates for it — the legend and the status line — are short lines read directly rather than skimmed past, and wrapping either one made it read as a stray diff-hunk header pasted into the output. De-emphasis was not worth that, so `@@` never appears and the working palette is three colours: green, red, default.
+
+Three usable colours is the whole budget, so what they encode is a real decision. They encode staged-ness — green for staged, default for unstaged and untracked, red reserved for conflicts — rather than direction. Staged-ness is what gets acted on: it is precisely the set `/git:commit` would carry, which is the question the command is usually being asked. Direction is already in the state emoji, so colouring it would spend the only colour channel repeating that column. The cost is that a staged deletion renders green, which reads oddly for a moment; the emoji carries the meaning and green consistently means "in the index".
+
+### Emoji, not Nerd Font glyphs
+
+Each entry names its state with one emoji and nothing else.
+
+Nerd Font glyphs were tried and abandoned. On paper they are the better fit: monospace, designed for exactly this, and matching the editor. In practice Claude Code does not render them — they were tested and do not appear — so the whole set was unusable regardless of what font the terminal has patched. This is worth recording precisely because the reasoning for trying them is sound and will occur to someone again.
+
+That leaves emoji, whose weakness is width: a codepoint carrying a trailing `U+FE0F` variation selector, such as `🗑️` or `⚠️`, renders one column wide in some terminals and two in others, and a tree is aligned on exactly that column. The rule written into the command is therefore about the rendered result rather than the codepoint — every emoji must occupy two columns — with a preference for variation-selector-free codepoints because they satisfy it everywhere without being checked. `✏️` is the deliberate exception, kept because it was verified by eye in the target terminal; the rule requires that check rather than forbidding the glyph, since this is a personal configuration whose target terminal is known.
+
+A word beside each emoji was tried and removed. It read as a second column of near-identical strings — `modified` repeated down the tree — which is exactly the visual noise a tree is supposed to remove, and it pushed the names far enough right that the tree structure stopped being the thing the eye landed on. The emoji alone is denser and the state is a closed set of eight, so it is learned in one reading.
+
+Removing the word makes the legend load-bearing rather than a convenience, and that is the trade: the mapping now exists in exactly one place in the output, so the legend is printed on every non-empty tree rather than being optional. `❓` for untracked is part of the same reasoning — it is the state that most needs to be self-evident to a reader who has not consulted the legend, and a question mark says "git does not know about this yet" without being taught.
+
+Fields sit at fixed widths — marker, session, state, then the tree indent — totalling eight columns, so an entry at tree level `N` lands at column `8 + 2N` and the left edge reads as a status column while the names still form a tree. The alternative, letting the state travel inline with each name, puts it at a different horizontal position on every row and destroys the column that makes the output scannable at a glance.
+
+The block reads legend, then tree, then status line, all in the default colour. The legend is the key to everything under it, so it goes on top; the status line is the summary the reader is left holding, and putting it last places it directly above whatever is said outside the fence, so the two read as one thought. `✅` is the staged symbol wherever staged has to be named in words — the status line's count and the legend's gloss on green — but it never gets a column in the tree, because the green already says it and a second marker would spend a column repeating the colour.
+
+The status line is written entirely as emoji-plus-number, including the two line totals: `✅4 ✏️2 ❓1 💥0 | 🟢84 🔴12`. An earlier version wrote the totals as a bare `+84 −12`, and it was misread twice — sitting immediately after four emoji-labelled file counts, an unlabelled pair reads as a fifth count of files rather than a count of lines. Words were tried first (`+84 −12 lines tracked`) and fixed the ambiguity at the cost of a ragged line that mixed two notations. Making the totals emoji too keeps one notation across the whole line, and pushes the unit and the tracked-only scope into the legend, which is where every other symbol is already explained. The residual wrinkle is that `🟢` and the green row colour are different signals — added lines versus staged — so the legend names both explicitly rather than leaving the collision implicit.
+
+States mark the kind of change, not the file type. A per-extension emoji would double the count while repeating what the filename already says. Directories are the one exception: they get an emoji *and* a trailing `/`, because a directory named without an extension is otherwise indistinguishable from an extensionless file.
+
+`-uall` is load-bearing. Without it an untracked directory collapses to a single `dir/` entry and its contents never enter the tree, so a newly created subtree would show as one line. The cost is that a large untracked directory — build output, a dependency directory someone forgot to ignore — could flood the output, so a directory holding more than 20 untracked files is reported as one entry with a count instead.
+
+The command is read-only by construction and takes no arguments. Scoping it to a path would be a second way to express what `git status -- <path>` already does, and the tree is small enough that filtering it is not the problem being solved.
+
+The block is the entire output, and nothing is said beneath it. Every closing remark that suggested itself in practice — that the tree is clean, that the branch is level, that five files are modified, that `/git:push` is the next step — turned out to be a translation of a field already on screen, and a status command whose summary needs its own summary has failed at the one thing it does. The single exception is undetermined session ownership, because a blank session column is genuinely ambiguous with "this session touched everything"; that is a fact the block cannot carry, so it is the only sentence allowed outside it.
+
+### Status marks what this session did not touch
+
+Each entry carries a session field ahead of its state emoji, marking paths that were changed outside the present conversation.
+
+This reuses the session-scope rule the conventions already define for `/git:push` and `/git:append`, so there is one definition of "this session's work" rather than two that can disagree. The value is in the pairing: `/git:push` with no argument stages exactly the unmarked entries, so the marked ones are a preview of what that command would leave behind, visible before running it rather than in its closing report.
+
+One rule differs from the staging commands, and it follows from this one being read-only. When the session edit record is unavailable or untrustworthy, `/git:push` stops and asks; `/git:status` must not, because a status command that refuses to print a status is useless. It leaves the session column blank and says once beneath the tree that ownership could not be determined. A per-row "unknown" mark was considered and dropped: ownership is unknown for the whole tree or for none of it, so repeating the mark on every row costs a column to say what one sentence says better. Nothing is at risk from being wrong here — the command changes nothing — so reporting the uncertainty is strictly better than blocking on it.
+
+The field occupies a fixed column on every row rather than being appended only where it applies. Appending would be less noisy, but the point of the mark is to be scanned, and entries sitting at different tree depths do not line up when the mark trails the name.
+
 ### Fetch is deliberately narrow
 
 `/git:fetch` runs `git fetch origin` and nothing else — no `--all`, no `--prune`, no implicit pull. It is the command for the moment when the user wants remote-tracking refs refreshed without touching the working tree, so its value is in being predictable. The reporting is where the work is: it says what arrived and whether the current branch is now behind, and points at `/git:pull` when it is.
@@ -107,6 +155,7 @@ Each command file carries `model:` and `effort:` frontmatter, tuned to what that
 | Command | Model | Effort | Why |
 | --- | --- | --- | --- |
 | `conventions`, `fetch`, `init` | `sonnet` | `low` | A fixed sequence and a report; `init`'s only judgement is a URL shape check. |
+| `status` | `sonnet` | `low` | Read-only. A few git reads and a mechanical render — the state and colour mappings are tables, and the one judgement, session ownership, degrades to a reported unknown rather than a guess. |
 | `pull`, `switch`, `merge` | `sonnet` | `medium` | A small decision tree over repository state, with every stop condition spelled out. |
 | `mergeinto`, `cleanup` | `sonnet` | `high` | Several state transitions, and a mistake is expensive: the wrong branch mid-merge, or a deleted branch. The reasoning is still mechanical, so the model tier does not need to change. |
 | `commit` | `sonnet` | `low` | Same judgement as `push` — scope and message — but nothing leaves the machine, and both failure modes are cheap to undo locally. |

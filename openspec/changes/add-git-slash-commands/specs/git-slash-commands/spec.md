@@ -6,11 +6,11 @@ Defines a `/git:*` slash-command suite carried in the personal Claude Code confi
 
 ### Requirement: Command namespace
 
-The suite SHALL be invoked as `/git:<command>` and SHALL be available in any git repository, not only the home configuration repository. The suite SHALL consist of exactly `init`, `fetch`, `commit`, `push`, `pull`, `switch`, `squash`, `append`, `merge`, `mergeinto`, and `cleanup`.
+The suite SHALL be invoked as `/git:<command>` and SHALL be available in any git repository, not only the home configuration repository. The suite SHALL consist of exactly `init`, `fetch`, `status`, `commit`, `push`, `pull`, `switch`, `squash`, `append`, `merge`, `mergeinto`, and `cleanup`.
 
 #### Scenario: Invocation form
 
-- **WHEN** the user types `/git:init`, `/git:fetch`, `/git:commit`, `/git:push`, `/git:pull`, `/git:switch`, `/git:squash`, `/git:append`, `/git:merge`, `/git:mergeinto`, or `/git:cleanup`
+- **WHEN** the user types `/git:init`, `/git:fetch`, `/git:status`, `/git:commit`, `/git:push`, `/git:pull`, `/git:switch`, `/git:squash`, `/git:append`, `/git:merge`, `/git:mergeinto`, or `/git:cleanup`
 - **THEN** the corresponding command SHALL run
 
 #### Scenario: Available outside the home repository
@@ -150,6 +150,132 @@ A command that creates or rewrites a commit message SHALL write the message from
 - **WHEN** the fetch fails, such as on an unreachable host or refused authentication
 - **THEN** the command SHALL report the failure with the decisive line of git's output
 - **AND** it SHALL NOT retry with different credentials or a different remote
+
+### Requirement: Status shows the working tree as an annotated tree
+
+`/git:status` SHALL render the repository's uncommitted changes as a directory tree with one icon per entry, and SHALL NOT modify the repository or contact a remote.
+
+#### Scenario: Read-only
+
+- **WHEN** `/git:status` runs
+- **THEN** it SHALL NOT stage, commit, fetch, pull, or push
+- **AND** the working tree, the index, and the checked-out branch SHALL be unchanged when it finishes
+
+#### Scenario: Changes rendered as a tree
+
+- **WHEN** the repository has uncommitted changes
+- **THEN** the changed paths SHALL be rendered as a nested directory tree rather than a flat path list
+- **AND** each directory entry SHALL end in `/`
+- **AND** a directory SHALL show only the children that actually changed
+
+#### Scenario: Untracked directories are expanded
+
+- **WHEN** an untracked directory contains changed files
+- **THEN** its files SHALL be listed individually rather than collapsed to a single directory entry
+
+#### Scenario: Large untracked directory is capped
+
+- **WHEN** a single untracked directory holds more than 20 files
+- **THEN** the directory SHALL be shown as one entry with the file count instead of its contents
+- **AND** the report SHALL say that the listing was collapsed
+
+#### Scenario: State named by one emoji
+
+- **WHEN** an entry is rendered
+- **THEN** its state SHALL be determined by its porcelain index and working-tree columns, distinguishing at least untracked, added, modified, deleted, renamed, copied, type-changed, and conflicted
+- **AND** the state SHALL be shown as a single emoji, with no word beside it
+- **AND** directories SHALL carry a directory emoji distinct from every file emoji
+- **AND** no emoji SHALL encode the file's type or extension
+
+#### Scenario: Emoji are width-stable
+
+- **WHEN** an emoji is chosen for any state
+- **THEN** it SHALL occupy two columns in the target terminal, since the tree is aligned on that grid
+- **AND** a codepoint carrying no variation selector SHALL be preferred, as it satisfies this without being checked
+- **AND** a codepoint carrying a trailing `U+FE0F` SHALL be verified by eye before use, as its width varies by terminal
+- **AND** Nerd Font glyphs SHALL NOT be used, as Claude Code does not render them
+
+#### Scenario: Fields are aligned in fixed columns
+
+- **WHEN** the tree is printed
+- **THEN** the marker, session, and state fields SHALL occupy fixed widths at the start of every entry line
+- **AND** the tree indentation SHALL follow them, so that names form the tree while the left edge forms a status column
+
+#### Scenario: Colour comes from the fenced block
+
+- **WHEN** the status is printed
+- **THEN** the legend, tree, and status line SHALL be emitted inside a single ```diff fenced block
+- **AND** ANSI escape sequences SHALL NOT be emitted
+- **AND** each line's colour SHALL be selected by its first non-space character
+
+#### Scenario: Colour encodes staged-ness
+
+- **WHEN** an entry's change is staged
+- **THEN** its line SHALL begin with `+` so that it renders green
+- **AND** an unstaged or untracked entry SHALL begin with neither `+` nor `-`
+- **AND** a conflicted entry SHALL begin with `-` so that it renders red
+- **AND** `@@ … @@` SHALL NOT be used anywhere in the output, so no line renders grey
+- **AND** staged SHALL be named `✅` wherever it is named in words, without occupying a column in the tree
+
+#### Scenario: Legend covers what is shown
+
+- **WHEN** the tree is printed
+- **THEN** a legend SHALL give the meaning of every state that appears in that tree
+- **AND** it SHALL say what the green colour means
+- **AND** it SHALL be omitted only when the tree is empty, since it is the only place the emoji mapping is written
+
+#### Scenario: Legend first, status line last
+
+- **WHEN** the block is printed
+- **THEN** the legend SHALL be its first line and the status line its last, with the tree between them
+
+#### Scenario: Conflicts are surfaced first
+
+- **WHEN** any path is conflicted
+- **THEN** the conflict count SHALL appear directly under the legend, above the tree
+
+#### Scenario: Clean tree
+
+- **WHEN** there are no uncommitted changes
+- **THEN** the command SHALL print the status line alone, with no tree and no legend
+- **AND** it SHALL NOT add a sentence stating that the tree is clean, since the zero counts already state it
+
+#### Scenario: Nothing is said that the block already shows
+
+- **WHEN** the block has been printed
+- **THEN** no prose SHALL restate the branch, its ahead/behind relation, any count, or any path shown in it
+- **AND** no next command SHALL be suggested, since the status line already carries the reason for it
+- **AND** the only permitted line outside the block SHALL be the notice that session ownership could not be determined
+
+#### Scenario: Branch state in the status line
+
+- **WHEN** the status is printed
+- **THEN** a status line SHALL name the current branch and its ahead/behind relation to its upstream, or state that there is no upstream
+- **AND** a detached HEAD SHALL be reported as such rather than as a branch
+- **AND** the status line SHALL carry staged, unstaged, untracked, and conflicted counts, each always printed even when zero
+- **AND** it SHALL carry the added and removed line totals summed across both numstats, written in the same emoji-plus-number shape as the counts beside them, so the whole line uses one notation
+- **AND** their unit and their tracked-only scope SHALL be stated in the legend
+- **AND** it SHALL NOT count lines in untracked files, which are represented by the untracked file count instead
+- **AND** it SHALL be plain, taking the default colour, as SHALL the legend
+
+#### Scenario: Ignored paths stay out
+
+- **WHEN** a path is matched by an ignore rule
+- **THEN** it SHALL NOT appear in the tree
+
+#### Scenario: Changes from outside this session are marked
+
+- **WHEN** a dirty path was not created or modified by the present conversation
+- **THEN** its entry SHALL carry a session marker distinguishing it from the paths this session touched
+- **AND** the marker SHALL occupy the same column on every entry so that marked entries align
+
+#### Scenario: Session ownership cannot be determined
+
+- **WHEN** the session edit record is unavailable or untrustworthy
+- **THEN** the session column SHALL be left blank on every entry
+- **AND** the command SHALL say once beneath the tree that ownership could not be determined
+- **AND** it SHALL NOT ask the user which paths belong to the session
+- **AND** it SHALL still print the tree
 
 ### Requirement: Commit records work without publishing it
 

@@ -49,3 +49,22 @@
 - [x] 8.4 Exercise `/git:cleanup` in a scratch repository with a merged branch, a gone-upstream branch, an unmerged branch, and the default branch present — confirming the proposal is correct, that declining deletes nothing, and that the unmerged branch is refused rather than forced.
 - [x] 8.5 Stage the new files by explicit path in the home repository, confirm the commit guard passes, and confirm `git status --porcelain` shows no unintended additions.
 - [x] 8.6 Set `model:` and `effort:` frontmatter on each command per the design's table, and confirm the commands still register.
+
+## 9. Working-tree status
+
+- [x] 9.1 Write `status.md`: read `git status --porcelain=v1 -uall --branch` plus `git diff --numstat` and `git diff --cached --numstat`, and render nothing else — no staging, no fetch, no remote contact.
+- [x] 9.2 Build the tree: merge paths into a nested structure, collapse single-child directories into their parent, sort directories before files, suffix every directory with `/`, and show only the children that actually changed.
+- [x] 9.3 Define the state table against the porcelain `XY` columns — untracked, added, modified, deleted, renamed, copied, type-changed, conflicted, directory — as one emoji each with no word beside it, each required to occupy two columns in the target terminal, preferring variation-selector-free codepoints and verifying any `U+FE0F` glyph by eye, and no per-filetype emoji.
+- [x] 9.4 Define the output shape: fixed-width marker, session, and state fields totalling eight columns with the tree indent hanging off them, a mandatory plain legend on the first line, conflicts surfaced directly beneath it, and the tree below that.
+- [x] 9.5 Add the untracked-directory cap: more than 20 files in one untracked directory renders as a single counted entry, and the report says the listing was collapsed.
+- [x] 9.6 Exercise `/git:status` in a scratch repository across untracked, staged, unstaged, partially staged, deleted, renamed, and conflicted entries, plus a clean tree, a detached HEAD, and a branch with no upstream — confirming the repository is unchanged afterwards.
+- [x] 9.7 Confirm ignored paths never appear and that a capped untracked directory reports its count rather than its contents.
+- [x] 9.8 Establish the colour mechanism empirically: confirm ANSI escapes do not survive rendering bare or in an `ansi` fence, confirm a ```diff fence does colour, and map the four available buckets (`+` green, `-` red, `@@ … @@` grey, default) including that leading whitespace does not defeat the match.
+- [x] 9.9 Bind colour to staged-ness rather than direction — `+` for staged, bare for unstaged and untracked, `-` for conflicted — and record in the design why a staged deletion renders green.
+- [x] 9.10 Add the session field ahead of each state emoji, reusing the conventions' session-scope rule, held in a fixed column so marked entries align.
+- [x] 9.11 Make uncertain session ownership non-blocking: leave the session column blank, say once beneath the tree that ownership could not be determined, and never ask, since the command is read-only.
+- [x] 9.12 Establish that Claude Code does not render Nerd Font glyphs, record it in the design as the reason emoji are used, and keep the emoji set restricted to width-stable codepoints.
+- [x] 9.13 Define the status line as the block's last line, plain like the legend since `@@ … @@` is used nowhere: `[⎇ branch] ⇡N ⇣N | ✅N ✏️N ❓N 💥N | 🟢N 🔴N`, with all four counts always printed including zeros, and the no-upstream and detached-HEAD variants.
+- [x] 9.14 Drop grey entirely: forbid `@@ … @@` anywhere in the output, leave the legend and status line plain, and record that de-emphasis was not worth wearing the delimiters on screen.
+- [x] 9.15 Write the line totals as `🟢N 🔴N` so the status line uses one notation throughout, move their unit and tracked-only scope into the legend, and name the `🟢`-versus-green-row collision there explicitly.
+- [x] 9.16 Make the block the entire output: forbid prose restating the branch, counts, paths, or a suggested next command, allow only the unknown-session-ownership notice outside it, and print the status line alone on a clean tree.
