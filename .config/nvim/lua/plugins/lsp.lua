@@ -55,6 +55,45 @@ return {
       settings = { Lua = {} }, -- the table on_init merges into; without it the merge has no base
     })
 
+    -- Tailwind's root marker set ends in `.git`, an upstream fallback for Tailwind v4 projects,
+    -- which no longer require a tailwind.config.* file. Combined with the server's filetype list --
+    -- which includes `markdown`, `html`, every template language and every JS dialect -- opening
+    -- ANY of those files inside a git repository starts the server with that repository as its
+    -- workspace, and the server then walks the whole tree hunting for a Tailwind config and
+    -- registers a didChangeWatchedFiles watch over it.
+    --
+    -- That is merely wasteful in a project and pathological in `$HOME`, which is itself a git
+    -- repository here: opening ~/README.md rooted the server at the home directory and sent it
+    -- through ~12 GB of .nuget, .cache and .local. The resulting message and file-watch traffic is
+    -- serviced on Neovim's main loop, so the editor stops redrawing -- the cursor appears to freeze
+    -- mid-motion -- until the walk finishes or the process is killed.
+    --
+    -- So the fallback is dropped and only a real Tailwind or PostCSS config counts as a root.
+    -- `workspace_required` is true upstream, so returning no directory means the server simply does
+    -- not attach rather than attaching rootless. The cost is Tailwind v4 projects that carry no
+    -- config file at all: add a postcss.config.* there, or name that directory here.
+    vim.lsp.config("tailwindcss", {
+      root_dir = function(bufnr, on_dir)
+        local markers = {}
+        for _, base in ipairs({ "tailwind.config", "postcss.config" }) do
+          for _, ext in ipairs({ "js", "cjs", "mjs", "ts" }) do
+            markers[#markers + 1] = base .. "." .. ext
+          end
+        end
+
+        local found = vim.fs.find(markers, {
+          path = vim.api.nvim_buf_get_name(bufnr),
+          upward = true,
+        })[1]
+
+        -- on_dir is not called when there is no root: calling it with nil is what upstream does to
+        -- mean "the buffer's own directory", which would re-create the problem one level down.
+        if found then
+          on_dir(vim.fs.dirname(found))
+        end
+      end,
+    })
+
     -- Diagnostics are an editor-level display concern, so they are configured once, globally --
     -- there is no reason for two servers to render an error differently.
     vim.diagnostic.config({
