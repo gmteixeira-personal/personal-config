@@ -54,6 +54,7 @@
 # tool configs
 !/.config/lazygit/config.yml
 !/.config/gh/config.yml
+!/.config/caveman/config.json
 
 # claude code — declaration only; the install tree is derived (see block 4)
 !/.claude/settings.json
