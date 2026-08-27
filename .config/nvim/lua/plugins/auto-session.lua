@@ -15,6 +15,37 @@ return {
     -- nor leaves a session behind for a directory nobody works in.
     suppressed_dirs = { "~/", "/", "~/Downloads" },
 
+    -- Close diffview's views before the session is written. Its own documentation asks for this,
+    -- and without it a session records a file the user never opened.
+    --
+    -- close_unsupported_windows below drops a window whose file is not readable, which covers the
+    -- file panel and the `diffview://` revision side. It does not cover the *other* side: that one
+    -- is the real file on disk, so it survives the cull and lands in the session. Open an empty
+    -- editor, press <leader>gm, quit -- and the next launch in that directory opens whichever file
+    -- the diff happened to be showing, which was never a file being edited.
+    --
+    -- Closing the views first leaves exactly what the user had. Where that is nothing, the session
+    -- is not written at all, which is the right answer for an editor opened only to read a diff.
+    --
+    -- package.loaded rather than require: under lazy.nvim a require here would load diffview at
+    -- quit for a session that never opened it.
+    pre_save_cmds = {
+      function()
+        local lib = package.loaded["diffview.lib"]
+        if not lib then
+          return
+        end
+
+        -- Snapshot the list: closing a view removes it from lib.views as we iterate.
+        for _, view in ipairs(vim.list_slice(lib.views)) do
+          if vim.api.nvim_tabpage_is_valid(view.tabpage) then
+            vim.api.nvim_set_current_tabpage(view.tabpage)
+            pcall(vim.cmd.DiffviewClose)
+          end
+        end
+      end,
+    },
+
     -- Everything else is upstream's default, and each default is the decision:
     --
     -- use_git_branch off -- session identity is the working directory and nothing else, so checking

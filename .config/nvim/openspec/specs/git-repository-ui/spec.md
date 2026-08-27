@@ -6,7 +6,9 @@ Gives the user a view of the whole repository — every file that differs from t
 
 ### Requirement: A repository status view opens from the git prefix
 
-The user SHALL be able to open, from a two-key sequence beginning `<leader>g`, a view of the git repository containing the current working directory. That view SHALL show the state of the whole repository rather than of one buffer, listing at least:
+The user SHALL be able to open, from a two-key sequence beginning `<leader>g`, a view of the git repository containing the current working directory, and to dismiss it with the **same sequence**. The mapping SHALL have two states and no third: pressing it opens the view where none is open, and closes it where one is.
+
+That view SHALL show the state of the whole repository rather than of one buffer, listing at least:
 
 - the files with **unstaged** changes,
 - the files with **staged** changes,
@@ -15,12 +17,14 @@ The user SHALL be able to open, from a two-key sequence beginning `<leader>g`, a
 
 The view SHALL reflect the repository as it is at the moment it is opened, and SHALL update to reflect changes made through it without the user reopening it.
 
-`<leader>g` SHALL NOT itself be bound as a mapping, so that no sequence under it waits out a key-sequence timeout.
+This SHALL be reachable at `<leader>gg`. `<leader>g` SHALL NOT itself be bound as a mapping, so that no sequence under it waits out a key-sequence timeout.
+
+Dismissing and reopening the view SHALL return the user to where they left off in it — the same position in the list, with the same sections expanded — rather than to the top.
 
 #### Scenario: Opening the view over a dirty repository
 
 - **WHEN** the working directory is a git repository with modified, staged and untracked files
-- **AND** the user opens the status view
+- **AND** the user presses `<leader>gg`
 - **THEN** the modified files are listed as unstaged
 - **AND** the staged files are listed as staged
 - **AND** the untracked files are listed as untracked
@@ -33,6 +37,19 @@ The view SHALL reflect the repository as it is at the moment it is opened, and S
 - **THEN** the view opens and reports that there is nothing to stage or commit
 - **AND** no error is raised
 
+#### Scenario: Dismissing the view with the same key
+
+- **WHEN** the status view is open and the user presses `<leader>gg`
+- **THEN** the view closes
+- **AND** the user is returned to the buffer they were editing
+
+#### Scenario: Reopening returns to where the user left off
+
+- **WHEN** the user has scrolled the status view and expanded one of its sections
+- **AND** dismisses it and presses `<leader>gg` again
+- **THEN** the view reopens at the position it was left at
+- **AND** the section that was expanded is still expanded
+
 #### Scenario: The view follows what is done through it
 
 - **WHEN** the status view is open and the user stages a listed file through it
@@ -44,47 +61,6 @@ The view SHALL reflect the repository as it is at the moment it is opened, and S
 - **WHEN** the user presses `<leader>g`
 - **THEN** nothing is executed and no action is deferred pending a timeout
 - **AND** the editor waits for the next key of the sequence
-
-### Requirement: The window arrangement is chosen at the moment of opening
-
-Opening the status view SHALL be available in four distinct arrangements, each on its own mapping, so that the user picks how the view is placed at the moment they ask for it rather than from a fixed setting:
-
-- `<leader>gg` — the arrangement is chosen **automatically** from the space available.
-- `<leader>gr` — the view **replaces** the current window's contents, using the whole of that window.
-- `<leader>gv` — the view opens in a new **vertical** split.
-- `<leader>gh` — the view opens in a new **horizontal** split.
-
-All four SHALL open the same view, differing only in placement. Closing the view SHALL leave the user with the window layout and the buffer they had before opening it.
-
-#### Scenario: Letting the editor choose
-
-- **WHEN** the user presses `<leader>gg`
-- **THEN** the status view opens in an arrangement chosen from the space available
-- **AND** the view shown is the same one the other three mappings open
-
-#### Scenario: Replacing the current window
-
-- **WHEN** the user is editing a file and presses `<leader>gr`
-- **THEN** the status view occupies the window that file was in
-- **AND** no new window is created
-- **AND** closing the view returns that window to the file
-
-#### Scenario: Opening beside the current window
-
-- **WHEN** the user presses `<leader>gv`
-- **THEN** a new vertical split is created for the status view
-- **AND** the window the user came from remains open showing its buffer
-
-#### Scenario: Opening above or below the current window
-
-- **WHEN** the user presses `<leader>gh`
-- **THEN** a new horizontal split is created for the status view
-- **AND** the window the user came from remains open showing its buffer
-
-#### Scenario: Layout is restored on close
-
-- **WHEN** the user has a split layout, opens the status view in any arrangement, and then closes it
-- **THEN** the layout and buffers they had before opening it are restored
 
 ### Requirement: Changes are staged and committed from the view
 
@@ -226,3 +202,53 @@ Where the working directory is not inside a git repository, opening the status v
 - **WHEN** the user is asked whether to initialize a repository and accepts
 - **THEN** a git repository is created in that directory
 - **AND** the status view opens over it in the arrangement the mapping named
+
+### Requirement: A change listed in the status view opens in the dedicated diff view
+
+From the status view the user SHALL be able to hand a listed change to the repository diff view, rather than only expanding it inline. This SHALL be available for at least:
+
+- the entry under the cursor, whether that is a file or a whole section,
+- an arbitrary **range between two revisions**, where the available revisions are offered as choices rather than typed from memory,
+- a **single commit** selected from the log.
+
+Expanding an entry in place SHALL continue to work as it does. The dedicated view is an additional way to read a change, not a replacement for the inline one.
+
+#### Scenario: Opening the entry under the cursor
+
+- **WHEN** the status view lists a changed file and the cursor is on it
+- **AND** the user asks for it in the diff view
+- **THEN** that file's difference opens in the dedicated view
+- **AND** the status view is left as it was to return to
+
+#### Scenario: Opening a range between revisions
+
+- **WHEN** the user asks the status view for the difference between two revisions
+- **THEN** the repository's branches, tags and the current commit are offered as choices
+- **AND** selecting two of them opens every file differing between them in the dedicated view
+
+#### Scenario: Expanding in place still works
+
+- **WHEN** the user expands a listed entry in the status view
+- **THEN** the change that entry represents is displayed inline as before
+- **AND** nothing is staged, discarded or committed by displaying it
+
+### Requirement: A conflicted file is staged by resolving it
+
+Where the status view lists a file as conflicted, asking to stage it SHALL open that file in the three-way conflict view rather than refusing. Once every conflicting region has been resolved and the view is closed, the file SHALL be staged without the user asking a second time.
+
+Where the file is closed still conflicted, it SHALL NOT be staged, and the status view SHALL continue to list it as conflicted.
+
+#### Scenario: Staging a conflicted file resolves it first
+
+- **WHEN** a merge has left a file conflicted and the status view lists it as such
+- **AND** the user asks to stage it
+- **THEN** the file opens in the three-way conflict view
+- **AND** resolving every region and closing the view stages the file
+- **AND** the status view lists it as staged
+
+#### Scenario: Leaving a conflict unresolved
+
+- **WHEN** the user opens a conflicted file from the status view and closes it with regions still unresolved
+- **THEN** the file is not staged
+- **AND** the status view still lists it as conflicted
+- **AND** no error is raised

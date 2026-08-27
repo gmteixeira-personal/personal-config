@@ -1,12 +1,14 @@
 -- The repository, as opposed to the buffer: one view listing everything that differs from the
 -- index and from the last commit, from which files and parts of files are staged, commits are
--- written and amended, and branches, remotes, rebases, stashes and the log are driven. Four
--- mappings under <leader>g open it, differing only in where the window goes.
+-- written and amended, and branches, remotes, rebases, stashes and the log are driven. One mapping
+-- under <leader>g toggles it, in the window the user is already in.
 --
--- gitsigns is the other half of git here and is untouched by this file. It marks and stages hunks
--- inside the buffer being edited; this stages across files and does everything that has no
--- per-buffer meaning at all. Both act on the same index, so work staged by either is visible to
--- the other -- see the note on refreshing at the foot of this file.
+-- gitsigns marks and stages hunks inside the buffer being edited and is untouched by this file;
+-- this stages across files and does everything that has no per-buffer meaning at all. Both act on
+-- the same index, so work staged by either is visible to the other -- see the note on refreshing
+-- at the foot of this file. diffview is the third and is reached from here as well as from its own
+-- mapping: it is where this view sends a change too large to read inline, and where it sends a
+-- conflict.
 return {
   "NeogitOrg/neogit",
   dependencies = { "nvim-lua/plenary.nvim" }, -- already installed for Telescope and todo-comments
@@ -28,13 +30,26 @@ return {
     -- is actually opened, which is a keypress the user made.
     integrations = {
       telescope = true,
-      -- diffview.nvim is not installed. Neogit's own expandable diffs inside the status buffer
-      -- cover reviewing a change before staging it, which is what this configuration needs; a
-      -- second full plugin would bring a second set of buffer-local keys and a second history UI
-      -- overlapping <leader>gc. Deferred rather than declined for good: flipping this to true and
-      -- adding the dependency is the whole change if the inline diffs prove too cramped.
-      diffview = false,
+      -- diffview.nvim, installed in lua/plugins/diffview.lua. This was false for as long as the
+      -- inline diffs above were enough; they are not, for a change spanning several files, and
+      -- they can do nothing at all with a merge conflict. Turning it on is what gives the diff
+      -- popup somewhere to send a change, and what makes staging a conflicted file open a
+      -- three-way view instead of reporting "Conflicts must be resolved before staging" -- both
+      -- are branches neogit already has and could not reach.
+      --
+      -- Its file history is still not mapped anywhere: :DiffviewFileHistory exists, but a key for
+      -- it would sit beside Telescope's <leader>gc listing the same commits differently. That
+      -- overlap was the real half of the old argument here and it is unresolved, so it stays a
+      -- command.
+      diffview = true,
     },
+
+    -- Which of the two viewers neogit hands a diff to. Stated rather than left nil for the reason
+    -- above -- a nil viewer is auto-detected, and auto-detection's second candidate is codediff,
+    -- which means another pcall(require, ...) for a plugin this configuration does not install,
+    -- run on the code path reached by pressing d in the status buffer. Naming it skips the search.
+    -- It also means installing codediff later cannot quietly change which viewer neogit picks.
+    diff_viewer = "diffview",
 
     -- Everything else is upstream's default, deliberately. The status buffer's own keys -- s, u,
     -- c, b, p, P, r, Z, l and the rest -- are taken as they come rather than re-mapped: they are
@@ -42,17 +57,22 @@ return {
     -- view, which is the discoverability this configuration asks of them. They are buffer-local,
     -- so none of them changes the meaning of a key in an editing buffer.
   },
-  -- The placement is an argument to the call, not a setting -- which is the point of having four
-  -- mappings instead of one. Which arrangement is wanted depends on what the user is doing at that
-  -- moment: the whole window to work through a large status, a vertical split to keep the file in
-  -- view while staging it. As a setting that choice would be a config edit; as four two-key
-  -- sequences under a prefix which-key already names "Git", it is a keystroke.
+  -- One mapping, where there were four. The placement is still an argument to the call rather than
+  -- a setting, but it is no longer a choice made at the moment of opening: <leader>gg replaces the
+  -- current window and that is the arrangement.
+  --
+  -- The other three keys went to the diff views, which are pressed far more often than a placement
+  -- is reconsidered: <leader>gh is diffview's file history, <leader>gr its refresh, and <leader>gv
+  -- is unbound. Every arrangement is still reachable by asking for it outright -- :Neogit kind=auto,
+  -- kind=vsplit, kind=split -- which is where a choice made once in a while belongs.
   --
   -- <leader>g itself stays unbound, as every prefix in this configuration does, so nothing under
-  -- it waits out 'timeoutlen'. Telescope owns <leader>gf, <leader>gs, <leader>gc and <leader>gb,
-  -- and gitsigns owns <leader>gd; the three sets divide cleanly -- Telescope's four fuzzy-find
-  -- over the repository, gitsigns' one diffs the buffer being edited against the index, and these
-  -- four open the view that acts on the repository as a whole.
+  -- it waits out 'timeoutlen'. The prefix now divides three ways rather than four: Telescope owns
+  -- <leader>gf, <leader>gs, <leader>gc and <leader>gb, which fuzzy-find over the repository;
+  -- diffview owns <leader>gd, <leader>gm, <leader>gh and <leader>gr -- one file, every file, one
+  -- file's history, and refresh; and this owns <leader>gg, the view that acts on the repository as
+  -- a whole. gitsigns owns nothing here any more -- its <leader>gd went to diffview -- and keeps
+  -- its per-hunk actions under <leader>h.
   --
   -- Written as require("neogit").open(...) rather than as <cmd>Neogit kind=...<CR>: that is the
   -- API the argument belongs to, it is how every other plugin mapping here is written, and it does
@@ -61,35 +81,26 @@ return {
     {
       "<leader>gg",
       function()
-        -- The doubled letter is the one reached without thinking, so it carries the arrangement
-        -- that needs no thought: upstream's own width-based choice -- a vertical split when the
-        -- window is wide enough for one, a horizontal split when it is not. Left to upstream
-        -- rather than reimplemented here against a column count of our own. The other three are
-        -- for when a particular placement is wanted.
-        require("neogit").open({ kind = "auto" })
-      end,
-      desc = "Git status (auto-placed)",
-    },
-    {
-      "<leader>gr",
-      function()
+        -- A toggle, as every other key under <leader>g is: one key, two states, the view is up or
+        -- it is not. is_open() and the instance's close() are the status buffer module's own
+        -- answers -- deliberately not a search for a window with the NeogitStatus filetype, for
+        -- the same reason lua/plugins/diffview.lua asks a registry rather than the screen.
+        --
+        -- close() keeps the fold state, the cursor line and the view position, so reopening lands
+        -- where the user left off rather than at the top.
+        local status = require("neogit.buffers.status")
+        if status.is_open() then
+          status.instance():close()
+          return
+        end
+
+        -- kind = "replace": the whole of the current window, which is the arrangement a status
+        -- buffer wants -- it is a tall list, and reading it beside the file it describes means
+        -- reading both in half the width. The three other placements each had a key once; the
+        -- comment above records where they went. :Neogit kind=... still asks for any of them.
         require("neogit").open({ kind = "replace" })
       end,
-      desc = "Git status (replace window)",
-    },
-    {
-      "<leader>gv",
-      function()
-        require("neogit").open({ kind = "vsplit" })
-      end,
-      desc = "Git status (vertical split)",
-    },
-    {
-      "<leader>gh",
-      function()
-        require("neogit").open({ kind = "split" })
-      end,
-      desc = "Git status (horizontal split)",
+      desc = "Toggle git status",
     },
   },
 
