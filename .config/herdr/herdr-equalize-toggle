@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+#
+# Toggle the pane-equalizer plugin between its two modes.
+#
+#   auto     the plugin equalizes a tab whenever a pane is created, closed,
+#            moved, or exits
+#   keybind  nothing is resized on its own; only the plugin's actions equalize
+#
+# The plugin re-reads its config file on every event invocation, so rewriting
+# the mode line takes effect immediately — no reload, no plugin disable.
+# Turning auto on does not resize anything by itself: the panes as they stand
+# are left alone, and the tab evens out at the next pane change.
+#
+# Bound to prefix+plus in ~/.config/herdr/config.toml. Runs standalone too.
+
+set -euo pipefail
+
+readonly PLUGIN_ID="local.equalize-slots"
+
+# herdr injects HERDR_BIN_PATH into custom command keybindings; fall back to
+# PATH so the script also works when run by hand.
+herdr="${HERDR_BIN_PATH:-herdr}"
+
+config_dir=$("$herdr" plugin config-dir "$PLUGIN_ID")
+config="$config_dir/config.toml"
+
+# Read the current mode the same way the plugin does: strip comments, take the
+# first well-formed mode line, and treat anything else — including no config
+# file at all, which is the state right after install — as the default.
+mode=""
+if [ -f "$config" ]; then
+    mode=$(
+        sed -e 's/#.*$//' "$config" |
+            sed -n 's/^[[:space:]]*mode[[:space:]]*=[[:space:]]*"\(auto\|keybind\)"[[:space:]]*$/\1/p' |
+            head -1
+    )
+fi
+[ -n "$mode" ] || mode="auto"
+
+if [ "$mode" = "auto" ]; then
+    next="keybind"
+else
+    next="auto"
+fi
+
+# Swap the file in through a rename so a pane event firing mid-write reads
+# either the old mode or the new one, never a half-written file. Other keys in
+# the file are preserved in case the plugin grows a second option.
+mkdir -p "$config_dir"
+tmp=$(mktemp "$config_dir/config.toml.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+
+if [ -f "$config" ] && grep -q '^[[:space:]]*mode[[:space:]]*=' "$config"; then
+    sed "s/^[[:space:]]*mode[[:space:]]*=.*/mode = \"$next\"/" "$config" >"$tmp"
+else
+    [ -f "$config" ] && cat "$config" >"$tmp"
+    printf 'mode = "%s"\n' "$next" >>"$tmp"
+fi
+
+chmod 644 "$tmp"
+mv -f "$tmp" "$config"
+trap - EXIT
+
+# herdr shows one toast at a time and answers `shown: false, reason: busy`
+# while an earlier one is still on screen — about two seconds. Toggling twice
+# in a row is exactly the case that hits it, and a silently dropped report is
+# worse than a late one, so retry until it lands.
+notify() {
+    local title=$1 body=$2 attempt
+    for attempt in 1 2 3 4 5 6 7 8; do
+        if "$herdr" notification show "$title" --body "$body" |
+            grep -q '"shown":true'; then
+            return 0
+        fi
+        sleep 0.5
+    done
+    return 0
+}
+
+if [ "$next" = "auto" ]; then
+    notify "Pane auto-equalize on" "Panes even out from the next split or close."
+else
+    notify "Pane auto-equalize off" "Panes keep their sizes. prefix+e or prefix+= equalizes once."
+fi

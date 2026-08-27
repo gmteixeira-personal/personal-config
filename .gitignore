@@ -54,6 +54,8 @@
 # tool configs
 !/.config/gh/config.yml
 !/.config/herdr/config.toml
+!/.config/herdr/herdr-equalize-toggle
+!/.config/herdr/equalize-slots/**
 !/.config/caveman/config.json
 
 # claude code — declaration only; the install tree is derived (see block 4)
@@ -147,6 +149,14 @@ adbkey*
 # Claude Code reconstructs .claude/plugins/ from it. The files here also record
 # installLocation as absolute paths into this machine's home directory.
 .claude/plugins/
+
+# herdr plugins, the same story: README names the install command, and herdr
+# rebuilds this tree from it. `plugins.json` records absolute paths, a
+# content-hashed directory name, and an install timestamp, and each managed
+# checkout carries its own .git, which git would otherwise offer as an
+# embedded repository.
+.config/herdr/plugins/
+.config/herdr/plugins.json
 
 # -- claude code: session and machine-local state --
 .claude/projects/

@@ -123,6 +123,35 @@ Two keys are deliberately absent from the tracked `settings.json`:
   here: it is scoped to `$HOME`-as-a-project and is ignored when Claude Code
   runs from anywhere else.
 
+## herdr pane equalizing
+
+`.config/herdr/equalize-slots/` is a local herdr plugin, written for this
+repository and tracked with it. It keeps a tab's panes evenly sized: equal-width
+columns first, then equal-height rows inside each column. A column that holds
+stacked panes still counts as one column, which is the part every off-the-shelf
+equalizer gets differently — they weight by pane count, so a column holding
+three panes ends up three times as wide as its neighbours.
+
+herdr registers local plugins per machine, so a fresh checkout needs one
+command before the keybindings do anything:
+
+```sh
+herdr plugin link ~/.config/herdr/equalize-slots
+herdr server reload-config
+```
+
+| key | effect |
+|---|---|
+| `prefix+plus` | turn automatic equalizing on or off; resizes nothing by itself |
+| `prefix+e`, `prefix+=` | equalize the focused tab once, in either mode |
+
+`prefix+plus` runs `.config/herdr/herdr-equalize-toggle`, which rewrites `mode`
+in the plugin's config directory. The plugin re-reads that file on every event,
+so the switch is live — no reload, no plugin disable. The selected mode is
+per-machine and deliberately not tracked, and neither is anything else herdr
+writes for a plugin: `plugins.json` records absolute paths and an install
+timestamp, and `.plugins.lock` is an empty lock file, not a manifest.
+
 ## What is deliberately not tracked
 
 | path | why |
@@ -132,6 +161,7 @@ Two keys are deliberately absent from the tracked `settings.json`:
 | `.config/gh/hosts.yml` | OAuth token |
 | `.claude/.credentials.json`, `.claude.json` | credentials and session state |
 | `.claude/plugins/` | derived from the declaration above |
+| `.config/herdr/plugins/`, `.config/herdr/plugins.json` | herdr's own plugin registry and config: absolute paths, install timestamps, live mode |
 | `.bash_history`, `.psql_history`, `.viminfo` | history can contain anything |
 | `.config/openspec/config.json` | telemetry state; a published `anonymousId` is not anonymous |
 | `.cache/`, `.local/`, `.npm/`, `.nuget/`, `.cargo/`, `.dotnet/`, `.nvm/`, `.vscode-server/` | bulk, machine-local |

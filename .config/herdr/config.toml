@@ -9,10 +9,33 @@ host_cursor = "native"
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "priority"
 [ui.toast]
-delivery = "terminal"
+# "terminal" asks the outer terminal for a desktop notification, which under
+# WSL reaches nothing; "herdr" draws the toast inside herdr itself.
+delivery = "herdr"
 
 [keys]
 prefix = "ctrl+f"
+
+# Pane sizing, from the pane-equalizer plugin. The toggle script flips the
+# plugin between equalizing on every pane change and leaving sizes alone; the
+# two equalize keys work in either mode and do not change which one is set.
+[[keys.command]]
+key = "prefix+plus"
+type = "shell"
+command = "$HOME/.config/herdr/herdr-equalize-toggle"
+description = "toggle pane auto-equalize"
+
+[[keys.command]]
+key = "prefix+e"
+type = "plugin_action"
+command = "local.equalize-slots.equalize"
+description = "equalize panes"
+
+[[keys.command]]
+key = "prefix+="
+type = "plugin_action"
+command = "local.equalize-slots.equalize"
+description = "equalize panes"
 
 [[keys.command]]
 key = "prefix+backslash"

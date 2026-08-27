@@ -1,0 +1,30 @@
+id = "local.equalize-slots"
+name = "Equalize Slots"
+version = "1.0.0"
+min_herdr_version = "0.8.0"
+description = "Equal-width columns, then equal-height rows inside each column"
+platforms = ["linux", "macos"]
+
+# Equalize the focused tab now. Works whatever the mode is set to.
+[[actions]]
+id = "equalize"
+title = "Equalize columns and rows"
+contexts = ["workspace", "tab", "pane"]
+command = ["python3", "equalize.py", "--action"]
+
+# While mode is "auto", keep every tab equalized as its panes change.
+[[events]]
+on = "pane.created"
+command = ["python3", "equalize.py", "--event"]
+
+[[events]]
+on = "pane.closed"
+command = ["python3", "equalize.py", "--event"]
+
+[[events]]
+on = "pane.exited"
+command = ["python3", "equalize.py", "--event"]
+
+[[events]]
+on = "pane.moved"
+command = ["python3", "equalize.py", "--event"]
