@@ -4,6 +4,20 @@
     "defaultMode": "auto"
   },
   "model": "opus[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/home/gmteixeira/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
@@ -24,7 +38,7 @@
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-opus-5": {
-      "effortLevel": "high"
+      "effortLevel": "xhigh"
     }
   },
   "tui": "fullscreen",
@@ -37,6 +51,5 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "hooks": {"SessionStart":[{"matcher":"*","hooks":[{"type":"command","command":"bash '/home/gmteixeira/.claude/hooks/herdr-agent-state.sh' session","timeout":10}]}]}
+  "voiceEnabled": true
 }

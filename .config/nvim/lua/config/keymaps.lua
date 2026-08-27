@@ -76,7 +76,9 @@ map("n", "<C-j>", "<C-w>j", "Focus window below")
 map("n", "<C-k>", "<C-w>k", "Focus window above")
 map("n", "<C-l>", "<C-w>l", "Focus window right")
 
--- Window size. The same four directions as the focus mappings, one modifier apart.
+-- Window size. The same four directions as the focus mappings, one modifier apart. Each key grows
+-- the focused window toward the direction its letter names and shrinks it away from that direction
+-- -- k up, j down, l right, h left -- whichever side of the layout the window happens to sit on.
 --
 -- Alt, not the <C-Up>/<C-Down> arrow set: those belong to vim-visual-multi, and init.lua loads
 -- config.keymaps before config.lazy, so lazy.nvim's stubs are installed after this file runs and
@@ -84,8 +86,8 @@ map("n", "<C-l>", "<C-w>l", "Focus window right")
 -- produces a visible change instead of the user holding the key.
 map("n", "<M-k>", "<cmd>resize +2<CR>", "Increase window height")
 map("n", "<M-j>", "<cmd>resize -2<CR>", "Decrease window height")
-map("n", "<M-h>", "<cmd>vertical resize +2<CR>", "Increase window width")
-map("n", "<M-l>", "<cmd>vertical resize -2<CR>", "Decrease window width")
+map("n", "<M-l>", "<cmd>vertical resize +2<CR>", "Increase window width")
+map("n", "<M-h>", "<cmd>vertical resize -2<CR>", "Decrease window width")
 
 -- <C-w>\ maximize toggle. Prefixed despite being interactive, because it *extends* the built-in
 -- window-command prefix rather than competing with it: \ is unbound under <C-w>, so no built-in
