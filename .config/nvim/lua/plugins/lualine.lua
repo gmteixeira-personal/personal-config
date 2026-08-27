@@ -5,10 +5,11 @@
 --
 -- Upstream's defaults are taken as they come. The separators, icons and theme are all lualine's
 -- own, deliberately not written out here -- the same reasoning which-key.lua records for
--- preset = "modern" and noice.lua for taking `presets` over an expanded routes table. TWO
--- presentation choices are made here and no more: the recording indicator in lualine_x, and the
--- repository summary in lualine_b. Each costs its section's upstream defaults being respelled
--- alongside it, because lualine replaces a named section wholesale; see the comments on both.
+-- preset = "modern" and noice.lua for taking `presets` over an expanded routes table. THREE
+-- presentation choices are made here and no more: the recording indicator and the filetype
+-- component in lualine_x, and the repository summary in lualine_b. Each costs its section's
+-- upstream defaults being respelled alongside it, because lualine replaces a named section
+-- wholesale; see the comments on each.
 --
 -- laststatus is not touched either, so each window keeps a status line of its own exactly as
 -- before. lualine's own `globalstatus` default derives from whatever laststatus already is.
@@ -347,7 +348,46 @@ return {
           -- lualine's own lualine_x defaults, restated because naming the section replaces it.
           "encoding",
           "fileformat",
-          "filetype",
+          {
+            -- The file's type, and this file's third presentation choice. lualine's own `filetype`
+            -- component draws the icon AND the name -- `憐 lua` -- which says the same thing
+            -- twice. `icon_only = true` is upstream's answer to that and is not enough: when
+            -- neither the file name nor the filetype maps to a glyph, its apply_icon() substitutes
+            -- a generic  and a DevIconDefault highlight, so an unrecognised type renders as a
+            -- blank page icon carrying no information at all rather than as its name.
+            --
+            -- mini.icons is asked directly instead, because its get() returns a third value the
+            -- nvim-web-devicons mock has to throw away: whether the icon it handed back is that
+            -- category's fallback. That is exactly the distinction wanted here -- a real glyph is
+            -- drawn, a fallback glyph gives way to the filetype's name. mini-icons.lua loads eager
+            -- at priority 900, ahead of this file's 800, so MiniIcons is up by the time any of this
+            -- runs.
+            function()
+              local ft = vim.bo.filetype
+              if ft == "" then
+                return ""
+              end
+              local icon, _, is_default = MiniIcons.get("filetype", ft)
+              return is_default and ft or icon
+            end,
+            -- The glyph keeps the colour mini.icons gives it, which is what lualine's `filetype`
+            -- does at its colored = true default and the one thing worth carrying over. Only the
+            -- foreground is taken, not a link to the group: MiniIconsAzure and its siblings set no
+            -- background, and linking would punch the section's own background out from under the
+            -- component. The name, when it is drawn instead, is left to lualine_x's colours --
+            -- nothing about an unrecognised filetype is worth colouring.
+            color = function()
+              local ft = vim.bo.filetype
+              if ft == "" then
+                return nil
+              end
+              local _, hl, is_default = MiniIcons.get("filetype", ft)
+              if is_default then
+                return nil
+              end
+              return { fg = require("lualine.utils.utils").extract_highlight_colors(hl, "fg") }
+            end,
+          },
         },
       },
 
