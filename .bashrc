@@ -131,6 +131,28 @@ esac
 # comes back with the next prompt, so the vi mode indicator still works.
 PS0=$'\e[0 q'
 
+# Advertise 24-bit color to programs that ask for it.
+#
+# Neovim does not need this -- lua/config/options.lua sets 'termguicolors'
+# outright -- but nearly everything else gates truecolor on COLORTERM: delta,
+# bat, fzf, supports-color in Node, rich in Python. terminfo cannot carry the
+# answer, because TERM is xterm-256color and its colors# capability is 256; the
+# entries that do declare direct color, xterm-direct among them, are absent on
+# remote hosts, and TERM travels over ssh.
+#
+# Named only where the terminal is known to support it, and never over a value
+# something else already set. Exporting it unconditionally would claim truecolor
+# on a bare tty and in an ssh session from a terminal that lacks it -- worse than
+# saying nothing, because a program that believes the claim emits escapes the
+# terminal then draws as literal text.
+if [ -z "${COLORTERM:-}" ] && { [ -n "${WT_SESSION:-}" ] \
+        || [ -n "${WEZTERM_EXECUTABLE:-}" ] \
+        || [ -n "${KITTY_WINDOW_ID:-}" ] \
+        || [ "${TERM_PROGRAM:-}" = "vscode" ] \
+        || [ "${TERM_PROGRAM:-}" = "iTerm.app" ]; }; then
+    export COLORTERM=truecolor
+fi
+
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
