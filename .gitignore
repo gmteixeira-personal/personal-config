@@ -52,7 +52,6 @@
 !/.githooks/**
 
 # tool configs
-!/.config/lazygit/config.yml
 !/.config/gh/config.yml
 !/.config/caveman/config.json
 
