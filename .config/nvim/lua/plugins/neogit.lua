@@ -49,9 +49,10 @@ return {
   -- sequences under a prefix which-key already names "Git", it is a keystroke.
   --
   -- <leader>g itself stays unbound, as every prefix in this configuration does, so nothing under
-  -- it waits out 'timeoutlen'. Telescope owns <leader>gf, <leader>gs, <leader>gc and <leader>gb;
-  -- the two sets divide cleanly -- those four fuzzy-find over the repository, these four open the
-  -- view that acts on it.
+  -- it waits out 'timeoutlen'. Telescope owns <leader>gf, <leader>gs, <leader>gc and <leader>gb,
+  -- and gitsigns owns <leader>gd; the three sets divide cleanly -- Telescope's four fuzzy-find
+  -- over the repository, gitsigns' one diffs the buffer being edited against the index, and these
+  -- four open the view that acts on the repository as a whole.
   --
   -- Written as require("neogit").open(...) rather than as <cmd>Neogit kind=...<CR>: that is the
   -- API the argument belongs to, it is how every other plugin mapping here is written, and it does
