@@ -18,18 +18,30 @@ fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+    case ":$PATH:" in
+        *":$HOME/bin:"*) ;;
+        *) PATH="$HOME/bin:$PATH" ;;
+    esac
 fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) PATH="$HOME/.local/bin:$PATH" ;;
+    esac
 fi
 
-# .NET SDK (installed to ~/.dotnet). ~/.bashrc sets this too, for shells that
-# never read this file; the guard keeps PATH from growing a duplicate entry.
-export DOTNET_ROOT="$HOME/.dotnet"
-case ":$PATH:" in
-    *":$DOTNET_ROOT:"*) ;;
-    *) export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH" ;;
-esac
+# .NET SDK, when it is a per-user install under ~/.dotnet. ~/.bashrc does this
+# too, for shells that never read this file, and both test for the binary rather
+# than for the directory: a system-packaged dotnet creates ~/.dotnet itself to
+# hold first-use sentinels, so the directory exists on machines with no per-user
+# SDK and would point DOTNET_ROOT at a root holding no runtime. The inner guard
+# keeps PATH from growing a duplicate entry.
+if [ -x "$HOME/.dotnet/dotnet" ]; then
+    export DOTNET_ROOT="$HOME/.dotnet"
+    case ":$PATH:" in
+        *":$DOTNET_ROOT:"*) ;;
+        *) export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH" ;;
+    esac
+fi

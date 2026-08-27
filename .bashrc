@@ -2,20 +2,45 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-# .NET SDK (installed to ~/.dotnet). Set before the non-interactive early
-# return below so non-interactive shells (scripts, tool runners) see dotnet too.
-export DOTNET_ROOT="$HOME/.dotnet"
-case ":$PATH:" in
-    *":$DOTNET_ROOT:"*) ;;
-    *) export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH" ;;
-esac
+# Prepend a directory to PATH, once, and only if it exists.
+#
+# Both checks earn their place. The existence test is what keeps this file
+# portable across machines: every tool below is installed per-machine -- bob puts
+# nvim under ~/.local/share, the .NET SDK is a ~/.dotnet install on one machine
+# and a system package on another -- so a machine that gets one of them from
+# /usr must not carry a dead entry for the other layout. The dedupe test keeps
+# PATH from growing a second copy of everything each time this file is
+# re-sourced.
+prepend_path() {
+    [ -d "$1" ] || return 0
+    case ":$PATH:" in
+        *":$1:"*) ;;
+        *) export PATH="$1:$PATH" ;;
+    esac
+}
 
-# Neovim (installed by bob). Set before the non-interactive early return below
-# so scripts and tool runners that spawn $EDITOR find it too.
-case ":$PATH:" in
-    *":$HOME/.local/share/bob/nvim-bin:"*) ;;
-    *) export PATH="$HOME/.local/share/bob/nvim-bin:$PATH" ;;
-esac
+# .NET SDK, when it is a per-user install under ~/.dotnet. DOTNET_ROOT is
+# exported only in that case: a system-packaged dotnet locates its own root, and
+# naming the wrong directory would override that correct answer.
+#
+# The test is for the dotnet binary rather than for the directory, because the
+# directory is not evidence of anything. A system-packaged dotnet creates
+# ~/.dotnet itself on first run, to hold first-use sentinels and a corefx cache
+# -- so on a machine with no per-user SDK at all the directory exists, holds no
+# runtime, and a -d test would point DOTNET_ROOT straight at it.
+#
+# Set before the non-interactive early return below so non-interactive shells
+# (scripts, tool runners) see dotnet too.
+if [ -x "$HOME/.dotnet/dotnet" ]; then
+    export DOTNET_ROOT="$HOME/.dotnet"
+    prepend_path "$DOTNET_ROOT/tools"
+    prepend_path "$DOTNET_ROOT"
+fi
+
+# Neovim, when bob installed it rather than the system package manager. Set
+# before the non-interactive early return below so scripts and tool runners that
+# spawn $EDITOR find it too.
+prepend_path "$HOME/.local/share/bob/nvim-bin"
 export EDITOR="nvim"
 export VISUAL="nvim"
 
@@ -149,11 +174,15 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-export PATH="$HOME/.local/bin:$PATH"
+# Rust toolchains installed by rustup. Prepended before ~/.local/bin below, so
+# that directory stays ahead of it in PATH as it was before these entries were
+# guarded.
+prepend_path "$HOME/.cargo/bin"
+prepend_path "$HOME/.local/bin"
 
+# nvm, when it is installed. NVM_DIR is named unconditionally because nvm's own
+# installer expects to find it here and rewrites this block if it does not; the
+# two guards below are what keep an absent nvm from doing anything.
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-export PATH="$HOME/.cargo/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
