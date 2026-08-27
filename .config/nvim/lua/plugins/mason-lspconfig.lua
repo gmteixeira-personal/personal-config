@@ -14,8 +14,13 @@ local servers = {
   "tailwindcss",
   "basedpyright",
   "bashls",
-  "roslyn_ls", -- C#; also needs a .NET SDK on the system, which mason cannot supply
 }
+
+-- Deliberately absent: roslyn_ls. C# and Razor are served by one Roslyn instance started by
+-- roslyn.nvim (see lua/plugins/roslyn.lua), not by vim.lsp.enable(). Naming it here would put it
+-- in the allowlist below and start a second instance alongside that one, each with its own
+-- workspace. Its binary is declared in mason-tool-installer.lua instead, which is where a tool
+-- that must be installed without being auto-enabled belongs.
 
 return {
   "mason-org/mason-lspconfig.nvim",
