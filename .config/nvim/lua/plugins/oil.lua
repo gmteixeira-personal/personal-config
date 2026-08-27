@@ -11,10 +11,19 @@ return {
   keys = {
     {
       "<leader>e",
+      -- Oil ships `toggle_float` but no in-window equivalent, so the toggle is assembled here out
+      -- of the two halves it does expose. `close` restores the buffer and the scroll position the
+      -- window held before, both recorded by an autocmd oil installs at setup -- so this side has
+      -- nothing to track. The filetype is oil's own, and nothing else here sets it.
       function()
-        require("oil").toggle_float() -- same key closes the float again
+        local oil = require("oil")
+        if vim.bo.filetype == "oil" then
+          oil.close()
+        else
+          oil.open()
+        end
       end,
-      desc = "Toggle Oil (float)",
+      desc = "Toggle Oil",
     },
   },
 }
