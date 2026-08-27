@@ -13,3 +13,9 @@ delivery = "terminal"
 
 [keys]
 prefix = "ctrl+f"
+
+[[keys.command]]
+key = "prefix+backslash"
+type = "shell"
+command = '"$HERDR_BIN_PATH" pane zoom --pane "$HERDR_ACTIVE_PANE_ID" --toggle'
+description = "toggle pane zoom"
