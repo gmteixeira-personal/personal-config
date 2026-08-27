@@ -3,7 +3,10 @@ $include /etc/inputrc
 
 # Vi editing mode
 set editing-mode vi
-
+set keymap vi-command
+Control-l: clear-screen
+set keymap vi-insert
+Control-l: clear-screen
 # Report the mode through the cursor shape: the terminal's own default shape
 # (an empty box here) in normal mode, blinking beam in insert mode.
 # \1 and \2 mark the escapes as non-printing.
