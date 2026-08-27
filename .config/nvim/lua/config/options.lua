@@ -25,7 +25,7 @@ vim.opt.incsearch = true -- the match moves under the query as it is typed, so a
 vim.opt.hlsearch = true -- matches stay highlighted after the search is accepted, so a term's spread stays visible; <Esc> in lua/config/keymaps.lua is what dismisses them
 
 -- Movement and splits
-vim.opt.scrolloff = 8 -- context stays on screen; the cursor never sits against the top or bottom edge
+vim.opt.scrolloff = 999 -- the cursor is held at the middle of the window; the view scrolls under it
 vim.opt.splitright = true -- the new window takes the new space and the existing one keeps its position
 vim.opt.splitbelow = true
 
