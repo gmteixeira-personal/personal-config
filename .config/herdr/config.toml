@@ -16,6 +16,11 @@ delivery = "herdr"
 [keys]
 prefix = "ctrl+f"
 
+# Reach an agent by its position in the agent panel. Under the priority sort
+# that panel is an attention queue, so a digit names whatever sits at that
+# position now, not one particular agent.
+focus_agent = "prefix+shift+1..9"
+
 # Pane sizing, from the pane-equalizer plugin. The toggle script flips the
 # plugin between equalizing on every pane change and leaving sizes alone; the
 # two equalize keys work in either mode and do not change which one is set.
