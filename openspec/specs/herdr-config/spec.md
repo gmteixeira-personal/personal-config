@@ -42,20 +42,32 @@ Plugin trees under that directory SHALL be ignored by name rather than by the de
 - **WHEN** `git status` lists untracked files with the directory populated by a running herdr
 - **THEN** the only paths from that directory it may list SHALL be the configuration file and the scripts its keybindings invoke
 
-### Requirement: The prefix key is ctrl+f
+### Requirement: The prefix key is ctrl+space
 
-herdr's prefix key SHALL be `ctrl+f`. The shipped default of `ctrl+b` SHALL NOT apply, and the binding SHALL be declared in the tracked configuration file so it survives a reinstall and reaches every machine.
+herdr's prefix key SHALL be `ctrl+space`. The shipped default of `ctrl+b` SHALL NOT apply, nor SHALL the previous `ctrl+f`, and the binding SHALL be declared in the tracked configuration file so it survives a reinstall and reaches every machine.
 
 #### Scenario: The prefix is bound
 
 - **WHEN** the herdr configuration is read
-- **THEN** its keys section SHALL name `ctrl+f` as the prefix
+- **THEN** its keys section SHALL name `ctrl+space` as the prefix
 
 #### Scenario: A prefixed action responds to it
 
-- **WHEN** `ctrl+f` is pressed and followed by the key of a prefixed action
+- **WHEN** `ctrl+space` is pressed and followed by the key of a prefixed action
 - **THEN** that action SHALL run
-- **AND** pressing `ctrl+b` first SHALL NOT run it
+- **AND** pressing `ctrl+b` or `ctrl+f` first SHALL NOT run it
+
+#### Scenario: Every existing prefixed action keeps its second key
+
+- **WHEN** the prefix is pressed and followed by `\`, `e`, `=`, `+`, or `shift` and a digit from 1 to 9
+- **THEN** the same action SHALL run as ran under the previous prefix
+- **AND** no `[[keys.command]]` block SHALL have had its `key` value changed
+
+#### Scenario: The released key reaches the pane
+
+- **WHEN** `ctrl+f` is pressed in a pane running a program that binds it
+- **THEN** herdr SHALL NOT consume it
+- **AND** the program in the pane SHALL receive it
 
 #### Scenario: A change applies without restarting
 
