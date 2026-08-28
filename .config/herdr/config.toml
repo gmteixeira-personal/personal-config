@@ -15,7 +15,7 @@ agent_panel_sort = "spaces"
 delivery = "herdr"
 
 [keys]
-prefix = "ctrl+f"
+prefix = "ctrl+space"
 
 # Reach an agent by its position in the agent panel. Under the priority sort
 # that panel is an attention queue, so a digit names whatever sits at that
