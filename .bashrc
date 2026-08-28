@@ -12,11 +12,11 @@
 # PATH from growing a second copy of everything each time this file is
 # re-sourced.
 prepend_path() {
-    [ -d "$1" ] || return 0
-    case ":$PATH:" in
-        *":$1:"*) ;;
-        *) export PATH="$1:$PATH" ;;
-    esac
+  [ -d "$1" ] || return 0
+  case ":$PATH:" in
+  *":$1:"*) ;;
+  *) export PATH="$1:$PATH" ;;
+  esac
 }
 
 # .NET SDK, when it is a per-user install under ~/.dotnet. DOTNET_ROOT is
@@ -32,9 +32,9 @@ prepend_path() {
 # Set before the non-interactive early return below so non-interactive shells
 # (scripts, tool runners) see dotnet too.
 if [ -x "$HOME/.dotnet/dotnet" ]; then
-    export DOTNET_ROOT="$HOME/.dotnet"
-    prepend_path "$DOTNET_ROOT/tools"
-    prepend_path "$DOTNET_ROOT"
+  export DOTNET_ROOT="$HOME/.dotnet"
+  prepend_path "$DOTNET_ROOT/tools"
+  prepend_path "$DOTNET_ROOT"
 fi
 
 # Neovim, when bob installed it rather than the system package manager. Set
@@ -51,10 +51,35 @@ export VISUAL="nvim"
 prepend_path "$HOME/.cargo/bin"
 prepend_path "$HOME/.local/bin"
 
+# Neovim for sudoedit. SUDO_EDITOR is read by sudoedit alone and outranks VISUAL
+# and EDITOR, so naming it states the choice unambiguously and keeps it immune to
+# anything later in a session setting VISUAL for its own purposes.
+#
+# It carries an absolute path where EDITOR and VISUAL above keep the bare name.
+# Those two are read by git, crontab, systemctl edit and everything else that
+# spawns an editor, each of which should resolve the name freshly against the
+# PATH of the moment; an absolute path there would pin them to whatever existed
+# when the shell started. SUDO_EDITOR has one consumer, and sudo documents the
+# environment it hands the editor but not the PATH it searches to find it, so a
+# bare name would leave the bob-installed case resting on an undocumented detail.
+#
+# Resolved from PATH rather than from a named directory, and placed after the
+# prepends above so it sees them: a bob install and a system package both work
+# without this file naming either. No nvim, no variable -- an empty SUDO_EDITOR
+# is still consulted and names nothing, where an unset one lets sudoedit fall
+# through to VISUAL, then EDITOR, then the editor list in sudoers, as it does
+# today. Set before the non-interactive early return below, with EDITOR and
+# VISUAL, since all three are read for the same reason.
+_nvim_path="$(command -v nvim)"
+if [ -n "$_nvim_path" ]; then
+  export SUDO_EDITOR="$_nvim_path"
+fi
+unset _nvim_path
+
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+*i*) ;;
+*) return ;;
 esac
 
 # OPENSPEC:START
@@ -90,12 +115,12 @@ shopt -s checkwinsize
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
+  debian_chroot=$(cat /etc/debian_chroot)
 fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+xterm-color | *-256color) color_prompt=yes ;;
 esac
 
 # uncomment for a colored prompt, if the terminal has the capability; turned
@@ -104,32 +129,32 @@ esac
 #force_color_prompt=yes
 
 if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
+  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with Ecma-48
+    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=yes
+  else
+    color_prompt=
+  fi
 fi
 
 if [ "$color_prompt" = yes ]; then
-    # Bright slots named outright, for the same reason as LS_COLORS below:
-    # Windows Terminal promotes bold to bright, herdr keeps the normal slot.
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;92m\]\u@\h\[\033[00m\]:\[\033[01;94m\]\w\[\033[00m\]\$ '
+  # Bright slots named outright, for the same reason as LS_COLORS below:
+  # Windows Terminal promotes bold to bright, herdr keeps the normal slot.
+  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;92m\]\u@\h\[\033[00m\]:\[\033[01;94m\]\w\[\033[00m\]\$ '
 else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+  PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
 unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
+xterm* | rxvt*)
+  PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+  ;;
 *)
-    ;;
+  ;;
 esac
 
 # Hand the terminal's own cursor shape to every command before it runs.
@@ -163,31 +188,31 @@ PS0=$'\e[0 q'
 # on a bare tty and in an ssh session from a terminal that lacks it -- worse than
 # saying nothing, because a program that believes the claim emits escapes the
 # terminal then draws as literal text.
-if [ -z "${COLORTERM:-}" ] && { [ -n "${WT_SESSION:-}" ] \
-        || [ -n "${WEZTERM_EXECUTABLE:-}" ] \
-        || [ -n "${KITTY_WINDOW_ID:-}" ] \
-        || [ "${TERM_PROGRAM:-}" = "vscode" ] \
-        || [ "${TERM_PROGRAM:-}" = "iTerm.app" ]; }; then
-    export COLORTERM=truecolor
+if [ -z "${COLORTERM:-}" ] && { [ -n "${WT_SESSION:-}" ] ||
+  [ -n "${WEZTERM_EXECUTABLE:-}" ] ||
+  [ -n "${KITTY_WINDOW_ID:-}" ] ||
+  [ "${TERM_PROGRAM:-}" = "vscode" ] ||
+  [ "${TERM_PROGRAM:-}" = "iTerm.app" ]; }; then
+  export COLORTERM=truecolor
 fi
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+  test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
 
-    # Ask for the bright palette slots outright instead of relying on the
-    # terminal to promote bold to bright. Windows Terminal does that promotion
-    # (intenseTextStyle "all"); herdr renders bold as weight and keeps the
-    # normal slot, so the same listing came out darker inside herdr.
-    LS_COLORS=${LS_COLORS//=01;3/=01;9}
+  # Ask for the bright palette slots outright instead of relying on the
+  # terminal to promote bold to bright. Windows Terminal does that promotion
+  # (intenseTextStyle "all"); herdr renders bold as weight and keeps the
+  # normal slot, so the same listing came out darker inside herdr.
+  LS_COLORS=${LS_COLORS//=01;3/=01;9}
 
-    alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
+  alias ls='ls --color=auto'
+  #alias dir='dir --color=auto'
+  #alias vdir='vdir --color=auto'
 
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+  alias grep='grep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias egrep='egrep --color=auto'
 fi
 
 # colored GCC warnings and errors
@@ -209,7 +234,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+  . ~/.bash_aliases
 fi
 
 # enable programmable completion features (you don't need to enable
@@ -227,5 +252,5 @@ fi
 # installer expects to find it here and rewrites this block if it does not; the
 # two guards below are what keep an absent nvm from doing anything.
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
