@@ -99,7 +99,9 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    # Bright slots named outright, for the same reason as LS_COLORS below:
+    # Windows Terminal promotes bold to bright, herdr keeps the normal slot.
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;92m\]\u@\h\[\033[00m\]:\[\033[01;94m\]\w\[\033[00m\]\$ '
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
@@ -156,6 +158,13 @@ fi
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+
+    # Ask for the bright palette slots outright instead of relying on the
+    # terminal to promote bold to bright. Windows Terminal does that promotion
+    # (intenseTextStyle "all"); herdr renders bold as weight and keeps the
+    # normal slot, so the same listing came out darker inside herdr.
+    LS_COLORS=${LS_COLORS//=01;3/=01;9}
+
     alias ls='ls --color=auto'
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
