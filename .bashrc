@@ -44,11 +44,27 @@ prepend_path "$HOME/.local/share/bob/nvim-bin"
 export EDITOR="nvim"
 export VISUAL="nvim"
 
+# Rust toolchains installed by rustup, and ~/.local/bin. Both are set before the
+# non-interactive early return below, so scripts and tool runners see the tools
+# installed there. Cargo is prepended before ~/.local/bin so that directory stays
+# ahead of it in PATH, as it was before these entries were guarded.
+prepend_path "$HOME/.cargo/bin"
+prepend_path "$HOME/.local/bin"
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
       *) return;;
 esac
+
+# OPENSPEC:START
+# OpenSpec shell completions configuration
+if [ -d "$HOME/.local/share/bash-completion/completions" ]; then
+  for f in "$HOME/.local/share/bash-completion/completions"/*; do
+    [ -f "$f" ] && . "$f"
+  done
+fi
+# OPENSPEC:END
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -206,11 +222,6 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-# Rust toolchains installed by rustup. Prepended before ~/.local/bin below, so
-# that directory stays ahead of it in PATH as it was before these entries were
-# guarded.
-prepend_path "$HOME/.cargo/bin"
-prepend_path "$HOME/.local/bin"
 
 # nvm, when it is installed. NVM_DIR is named unconditionally because nvm's own
 # installer expects to find it here and rewrites this block if it does not; the
