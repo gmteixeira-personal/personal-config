@@ -8,7 +8,11 @@ status_indicators = "symbols"
 host_cursor = "native"
 
 show_agent_labels_on_pane_borders = true
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
+
+# Drop the tab row while a workspace holds a single tab; it comes back as
+# soon as a second tab exists.
+hide_tab_bar_when_single_tab = true
 [ui.toast]
 # "terminal" asks the outer terminal for a desktop notification, which under
 # WSL reaches nothing; "herdr" draws the toast inside herdr itself.
@@ -21,6 +25,23 @@ prefix = "ctrl+space"
 # that panel is an attention queue, so a digit names whatever sits at that
 # position now, not one particular agent.
 focus_agent = "prefix+shift+1..9"
+
+# Each creation key names what it creates: t for a tab, c for a workspace.
+# This displaces the shipped keys — c created a tab, and shift+n created a
+# workspace — and leaves shift+n unbound.
+new_tab = "prefix+t"
+new_workspace = "prefix+c"
+
+# Closing is paired: the bare letter takes the smaller object, the shift the
+# larger one. q closes a pane and shift+q its tab; d closes a workspace and
+# shift+d detaches from the session entirely. This displaces the shipped keys —
+# x closed a pane, shift+x a tab, shift+d a workspace, and q detached — leaving
+# x and shift+x unbound. confirm_close still asks before a workspace goes.
+# herdr binds one chord per action, so there is no prefix+w d sequence to be had.
+close_pane = "prefix+q"
+close_tab = "prefix+shift+q"
+close_workspace = "prefix+d"
+detach = "prefix+shift+d"
 
 # Pane sizing, from the pane-equalizer plugin. The toggle script flips the
 # plugin between equalizing on every pane change and leaving sizes alone; the
