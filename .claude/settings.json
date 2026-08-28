@@ -38,6 +38,12 @@
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-opus-5": {
+      "effortLevel": "xhigh"
+    },
+    "claude-haiku-4-5": {
+      "effortLevel": "low"
+    },
+    "claude-sonnet-5": {
       "effortLevel": "high"
     }
   },
