@@ -13,6 +13,12 @@ agent_panel_sort = "priority"
 # Drop the tab row while a workspace holds a single tab; it comes back as
 # soon as a second tab exists.
 hide_tab_bar_when_single_tab = true
+tab_bar_right = [
+  { type = "hostname" },
+]
+
+tab_bar_right_separator = "·"
+
 [ui.toast]
 # "terminal" asks the outer terminal for a desktop notification, which under
 # WSL reaches nothing; "herdr" draws the toast inside herdr itself.
@@ -69,3 +75,6 @@ key = "prefix+backslash"
 type = "shell"
 command = '"$HERDR_BIN_PATH" pane zoom --pane "$HERDR_ACTIVE_PANE_ID" --toggle'
 description = "toggle pane zoom"
+
+[ui.sound]
+enabled = true
