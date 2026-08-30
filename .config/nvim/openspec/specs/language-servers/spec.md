@@ -8,7 +8,9 @@ Gives the editor an understanding of the code in a buffer — its errors, its sy
 
 Opening a file of a supported filetype SHALL start and attach a language server for that filetype. Attachment SHALL be lazy: no server SHALL be started at editor startup for a filetype not yet opened. Opening a file of an unsupported filetype SHALL attach nothing and SHALL raise no error.
 
-Supported filetypes SHALL be: Lua; TypeScript and JavaScript, including their JSX/TSX variants; JSON; YAML; CSS; HTML; Tailwind-annotated markup; Python; shell scripts; C#; and Razor, covering both the `.razor` and `.cshtml` extensions.
+Supported filetypes SHALL be: Lua; TypeScript and JavaScript, including their JSX/TSX variants; JSON; YAML; CSS; HTML; Tailwind-annotated markup; Python; shell scripts; fish; C#; and Razor, covering both the `.razor` and `.cshtml` extensions.
+
+fish is listed separately from shell scripts because it is not a POSIX shell: the server that serves `sh` and `bash` cannot parse it, and a distinct server covers it.
 
 Exactly one server SHALL attach per buffer for a given technology. Where one server serves several filetypes, opening any of them SHALL NOT start a second instance of that server alongside the first.
 
@@ -17,6 +19,13 @@ Exactly one server SHALL attach per buffer for a given technology. Where one ser
 - **WHEN** the user opens a Python file
 - **THEN** a language server for Python attaches to that buffer
 - **AND** its features become available in that buffer
+
+#### Scenario: Opening a fish file
+
+- **WHEN** the user opens a `.fish` file inside a directory tree carrying a fish configuration
+- **THEN** a language server for fish attaches to that buffer
+- **AND** diagnostics, hover, and completion are available in that buffer
+- **AND** the server serving `sh` and `bash` does not attach to it
 
 #### Scenario: Opening a Razor file
 

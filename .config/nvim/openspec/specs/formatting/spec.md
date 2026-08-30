@@ -59,13 +59,20 @@ Each filetype SHALL resolve to an ordered list of formatters. Resolution SHALL p
 2. Failing that, formatting provided by an attached language server.
 3. Failing that, no formatting — the buffer is left untouched, without error.
 
-The following filetypes SHALL have external formatters configured: Lua; JavaScript, TypeScript, and their JSX/TSX variants; JSON; YAML; CSS; HTML; Markdown; Python; and shell scripts. C# SHALL rely on language-server formatting.
+The following filetypes SHALL have external formatters configured: Lua; JavaScript, TypeScript, and their JSX/TSX variants; JSON; YAML; CSS; HTML; Markdown; Python; shell scripts; and fish. C# SHALL rely on language-server formatting.
 
 #### Scenario: A filetype with an external formatter
 
 - **WHEN** a Lua buffer is formatted
 - **THEN** the configured Lua formatter produces the result
 - **AND** no language server is asked to format it
+
+#### Scenario: A fish buffer is formatted by its external formatter
+
+- **WHEN** a fish buffer is formatted, whether on write or on demand
+- **AND** a fish language server capable of formatting is attached to it
+- **THEN** the external fish formatter produces the result
+- **AND** the language server is not asked to format it
 
 #### Scenario: Falling back to the language server
 
