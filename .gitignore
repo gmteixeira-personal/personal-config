@@ -50,8 +50,8 @@
 # generated scripts that each tool reinstalls (openspec and herdr both write
 # theirs), and fish_variables is where fish records universal variables, which
 # are set on the machine rather than in a config file. Both are machine-local.
-!/.config/fish/config.fish
 !/.config/fish/conf.d/**
+!/.config/fish/functions/**
 
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential
