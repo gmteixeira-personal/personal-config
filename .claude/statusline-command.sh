@@ -20,7 +20,7 @@ else
 fi
 [ -z "$mode" ] && mode="off"
 suffix=$(printf '%s' "$mode" | tr '[:lower:]' '[:upper:]')
-cave=$(printf '\033[38;5;172m[CAVEMAN:%s]\033[0m' "$suffix")
+cave=$(printf '\033[38;5;172m[%s]\033[0m' "$suffix")
 
 # Git pending state
 git_state=""
@@ -67,9 +67,9 @@ fast=$(printf '%s' "$input" | grep -o '"fast_mode"[[:space:]]*:[[:space:]]*true'
 
 badge=""
 if [ -n "$model" ] || [ -n "$effort" ]; then
-  text="$model"
+  text="${model%% *}"
   [ -n "$fast" ] && text="${text}⚡"
-  [ -n "$effort" ] && text="${text:+$text · }effort:${effort}"
+  [ -n "$effort" ] && text="${text:+$text:}${effort}"
   badge=$(printf '\033[38;5;110m[%s]\033[0m' "$text")
 fi
 
@@ -94,7 +94,7 @@ if [ -n "$ctx_pct" ]; then
 fi
 
 if [ -n "$branch" ]; then
-  printf "%s on %s %s %s %s %s" "$dir" "$branch" "$git_state" "$cave" "$badge" "$ctx_badge"
+  printf "%s:%s %s %s %s %s" "$dir" "$branch" "$git_state" "$cave" "$badge" "$ctx_badge"
 else
   printf "%s %s %s %s" "$dir" "$cave" "$badge" "$ctx_badge"
 fi
