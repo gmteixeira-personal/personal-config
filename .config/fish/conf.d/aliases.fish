@@ -19,6 +19,7 @@ if status is-interactive
     abbr gcm 'git commit -m'
     abbr gco 'git checkout'
     abbr grb 'git rebase'
+    abbr grs 'git restore --staged'
     abbr gstash 'git stash'
     abbr gpull 'git pull'
 
