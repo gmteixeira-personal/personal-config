@@ -19,7 +19,7 @@ return {
     })
 
     -- Per-server overrides. vim.lsp.config shallow-merges onto nvim-lspconfig's shipped
-    -- definition, so an override only names the keys it actually changes; nine of the ten
+    -- definition, so an override only names the keys it actually changes; eight of the eleven
     -- servers need none.
     --
     -- lua_ls is the exception, and only when editing Neovim configuration. The server has no
@@ -92,6 +92,21 @@ return {
           on_dir(vim.fs.dirname(found))
         end
       end,
+    })
+
+    -- fish_lsp ships the same `.git` fallback in its root markers, and it is the same mistake for
+    -- the same reason: `$HOME` is a git repository here, so any stray .fish file under it would
+    -- root the server at the home directory. A fish configuration announces itself with
+    -- config.fish, so that alone is the marker. vim.lsp.config shallow-merges, so naming
+    -- root_markers replaces the shipped pair rather than adding to it.
+    --
+    -- workspace_required is false upstream, unlike tailwindcss, so it must be set here: without
+    -- it a fish file with no config.fish above it attaches rootless instead of not attaching.
+    -- The cost is a standalone .fish script outside a fish config tree, which gets no server;
+    -- the files actually edited here live under ~/.config/fish and root there.
+    vim.lsp.config("fish_lsp", {
+      root_markers = { "config.fish" },
+      workspace_required = true,
     })
 
     -- Diagnostics are an editor-level display concern, so they are configured once, globally --

@@ -35,6 +35,8 @@ return {
       python = { "ruff_format" },
       sh = { "shfmt" },
       bash = { "shfmt" },
+      -- ships inside fish itself, so there is no mason package for it and none is declared
+      fish = { "fish_indent" },
       cs = {}, -- empty on purpose: no external C# formatter, so the LSP fallback below engages
     },
     format_on_save = function()

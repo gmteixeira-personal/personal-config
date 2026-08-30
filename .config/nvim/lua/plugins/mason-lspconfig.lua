@@ -14,6 +14,7 @@ local servers = {
   "tailwindcss",
   "basedpyright",
   "bashls",
+  "fish_lsp",
 }
 
 -- Deliberately absent: roslyn_ls. C# and Razor are served by one Roslyn instance started by
