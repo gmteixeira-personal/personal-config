@@ -82,3 +82,17 @@ description = "toggle pane zoom"
 
 [ui.sound]
 enabled = true
+
+[terminal]
+# fish for the panes herdr opens, while /etc/passwd keeps bash. $SHELL stays
+# /bin/bash, so ssh sessions, sudo -s, and anything running `$SHELL -c` with
+# POSIX syntax are untouched; the change reaches interactive panes and nothing
+# else.
+#
+# No fish-side environment setup is needed to make this work. Panes inherit the
+# herdr server's environment, and the server is started from an interactive
+# bash, so PATH, EDITOR, COLORTERM and the LS_COLORS bright-slot fix from
+# ~/.bashrc are already in place. That inheritance is a snapshot taken when the
+# server starts: a server launched from somewhere without those exports would
+# hand fish a bare environment instead.
+default_shell = "/usr/bin/fish"

@@ -254,3 +254,25 @@ fi
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
+# Hand interactive sessions to fish, whichever way this distro was entered -- a
+# Windows Terminal tab, `wsl -d archlinux` from a cmd or PowerShell prompt, an
+# editor's integrated terminal. Doing it here rather than with chsh is what
+# keeps /etc/passwd on bash: $SHELL stays /bin/bash, so scripts, `$SHELL -c`,
+# sudo -s and every tool runner that assumes POSIX syntax are untouched, and
+# only the shell a human types at changes.
+#
+# Placed last so everything above is already exported into the environment fish
+# inherits -- PATH, EDITOR, COLORTERM, the LS_COLORS bright-slot fix. exec
+# replaces bash rather than nesting under it, so no idle parent survives and a
+# single exit ends the session.
+#
+# FISH_LAUNCHED is what keeps this from firing twice. A bash started from
+# inside fish is still interactive and would otherwise come straight back here;
+# with the guard it stays bash, which is what someone dropping to bash on
+# purpose wants. The non-interactive early return far above already excludes
+# `bash -c`, so nothing scripted reaches this line.
+if [ -z "$FISH_LAUNCHED" ] && command -v fish >/dev/null 2>&1; then
+  export FISH_LAUNCHED=1
+  exec fish
+fi
