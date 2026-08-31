@@ -198,9 +198,19 @@ approved on its own terms.
 
 ## Neovim
 
-`.config/nvim` used to be its own repository and was absorbed into this one,
-which is why it carries a nested `.gitignore`, `.claude/`, and `openspec/` of
-its own rather than deferring to the ones at the root.
+`.config/nvim/` is a self-contained Neovim configuration: Lua throughout,
+`lazy.nvim` as the plugin manager, one file per plugin, a leader key of
+`<Space>`, and its own OpenSpec workspace alongside them. Copying its contents
+into another machine's `~/.config/nvim` gives that machine the same editor
+configuration, with nothing else from this repository needed.
+
+It provisions itself from there. The first launch clones the plugin manager,
+installs about thirty plugins, and installs the language servers and formatters
+those plugins need; there is no install script and no bootstrap command, and a
+failed clone prints the error and exits rather than falling through into a
+half-configured session. What it does not install is Neovim 0.11 or newer,
+`git`, and a Nerd Font, which must already be on the machine — plus a .NET SDK
+for C# alone.
 
 ### Layout and load order
 
@@ -208,39 +218,51 @@ its own rather than deferring to the ones at the root.
 |---|---|
 | `init.lua` | three `require` calls and nothing else; load order is the only thing it decides |
 | `lua/config/` | `options.lua`, `keymaps.lua`, `lazy.lua` — everything that is not a plugin |
-| `lua/plugins/` | one file per plugin, imported automatically |
+| `lua/plugins/` | one file per plugin, imported wholesale |
 | `lua/plugins/themes/` | the colorschemes and the switcher that applies them |
 | `lazy-lock.json` | the resolved revision of every plugin, tracked |
+| `openspec/` | the specifications |
 
 `init.lua` loads `config.options`, then `config.keymaps`, then `config.lazy`.
 The order is load-bearing at the first step: `mapleader` resolves when a mapping
 is *defined*, so it has to exist before any plugin spec is evaluated, and a
-plugin spec that declares `keys` is evaluated by `config.lazy`.
+plugin spec that declares `keys` is evaluated by `config.lazy`. The other two
+steps are ordered for readability rather than by necessity.
 
-`lua/plugins/` is imported wholesale — every `.lua` file directly inside it is a
-plugin spec, and adding a plugin means adding a file and nothing else.
-Subdirectories are not: lazy.nvim descends into one only when it holds an
-`init.lua`, so `lua/plugins/themes/` needs its own `{ import = "plugins.themes" }`
-line. A subdirectory left unnamed contributes nothing and reports no error,
-which is the failure mode that sentence exists to prevent.
+The split between the two general modules and the plugin files is a rule, not a
+habit: a setting that would still make sense with every plugin removed belongs
+in `lua/config/`, and everything a plugin needs — its options *and* the keymaps
+that invoke it — belongs in that plugin's own file, so deleting that file
+removes both together.
+
+`lua/plugins/` is imported wholesale, so adding a plugin means adding one file
+and restarting — no registration list, no edit to `init.lua`, no edit to any
+other plugin file. Subdirectories are the exception: `lazy.nvim` descends into
+one only when it holds an `init.lua`, so `lua/plugins/themes/` needs its own
+`{ import = "plugins.themes" }` line. A subdirectory left unnamed contributes
+nothing and reports no error, which is the failure mode that rule exists to
+prevent.
 
 ### Editor conventions
 
-`lua/config/options.lua` sets only what applies regardless of filetype; a
-plugin's own settings live with it in `lua/plugins/`.
+These apply to every buffer regardless of filetype; a plugin's own settings live
+with the plugin.
 
 Indentation is two columns and never a tab character. Line numbers are relative,
 with the absolute number on the cursor line, so a vertical motion count reads
 straight off the screen. The sign column is reserved permanently rather than
-`auto`, so a git or diagnostic sign cannot shove the buffer sideways as it
-appears. Search is case-insensitive until the query contains an upper-case
-character, incremental, and stays highlighted after the search is accepted —
-`<Esc>` is what dismisses it. The cursor is held at the vertical middle of the
-window and the view scrolls under it. Undo is written to disk, so it survives
-closing the file. Wrapping is display-only and breaks at word boundaries with
-the continuation rows indented to match; the file on disk is untouched. Yank and
-delete route through the system clipboard without the register having to be
-named.
+sized automatically, so a git or diagnostic sign appearing cannot shove the
+buffer sideways under the cursor. Search is case-insensitive until the query
+contains an upper-case character, matches move under the query as it is typed,
+and they stay highlighted after the search is accepted — `<Esc>` is what
+dismisses them. Wrapping is display-only and breaks at word boundaries with
+continuation rows indented to match; the file on disk is never modified. The
+cursor is held at the vertical middle of the window and the view scrolls under
+it, so the context above and below is the same however the cursor arrived. Undo
+is written to disk and survives closing the file. Sessions record the layout —
+window sizes and positions, folds, tabs, per-window options — and not the global
+option values. New splits open right and below. Yank and delete route through
+the system clipboard without the register having to be named.
 
 Under WSL that last one needs a bridge, and the configuration installs one only
 where Neovim found no provider of its own — asking the provider rather than
@@ -248,26 +270,49 @@ testing for WSL, so a faster tool Neovim already chose is never replaced. The
 question is deferred a tick past startup because asking it costs about 60 ms
 there.
 
+Two of these override a Neovim default in a way that can read as a malfunction.
+`scrolloff` is 999, so the cursor does not move down the screen as you scroll
+and the text moves instead. `hlsearch` stays on after a search completes,
+because highlights persisting is the point — they show a term's spread through
+the file.
+
 ### Keymaps
 
-`lua/config/keymaps.lua` holds the general mappings; a mapping that invokes a
-plugin lives with that plugin. `<Space>` is the leader.
+`<Space>` is the leader and `\` is the local leader. A bare `<Space>` is bound
+to nothing, so it never moves the cursor while a mapping is pending, and every
+prefix is a prefix *only* — never a mapping in its own right — so pressing one
+never waits out `timeoutlen` before showing what can follow. `which-key` lists
+the continuations while a sequence is pending, and `<leader>?` lists the
+mappings that belong to the current buffer alone.
 
-Two families are deliberately unprefixed, because they are used too often to
-pay a prefix for. `H` and `L` go to the ends of the line in two steps outward —
+Four mappings take over keys Vim already uses, unprefixed because they are
+wanted constantly. `H` and `L` reach the ends of the line in two steps outward —
 first non-blank, then column zero; last non-blank, then past the trailing
 whitespace — and they are real motions, so an operator consumes them and a
-visual selection extends by them. `<C-h>`/`<C-j>`/`<C-k>`/`<C-l>` move focus
-between windows.
+visual selection extends by them; what they displace is given up rather than
+rehomed. `<Esc>` clears the search highlight, and `<C-s>` writes the buffer from
+any editing mode.
 
-The rest sit under a prefix. `<M-h>`/`<M-j>`/`<M-k>`/`<M-l>` resize the focused
-window toward the direction each letter names. `<leader>w` mirrors the built-in
-`<C-w>` window commands without the chord, and adds a maximize toggle that
-restores the previous sizes rather than equalizing them. `<leader>b` is the
-buffer list. `<leader>q` is the editing session as a whole — quit, write-and-
-quit, and restarting the editor process — never one window and never one buffer.
-`<C-s>` writes the buffer from any editing mode, and `<M-;>` terminates the line
-or the selected lines with a semicolon.
+The rest sit under a prefix:
+
+| prefix | what it covers |
+|---|---|
+| `<leader>w` | the built-in `<C-w>` window commands without the chord, plus a maximize toggle that restores the previous sizes rather than equalizing them |
+| `<leader>b` | the buffer list — moving between buffers, and deleting this one, the others, or all |
+| `<leader>q` | the editing session as a whole: quit, write-and-quit, restarting the process, and the saved sessions |
+| `<leader>f` | finding file contents, buffers, help tags, symbols and colorschemes; files themselves are `<leader><leader>` |
+| `<leader>g`, `<leader>h` | the repository and, per buffer and only inside a git repository, this file's hunks |
+| `<leader>c` | what a language server offers: rename, code action, format |
+| `<leader>m` | multiple cursors, moved off the plugin's own `\` because that is the local leader here |
+| `<leader>n` | the messages and notifications noice captures |
+| `<leader>t` | the `TODO:`/`FIXME:` markers found across the project |
+
+`<C-h>`/`<C-j>`/`<C-k>`/`<C-l>` move focus between windows, and
+`<M-h>`/`<M-j>`/`<M-k>`/`<M-l>` resize the focused one; the same four `<M->`
+keys move the selection in visual mode, which does not collide because the modes
+differ. `s`, `f`, `t` and `/` are labelled jumps, `gd`/`gi`/`K` and `]d`/`[d`
+attach to a buffer when a language server does, `]c`/`[c` step through git
+hunks, and `<M-;>` terminates the line or the selected lines with a semicolon.
 
 Every deletion and every quit goes through `:confirm`, so a modified buffer
 produces a save/discard/cancel dialog rather than an error to work around or a
@@ -275,63 +320,70 @@ bang that throws the work away.
 
 ### Plugins
 
-lazy.nvim is the manager, and `lua/config/lazy.lua` clones it on first launch
-before anything else runs — a fresh machine needs no install step, and a failed
-clone aborts loudly rather than falling through into a half-configured session.
-`lazy-lock.json` is tracked, so every machine resolves the same revisions rather
-than whatever each one happens to fetch first.
+Thirty-one plugin files, grouped by the job each does. `lazy-lock.json` is
+tracked, so every machine resolves the same revisions rather than whatever each
+one happens to fetch first.
 
-**Language support.** `nvim-lspconfig` carries the client — diagnostics display
-and the buffer-local mappings — while mason installs the binaries under
-`stdpath("data")/mason/`, so nothing lands on the system or on the login shell's
-`PATH`. `mason-lspconfig` declares which servers must be present and enables
-each installed one; `mason-tool-installer` does the same for the tools that are
-not servers. C# is the exception: `roslyn.nvim` starts its own server rather
-than going through that path, and `vim-razor` colours the markup half of a
-`.razor` buffer, which the server does not.
+**Language support.** `nvim-lspconfig` carries the client — diagnostics display,
+the buffer-local mappings and the server configurations — while mason installs
+the binaries under `stdpath("data")/mason/`, so nothing lands on the system or
+on the login shell's `PATH`. `mason-lspconfig` declares which servers must be
+present and enables each installed one; `mason-tool-installer` does the same for
+the tools that are not servers. C# is the exception: `roslyn.nvim` starts its
+own server rather than going through that path, and `vim-razor` colours the
+markup half of a `.razor` buffer, which the server does not.
 
 **Completion and formatting.** `blink.cmp` provides completion, with
 `friendly-snippets` as its snippet source. `conform.nvim` is the single
 formatting entry point, on write and on demand alike, so a filetype covered by
 both an external formatter and a formatting-capable server cannot produce two
-different results depending on which route was taken.
+different results depending on which route the buffer took.
 
 **Git.** Three tools at three scales: `gitsigns` marks how the buffer differs
-from the index, line by line, and acts on those hunks; `neogit` is the
-repository — staging, commits, branches, rebases, stashes, the log; `diffview`
-is the whole difference against a revision, a file's history, and the three-way
-view of a merge conflict.
+from the index, line by line, and stages, resets, previews and blames those
+hunks; `neogit` is the repository — staging, commits, branches, fetch, pull,
+push, rebases, stashes, the log; `diffview` is a whole difference — every file
+that differs against a revision, a file's history, and the three-way view a
+merge conflict is resolved in.
 
 **Navigation.** `telescope` fuzzy-finds over files, file contents, buffers, help
-and the repository. `flash` reaches any position visible on screen by typing
-what is there and pressing the label that appears beside it. `oil` presents a
-directory as an ordinary buffer, so renaming a file is editing a line.
+tags, symbols and the repository. `flash` reaches any position visible on screen
+by typing what is there and pressing the label that appears beside it. `oil`
+presents a directory as an ordinary buffer, so renaming a file is editing a line
+— and a delete there is a real delete, not a move to trash.
 
 **Editing.** `nvim-autopairs` closes delimiters as they are typed;
 `nvim-surround` adds, changes and deletes the pair around text already in the
 buffer; `mini.move` shifts a selection around as a unit; `vim-visual-multi`
 edits at several places at once.
 
-**Interface.** `lualine` replaces the stock status line with the editing mode,
-the branch and working-tree summary, unpushed commits, and diagnostic counts.
-`noice` moves the command line, its messages, its notifications and the wildmenu
-off the last screen row into floating views. `which-key` lists what a
-half-typed sequence can still become. `render-markdown` draws markdown as
-formatted text rather than as its markup characters, `todo-comments` picks the
-`TODO:`/`FIXME:` markers out of the comments around them, `smear-cursor`
-animates the cursor between positions, and `mini.icons` is the single icon
-provider the rest of them draw from.
+**Interface.** `lualine` is the status line: editing mode, file and modified
+state, branch and working-tree summary, unpushed commits, diagnostic counts,
+cursor position, macro recording. `noice` moves the command line, messages,
+notifications and the wildmenu off the last screen row into floating views, so a
+long message is scrolled rather than acknowledged with `Press ENTER`.
+`which-key` lists what a half-typed sequence can still become.
+`render-markdown` draws markdown as formatted text rather than as its markup
+characters, reverting the cursor's own line to raw source so the document stays
+editable in place. `todo-comments` picks the `TODO:`/`FIXME:` markers out of the
+comments around them, `smear-cursor` animates the cursor between positions so a
+large jump is traceable, and `mini.icons` is the single icon provider every
+other plugin draws from.
 
 **Sessions and themes.** `auto-session` writes the open buffers, the window
 layout and every cursor position on exit and restores them on the next bare
-launch in the same directory. `themery` is the switcher, and the one file in the
-configuration that applies a colorscheme at all — `kanagawa`, `catppuccin`,
+launch in the same directory. `themery` is the switcher, and the only file in
+the configuration that applies a colorscheme at all — `kanagawa`, `catppuccin`,
 `rose-pine` and `tokyonight` are installed as bare installs that set nothing
 themselves, with kanagawa wave as the fallback before a theme has been chosen.
 
 ### Where the detail lives
 
-This section is an orientation, not a specification. `.config/nvim/openspec/`
-is a second OpenSpec workspace, and its `specs/` directory is authoritative for
-each capability above — the exact keymaps, the option values, which servers are
-declared, what a session records.
+This section is a condensation of `.config/nvim/README.md`, which is the fuller
+description of the configuration and the document to change first. Where the two
+disagree, that one is right.
+
+Neither is the specification. `.config/nvim/` holds a second OpenSpec workspace,
+and `.config/nvim/openspec/specs/` is authoritative for each capability above —
+the exact mappings and their modes, every option value and why it holds, which
+servers are declared, what a session records.
