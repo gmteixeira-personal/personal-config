@@ -261,8 +261,8 @@ export NVM_DIR="$HOME/.nvm"
 # what keeps a project's .venv from outliving the directory that declared it.
 #
 # Driven off PROMPT_COMMAND, which is direnv's own bash hook: bash has no chpwd
-# equivalent, and wrapping cd would miss pushd, popd, and zoxide's z -- it calls
-# builtin cd and so bypasses a cd function entirely.
+# equivalent, and wrapping cd would miss pushd and popd, along with anything else
+# that calls builtin cd and so bypasses a cd function entirely.
 #
 # Placed after the non-interactive early return far above because it is
 # prompt-driven, and a script or tool runner that changes directory should see
@@ -296,4 +296,21 @@ fi
 if [ -z "$FISH_LAUNCHED" ] && command -v fish >/dev/null 2>&1; then
   export FISH_LAUNCHED=1
   exec fish
+fi
+
+# fzf, for the bash sessions that stay bash.
+#
+# Below the exec above, deliberately, and this is the only block here that
+# depends on being there. Everything above that line is paid for by every
+# interactive bash and then thrown away a microsecond later, and `fzf --bash` is
+# the better part of a thousand lines to evaluate. Reached only when the exec did
+# not happen -- FISH_LAUNCHED already set, or no fish on the machine -- which is
+# exactly the case where a prompt is about to be drawn by bash and the pickers
+# are wanted. The non-interactive early return far above already excludes
+# scripts.
+#
+# The command check makes the dependency optional, as the direnv block above
+# does: absent, there is no picker and no message about it.
+if command -v fzf >/dev/null 2>&1; then
+  eval "$(fzf --bash)"
 fi

@@ -4,10 +4,14 @@
 if status is-interactive
     fish_vi_key_bindings
 
-    # fish calls this after every binding set is installed, including on a
-    # later `fish_vi_key_bindings`, which clears the table first. Custom
-    # bindings therefore have to be here to survive a mode switch -- and only
-    # bindings, so that changing them cannot take anything else with them.
+    # fish calls this once at the end of interactive start-up, after the
+    # binding set above is installed, so what is bound here is what a key
+    # resolves to at a prompt. Measured on fish 4.8.1, and not what an earlier
+    # version of this comment claimed: `fish_vi_key_bindings` does not call this
+    # function, and the `bind --erase --all --preset` it opens with erases only
+    # preset bindings, so a custom binding survives a mode switch wherever it is
+    # made. This is where they are collected anyway -- one place to look, and
+    # bindings only, so that changing them cannot take anything else with them.
     function fish_user_key_bindings
         bind -M default \cf forward-word
         bind -M insert \cf forward-word

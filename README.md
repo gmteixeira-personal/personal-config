@@ -112,6 +112,14 @@ named; where nothing at all is printed, that is said outright.
   message, no hook, and the `layout venv` in `.config/direnv/direnvrc` simply
   never runs. See **Python virtual environments** below. *A system package, or a
   binary on `PATH`.*
+- **`fzf` 0.74 or newer** — `conf.d/fzf.fish` sources `fzf --fish`, which is
+  where Ctrl+T (pick a file into the line), Ctrl+R (pick a command out of
+  history), Alt+C (change directory) and Shift+Tab (run the current token's
+  completions through the picker) come from; `.bashrc` does the same with
+  `fzf --bash` for the sessions that stay bash. The version floor is where the
+  `--fish` and `--bash` flags arrive. **Absence is silent**: no message, and
+  those four keys keep whatever fish and readline already gave them. *A system
+  package.*
 - **`herdr` 0.8.0 or newer** — the multiplexer that `.config/herdr/config.toml`
   configures: the prefix and keybindings, the theme, the agent panes, and the
   pane-equalizer plugin, whose `min_herdr_version` is where that floor comes
