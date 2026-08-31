@@ -80,7 +80,7 @@ A security denylist SHALL take precedence over every allowlist entry. A path mat
 
 ### Requirement: Bulk and machine-local trees are excluded
 
-Caches, package stores, language toolchains, editor server state, and Claude Code session data SHALL be ignored so the repository stays small and portable across environments.
+Caches, package stores, language toolchains, editor server state, Claude Code session data, and assistant-written scratch that describes one session's in-flight state SHALL be ignored so the repository stays small and portable across environments.
 
 #### Scenario: Cache and toolchain directories are ignored
 
@@ -97,6 +97,13 @@ Caches, package stores, language toolchains, editor server state, and Claude Cod
 
 - **WHEN** `.claude/projects/`, `.claude/sessions/`, `.claude/history.jsonl`, `.claude/shell-snapshots/`, `.claude/file-history/`, or `.claude/paste-cache/` is checked
 - **THEN** each SHALL be ignored
+
+#### Scenario: Handoff notes are ignored by a named rule
+
+- **WHEN** `.claude/handoff/` is checked
+- **THEN** it SHALL be ignored
+- **AND** `git check-ignore -v` on a file beneath it SHALL report a rule naming that directory, rather than the deny-by-default catch-all
+- **AND** `git ls-files` SHALL list no path beneath it
 
 ### Requirement: Derived state is ignored in favour of its declaration
 
