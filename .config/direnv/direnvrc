@@ -1,0 +1,37 @@
+# direnv's own startup file. Read before every .envrc, and the documented place
+# for custom layouts.
+
+# Bring a project's own .venv into effect.
+#
+# Called from a project as `layout venv`: direnv's stdlib dispatches
+# `layout <type>` to `layout_<type>`. The name reads correctly beside the
+# built-in `layout python`, which builds .direnv/python-$version rather than
+# using the project's .venv -- this one is the one that uses .venv.
+#
+# It works by naming the two values the environment contributes, VIRTUAL_ENV and
+# the bin directory to prepend to PATH, rather than running any script the
+# environment itself ships. Two things follow. Nothing the project supplies is
+# executed, even inside direnv's own subprocess, which is the stronger form of
+# the property direnv's approval gate already gives. And the shell dialect stops
+# mattering: direnv computes an environment diff and applies it, so there is no
+# bash-versus-fish branch anywhere here, and a .venv built by a Python that
+# omitted its fish script still works in fish.
+#
+# What is given up is whatever a .venv's own scripts do beyond those two
+# values -- the pydoc alias, VIRTUAL_ENV_PROMPT, and any hook a non-stdlib venv
+# tool writes into them. None is in use: tide derives its label from VIRTUAL_ENV
+# directly, so VIRTUAL_ENV_PROMPT goes unread.
+layout_venv() {
+  local venv="$PWD/.venv"
+
+  # An environment that is not there is reported, never built. One line naming
+  # the path that was looked for, and the shell is left exactly as it was --
+  # returning 0 so the rest of the .envrc still runs.
+  if [ ! -d "$venv" ]; then
+    log_error "layout venv: no virtual environment at $venv"
+    return 0
+  fi
+
+  export VIRTUAL_ENV="$venv"
+  PATH_add "$VIRTUAL_ENV/bin"
+}

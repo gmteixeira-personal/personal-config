@@ -255,6 +255,27 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
+# direnv, hooked in so the working directory decides which Python virtual
+# environment is on PATH. It applies whatever the nearest approved .envrc
+# declares and restores the captured environment on the way back out, which is
+# what keeps a project's .venv from outliving the directory that declared it.
+#
+# Driven off PROMPT_COMMAND, which is direnv's own bash hook: bash has no chpwd
+# equivalent, and wrapping cd would miss pushd, popd, and zoxide's z -- it calls
+# builtin cd and so bypasses a cd function entirely.
+#
+# Placed after the non-interactive early return far above because it is
+# prompt-driven, and a script or tool runner that changes directory should see
+# no environment appear or disappear on its behalf. Placed before the exec fish
+# below because nothing after that line runs.
+#
+# The command check is what makes the dependency optional: on a machine without
+# direnv there is no hook and no error, and environments are activated by hand
+# as they were before this block existed.
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook bash)"
+fi
+
 # Hand interactive sessions to fish, whichever way this distro was entered -- a
 # Windows Terminal tab, `wsl -d archlinux` from a cmd or PowerShell prompt, an
 # editor's integrated terminal. Doing it here rather than with chsh is what

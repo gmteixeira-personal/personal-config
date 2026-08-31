@@ -152,6 +152,36 @@ per-machine and deliberately not tracked, and neither is anything else herdr
 writes for a plugin: `plugins.json` records absolute paths and an install
 timestamp, and `.plugins.lock` is an empty lock file, not a manifest.
 
+## Python virtual environments
+
+`.config/direnv/direnvrc` defines `layout venv`. Entering a project puts its
+`.venv` on `PATH`, leaving it takes it back off, and a subdirectory counts as
+inside — identically in bash and fish, from one declaration per project. The
+helper names the two values the environment contributes rather than sourcing the
+`activate` script the project ships, so no project-supplied code runs in either
+shell.
+
+direnv is a machine-level dependency, installed once:
+
+```sh
+sudo pacman -S direnv
+```
+
+Without it both shell hooks are inert — no error, no activation — and virtual
+environments are activated by hand, exactly as they were before.
+
+Per project, once:
+
+```sh
+echo 'layout venv' > .envrc
+direnv allow
+```
+
+The approval is per machine and deliberately not tracked: it records what
+someone approved *here*, and carrying it to a clone would grant, on that
+machine, a trust nobody there gave. Editing `.envrc` revokes it, so the edit is
+approved on its own terms.
+
 ## What is deliberately not tracked
 
 | path | why |
