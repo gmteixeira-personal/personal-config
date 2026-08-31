@@ -180,6 +180,9 @@ adbkey*
 .claude/tasks/
 .claude/plans/
 .claude/ide/
+# /safe-clear writes its handoff notes here when the state does not fit in the
+# resume line. One session's in-flight work, described in this machine's paths.
+.claude/handoff/
 .claude/history.jsonl
 .claude/daemon.log
 .claude/*.jsonl
