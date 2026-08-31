@@ -23,4 +23,11 @@ if status is-interactive
     abbr grs 'git restore --staged'
 
     alias e nvim
+
+    # A deliberate override, not a shorthand: the name stays `cat` and the
+    # reader gets highlighting, line numbers, and a pager for anything longer
+    # than a screen. bat prints plain when its output is not a terminal, so a
+    # pipeline behaves as it always did, and `command cat` reaches the original.
+    # Guarded, so a machine without bat keeps plain cat and says nothing.
+    type -q bat; and alias cat bat
 end

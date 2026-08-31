@@ -1,25 +1,4 @@
-# shell-aliases Specification
-
-## Purpose
-
-Defines the command shorthands an interactive shell in this configuration answers to: which names are bound, what each resolves to, and the rules a shorthand follows so that it stays a convenience at the prompt without changing what any script sees.
-
-## Requirements
-
-### Requirement: An alias is an interactive convenience only
-
-A shorthand defined by this configuration SHALL be available at an interactive prompt and SHALL have no effect on a non-interactive shell. A script that runs under this configuration SHALL behave exactly as it would with no shorthand defined, so that a name bound for typing convenience never becomes something a script depends on.
-
-#### Scenario: Available at the prompt
-
-- **WHEN** an interactive shell has read this configuration
-- **THEN** each shorthand this configuration defines SHALL resolve to its target command
-
-#### Scenario: Absent from a script
-
-- **WHEN** a script or tool runner starts a non-interactive shell under this configuration
-- **THEN** no shorthand defined here SHALL be in effect
-- **AND** a name that is only a shorthand SHALL fail as an unknown command rather than silently resolving
+## MODIFIED Requirements
 
 ### Requirement: A shorthand does not shadow an existing command
 
@@ -48,24 +27,7 @@ Where the intent *is* to change a command's default behavior, the binding SHALL 
 - **WHEN** a deliberate override is in effect and the caller invokes the name through the shell's mechanism for bypassing a shorthand
 - **THEN** the original executable SHALL run
 
-### Requirement: `cls` clears the screen
-
-An interactive shell SHALL accept `cls` as a name for clearing the terminal, producing the same result as the `clear` command. The name is carried over from shells where it is the standard spelling, so that the reflex of typing it does not end in an error.
-
-#### Scenario: Clearing by the alternate name
-
-- **WHEN** `cls` is entered at an interactive prompt
-- **THEN** the terminal SHALL be cleared exactly as `clear` clears it
-
-#### Scenario: The original name still works
-
-- **WHEN** `clear` is entered at an interactive prompt
-- **THEN** it SHALL clear the terminal as before, unchanged by the presence of `cls`
-
-#### Scenario: Not defined for scripts
-
-- **WHEN** a script invokes `cls`
-- **THEN** the shell SHALL report it as an unknown command, since the shorthand is interactive-only
+## ADDED Requirements
 
 ### Requirement: `cat` shows highlighted output
 

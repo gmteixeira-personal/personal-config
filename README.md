@@ -120,6 +120,12 @@ named; where nothing at all is printed, that is said outright.
   `--fish` and `--bash` flags arrive. **Absence is silent**: no message, and
   those four keys keep whatever fish and readline already gave them. *A system
   package.*
+- **`bat`** — `conf.d/aliases.fish` and `.bashrc` bind `cat` to it in
+  interactive shells, so reading a file at the prompt gets syntax highlighting,
+  line numbers, and a pager for anything longer than a screen. It prints plain
+  when its output is not a terminal, so pipelines are unchanged, and `command
+  cat` reaches the original. **Absence is silent**: the alias is never defined
+  and `cat` is plain `cat`. *A system package.*
 - **`herdr` 0.8.0 or newer** — the multiplexer that `.config/herdr/config.toml`
   configures: the prefix and keybindings, the theme, the agent panes, and the
   pane-equalizer plugin, whose `min_herdr_version` is where that floor comes
