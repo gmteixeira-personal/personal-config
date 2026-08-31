@@ -17,11 +17,10 @@ if status is-interactive
 
     abbr gaa 'git add --all'
     abbr gcm 'git commit -m'
+    abbr gc 'git commit'
     abbr gco 'git checkout'
     abbr grb 'git rebase'
     abbr grs 'git restore --staged'
-    abbr gstash 'git stash'
-    abbr gpull 'git pull'
 
     alias e nvim
 end
