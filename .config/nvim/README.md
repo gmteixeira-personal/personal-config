@@ -8,6 +8,13 @@ Neovim, and wait. The first launch clones the plugin manager, installs about
 thirty plugins, and installs the language servers and formatters those plugins
 need. There is no install script and no bootstrap command to run.
 
+What it provisions is plugins and tool *binaries*, not the runtimes those
+binaries execute on. Twelve of the sixteen tools it installs need one — ten are
+Node packages, one is a Python package, one runs on .NET — and mason puts each
+of them on disk whether or not the machine can run it, so the install reports
+success and the failure arrives later, as a server that never attaches or a
+formatter that leaves the buffer alone. What has to be present first is below.
+
 - [Requirements](#requirements)
 - [Layout and load order](#layout-and-load-order)
 - [Editor conventions](#editor-conventions)
@@ -17,18 +24,53 @@ need. There is no install script and no bootstrap command to run.
 
 ## Requirements
 
-Three things must already be on the machine. Nothing here installs them, and
-each one fails differently if it is missing.
+Nothing in this section is installed by starting Neovim. It is grouped by what
+the absence costs rather than by language, because that is the direction a
+reader usually arrives from — something is missing or inert, and the cause is a
+runtime nobody mentioned.
+
+### Without these there is no editor
 
 | Requirement | Why | Without it |
 |---|---|---|
 | Neovim 0.11 or newer | `vim.uv`, `vim.lsp.config`, and `:restart` are used directly | startup errors on the first `require` |
 | `git` | the plugin manager is cloned on first launch, and plugins are fetched with it | first launch aborts with the clone's error output and exits |
-| A Nerd Font in the terminal | filetype and status-line glyphs come from one | icons render as replacement boxes; nothing breaks |
+| `curl` or `wget` | mason fetches every managed tool over one of them | no language server and no formatter installs at all |
+| `tar`, `gzip`, `unzip` | the prebuilt tools arrive as `.tar.gz`, `.zip` or `.nupkg` and mason unpacks them itself; the Node and Python ones are unpacked by `npm` and `pip` instead | a tool packaged as an archive never unpacks; the rest still install |
 
-A .NET SDK is needed for C# only. `roslyn.nvim` starts the Roslyn language
-server, and mason cannot supply the SDK it runs on. Every other language works
-without anything installed by hand.
+### Without these a language loses its tooling
+
+Each row is a runtime that managed tools run *on*. mason installs the tools
+either way; the runtime is what lets them start.
+
+| Requirement | What needs it | Without it |
+|---|---|---|
+| Node.js and `npm` | ten of the sixteen managed tools — the `vtsls`, `bashls`, `jsonls`, `yamlls`, `cssls`, `html`, `tailwindcss` and `fish_lsp` servers, and the `prettierd`/`prettier` formatters | none of those servers attach, so their buffers have no diagnostics, no completion and no `gd`; and JavaScript, TypeScript, JSON, YAML, CSS, HTML and markdown write unformatted, silently, because prettier is what formats them |
+| Python 3 with the `venv` module | `basedpyright` | Python buffers get no server. `ruff_format` is a static binary and still formats them |
+| A .NET SDK | the Roslyn server `roslyn.nvim` starts, which serves C# **and** Razor | C# gets no server, and a `.razor` buffer additionally stays uncoloured — its highlighting is that server's semantic tokens rather than a parser's |
+| `fish` | `fish_indent`, which ships inside the shell rather than as a mason package, and `fish_lsp`, which shells out to `fish` | a fish buffer gets no server and is written unformatted |
+
+Lua, Python and shell formatting survive all of this: `stylua`, `ruff` and
+`shfmt` are prebuilt binaries with no runtime behind them, as is
+`lua-language-server`.
+
+### Without these something is worse, but nothing is broken
+
+| Requirement | Why | Without it |
+|---|---|---|
+| `ripgrep` | `<leader>fg` greps the working tree with it, and has no fallback | live grep finds nothing; every other picker still works |
+| A Nerd Font in the terminal | filetype and status-line glyphs come from one | icons render as replacement boxes |
+
+`fd` is deliberately absent from this list. Telescope prefers it for finding
+files and falls back to ripgrep, which is required above already.
+
+### Checking a machine
+
+`:checkhealth mason` names `curl`, `wget`, `tar`, `gzip`, `unzip`, Node, `npm`,
+Python and its `venv` module, each with the version it found or the reason it
+found none. `:checkhealth telescope` does the same for `ripgrep`. Between them
+that covers every row above except the .NET SDK, which neither knows about —
+`:!dotnet --info` is the check for that one.
 
 Everything else arrives on its own:
 
@@ -41,7 +83,8 @@ Everything else arrives on its own:
   the same versions rather than whatever it happens to fetch first.
 - **Language servers and formatters.** mason installs them under
   `stdpath("data")/mason/`, in the background, on launch. Nothing lands on the
-  system or on the login shell's `PATH`.
+  system or on the login shell's `PATH` — and nothing there installs the
+  runtimes above that twelve of those sixteen tools need in order to run.
 
 ## Layout and load order
 
@@ -371,7 +414,9 @@ Thirty-one plugin files, grouped by the job each does.
 - **nvim-lspconfig** — the LSP client: diagnostics display, the buffer-local
   mappings, and the server configurations.
 - **mason** — installs servers and tools under `stdpath("data")/mason/`, so
-  nothing lands on the system or on the login shell's `PATH`.
+  nothing lands on the system or on the login shell's `PATH`. It installs the
+  binaries only; most of them need a runtime it does not supply, which is what
+  [Requirements](#requirements) lists.
 - **mason-lspconfig** — declares which servers must be present and enables each
   installed one: `lua_ls`, `vtsls`, `jsonls`, `yamlls`, `cssls`, `html`,
   `tailwindcss`, `basedpyright`, `bashls`, `fish_lsp`.
