@@ -294,6 +294,13 @@ someone approved *here*, and carrying it to a clone would grant, on that
 machine, a trust nobody there gave. Editing `.envrc` revokes it, so the edit is
 approved on its own terms.
 
+None of this announces itself. `.config/direnv/direnv.toml` filters direnv's
+routine status lines away, so entering, moving within, and leaving a project
+print nothing — the prompt already names the environment and its interpreter
+version. Errors are a separate path and stay: an unapproved `.envrc` names
+itself and the `direnv allow` that approves it, and a `layout venv` with no
+`.venv` names the path it looked for.
+
 ## What is deliberately not tracked
 
 | path | why |

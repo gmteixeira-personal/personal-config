@@ -1,0 +1,23 @@
+# direnv's own configuration. Read from $XDG_CONFIG_HOME/direnv/, alongside the
+# direnvrc beside it.
+
+[global]
+# Say nothing when the ordinary thing happens. direnv otherwise prints
+# `loading ~/project/.envrc` and `export +VIRTUAL_ENV ~PATH` on every entry into
+# a project, which reports a success the prompt already shows -- and puts it on
+# the two lines directly above the prompt, where a message that did need reading
+# would go.
+#
+# log_filter is a regular expression matched against each status message; only a
+# match is printed. `^$` matches the empty string alone, which no real message
+# is, so every status message is dropped.
+#
+# Errors are a separate path: log_error does not consult this filter, so a
+# blocked .envrc still names itself and the `direnv allow` that approves it, and
+# `layout venv` with no .venv still names the path it looked for. Silencing
+# those is not what this setting is for, and would need a different one.
+#
+# Not DIRENV_LOG_FORMAT: it is documented for this and is not honoured by
+# direnv 2.37.1 -- neither blanking it nor giving it a distinctive format
+# changes what is printed. Setting it would look right and do nothing.
+log_filter = "^$"

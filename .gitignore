@@ -59,13 +59,14 @@
 !/.githooks/**
 
 # tool configs
-# direnv: the file, not `/.config/direnv/**`. Only the helper that project
-# .envrc files call is tracked. direnv's approval records are per-machine and
-# must never be carried to another one -- they are already covered by the
-# `.local/` denylist entry in block 4, and naming the file here keeps the
-# tracked set correct even on a direnv old enough to keep them under
-# $XDG_CONFIG_HOME/direnv/ instead.
+# direnv: the files, not `/.config/direnv/**`. Only the helper that project
+# .envrc files call and direnv's own settings are tracked. direnv's approval
+# records are per-machine and must never be carried to another one -- they are
+# already covered by the `.local/` denylist entry in block 4, and naming the
+# files here keeps the tracked set correct even on a direnv old enough to keep
+# them under $XDG_CONFIG_HOME/direnv/ instead.
 !/.config/direnv/direnvrc
+!/.config/direnv/direnv.toml
 !/.config/gh/config.yml
 !/.config/herdr/config.toml
 !/.config/herdr/herdr-equalize-toggle
