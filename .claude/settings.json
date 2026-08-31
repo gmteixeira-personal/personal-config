@@ -45,6 +45,9 @@
     },
     "claude-sonnet-5": {
       "effortLevel": "high"
+    },
+    "claude-fable-5": {
+      "effortLevel": "xhigh"
     }
   },
   "tui": "fullscreen",
