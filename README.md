@@ -9,6 +9,10 @@ world-readable, because it is.
 
 ## Bootstrap a new machine
 
+These three steps need only `git`. What the tracked configuration itself expects
+of the machine is listed under **Software this configuration expects**, below —
+a finished bootstrap is not yet a working environment.
+
 **1. Get the repository into `$HOME` without clobbering what is already there.**
 
 The home directory of a fresh machine is never empty, so do not clone over it.
@@ -54,6 +58,106 @@ git config user.email "<id>+<user>@users.noreply.github.com"
 Without this, `git commit` fails with exit 128 before the hook even runs. Use
 the GitHub noreply address: commit objects are published even though
 `.gitconfig` is not.
+
+## Software this configuration expects
+
+The three bootstrap steps above need only `git`. Everything the tracked
+configuration itself reaches for is below, in three groups: what has to be
+there, what is tolerated when absent, and what the repository already carries so
+you do not go installing it. Each entry says where it comes from, but not with
+which package manager — that answer is correct on one machine and wrong on the
+next, and this configuration exists to move between them.
+
+### Required
+
+Without these, the tracked configuration does not work.
+
+- **`git`** — the repository *is* `$HOME`, the commit guard in `.githooks/` is a
+  git hook, and the prompt's branch segment reads from it. Nothing here starts
+  without it. *A system package.*
+- **`fish`** — `.config/fish/conf.d/` and `.config/fish/functions/` are the
+  largest tracked block there is: the environment, the abbreviations, the key
+  bindings, the prompt. Without fish none of it is read and the machine stays in
+  bash, which carries a deliberate copy of the environment block and nothing
+  else. *A system package.*
+- **Neovim 0.11 or newer** — `EDITOR`, `VISUAL`, and `SUDO_EDITOR` all name it,
+  `e` is aliased to it, and `.config/nvim/` is tracked in full. Without it every
+  one of those resolves to a command that is not there. *Installed through
+  `bob`, the version manager: `env.fish` already prepends
+  `~/.local/share/bob/nvim-bin` to `PATH`.* That configuration states its own
+  prerequisites — see **Neovim** below, and `.config/nvim/README.md`.
+- **A Nerd Font in the terminal** — the prompt's segment icons and Neovim's
+  filetype and status-line glyphs both come from one. Without it they render as
+  replacement boxes; nothing else breaks. *Installed into the terminal
+  emulator, not onto the machine.*
+- **`bash`** — `.bashrc`, `.profile`, `.inputrc`, and `.bash_logout` are
+  tracked, and `.bashrc` keeps its own copy of the environment block rather than
+  deferring to fish, because ssh sessions, `sudo -s`, and anything invoking
+  `$SHELL` still land in bash. Present on any machine this targets; listed so
+  that duplication reads as deliberate.
+
+### Optional
+
+The configuration is written to survive these being absent. What is lost is
+named; where nothing at all is printed, that is said outright.
+
+- **`python3`** — the herdr pane equalizer runs `equalize.py` on every pane
+  event and stops working entirely without it. The Claude status line also pipes
+  through it, but discards the error and drops only its context-percentage
+  badge, and the herdr agent-state hook checks for it and exits quietly. So one
+  feature breaks and two degrade. *A system package.*
+- **`direnv`** — `conf.d/direnv.fish` installs the hook only where `type -q
+  direnv` succeeds, so without it project environments are activated by hand,
+  which is the behaviour that predates the file. **Absence is silent**: no
+  message, no hook, and the `layout venv` in `.config/direnv/direnvrc` simply
+  never runs. See **Python virtual environments** below. *A system package, or a
+  binary on `PATH`.*
+- **`herdr` 0.8.0 or newer** — the multiplexer that `.config/herdr/config.toml`
+  configures: the prefix and keybindings, the theme, the agent panes, and the
+  pane-equalizer plugin, whose `min_herdr_version` is where that floor comes
+  from. Without it the whole tracked config is inert. See **herdr pane
+  equalizing** below. *A per-user install.*
+- **Claude Code** — `.claude/` carries the settings, the `/git:*` and `/opsx:*`
+  command suites, the skills, the hooks, and the status line. Without it those
+  files are just text. Its plugins are declared rather than vendored — see
+  **Claude Code plugins are declarative** below. *A per-user install.*
+- **The `openspec` CLI** — drives `openspec/`, where every change here is
+  proposed, implemented, and archived. Without it the specs stay perfectly
+  readable and the workflow around them does not run. *A per-user install
+  landing in `~/.local/bin`, which `env.fish` already has on `PATH`.*
+- **`gh`** — `.config/gh/config.yml` sets HTTPS as the git protocol and `co` as
+  an alias for `pr checkout`. Without it nothing else changes. *A system
+  package.*
+- **A .NET SDK** — for C# in Neovim and nothing else; every other language works
+  without it. `env.fish` points `DOTNET_ROOT` at `~/.dotnet` when a per-user
+  install is there, testing for the binary rather than the directory, because a
+  system-packaged `dotnet` creates that directory itself. *A per-user install
+  under `~/.dotnet`, or a system package.*
+- **`bash-completion`** — deliberately not needed. `.bashrc` loads every script
+  in `~/.local/share/bash-completion/completions/` itself, precisely because
+  that loader is missing on machines that have the directory. **Absence is
+  silent, and by design.**
+
+### Carried by the repository
+
+Cloning gives you these. Installing them separately is unnecessary.
+
+- **`fisher`**, the fish plugin manager — `.config/fish/functions/fisher.fish`
+  is tracked.
+- **`tide`**, the prompt — its functions are tracked under
+  `.config/fish/functions/`, and `conf.d/tide.fish` mirrors the prompt
+  configuration into globals so that git carries it while `fish_variables`
+  itself stays ignored. After running `tide configure`, run `tide-save-config`
+  to refresh that file.
+
+### Must not be installed
+
+- **`lazygit`** — retired, and required to stay that way:
+  `openspec/specs/retired-tooling/spec.md` wants the package absent, no
+  configuration tracked, and no state or cache directory left behind. The git
+  workflow it served is covered by the Neovim git plugins and the `/git:*`
+  commands. Bringing it back is a deliberate change that supersedes that
+  requirement, not merely a reinstall.
 
 ## Adding a new dotfile
 
