@@ -11,9 +11,9 @@ set -g tide_bun_icon 󰳓
 set -g tide_character_color 5FD700
 set -g tide_character_color_failure FF0000
 set -g tide_character_icon ❯
-set -g tide_character_vi_icon_default ▚
+set -g tide_character_vi_icon_default ◆
 set -g tide_character_vi_icon_replace ▶
-set -g tide_character_vi_icon_visual V
+set -g tide_character_vi_icon_visual ▚
 set -g tide_cmd_duration_bg_color normal
 set -g tide_cmd_duration_color 87875F
 set -g tide_cmd_duration_decimals 0
