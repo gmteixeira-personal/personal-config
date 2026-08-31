@@ -101,21 +101,6 @@ Once a search is accepted, every match SHALL remain highlighted until the highli
 - **WHEN** the user cancels a search part-way through typing
 - **THEN** the cursor returns to where it was before the search began
 
-### Requirement: Context is kept above and below the cursor
-
-The editor SHALL keep at least eight lines visible above and below the cursor whenever the file is long enough to allow it, so that the cursor never sits against the top or bottom edge of the window while scrolling is still possible.
-
-#### Scenario: Scrolling down through a long file
-
-- **WHEN** the user moves the cursor downward through a file longer than the window
-- **THEN** the view scrolls so that at least eight lines remain visible below the cursor
-
-#### Scenario: Approaching the end of the file
-
-- **WHEN** the cursor is within eight lines of the last line of the file
-- **THEN** the cursor is allowed to reach the final line
-- **AND** no blank space is scrolled in beyond the end of the file
-
 ### Requirement: The sign column is always present
 
 The gutter used for signs SHALL be reserved permanently, whether or not any sign is currently displayed, so that text never shifts horizontally when a sign appears or is removed.

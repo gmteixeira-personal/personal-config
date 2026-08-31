@@ -1,4 +1,4 @@
-# nvim-markdown-rendering Specification
+# markdown-rendering Specification
 
 ## Purpose
 

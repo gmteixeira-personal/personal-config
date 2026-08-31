@@ -1,4 +1,4 @@
-# nvim-scrolling Specification
+# scrolling Specification
 
 ## Purpose
 

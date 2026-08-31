@@ -335,8 +335,3 @@ This section is an orientation, not a specification. `.config/nvim/openspec/`
 is a second OpenSpec workspace, and its `specs/` directory is authoritative for
 each capability above — the exact keymaps, the option values, which servers are
 declared, what a session records.
-
-Two Neovim capabilities are specified from the root workspace instead of that
-one: `openspec/specs/nvim-markdown-rendering/` and
-`openspec/specs/nvim-scrolling/`. Check both places before concluding a
-behaviour is unspecified.
