@@ -74,8 +74,17 @@ type = "plugin_action"
 command = "local.equalize-slots.equalize"
 description = "equalize panes"
 
+# Zoom aliases. herdr's [keys] table takes one key per built-in action, so the
+# shipped prefix+z keeps its entry there and the extra keys call the same
+# operation through the CLI. All three toggle one shared zoom state.
 [[keys.command]]
 key = "prefix+backslash"
+type = "shell"
+command = '"$HERDR_BIN_PATH" pane zoom --pane "$HERDR_ACTIVE_PANE_ID" --toggle'
+description = "toggle pane zoom"
+
+[[keys.command]]
+key = "prefix+f"
 type = "shell"
 command = '"$HERDR_BIN_PATH" pane zoom --pane "$HERDR_ACTIVE_PANE_ID" --toggle'
 description = "toggle pane zoom"

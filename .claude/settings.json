@@ -32,13 +32,19 @@
         "source": "github",
         "repo": "JuliusBrussee/caveman"
       }
+    },
+    "zoharbabin-claude-tools": {
+      "source": {
+        "source": "github",
+        "repo": "zoharbabin/claude-code-message-timestamps"
+      }
     }
   },
   "syntaxHighlightingDisabled": false,
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-opus-5": {
-      "effortLevel": "high"
+      "effortLevel": "xhigh"
     },
     "claude-haiku-4-5": {
       "effortLevel": "low"
