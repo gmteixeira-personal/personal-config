@@ -1,6 +1,6 @@
 onboarding = false
 [theme]
-name = "gruvbox"
+name = "catppuccin"
 auto_switch = false
 
 [ui]
