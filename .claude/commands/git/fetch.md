@@ -1,6 +1,6 @@
 ---
 description: Fetch from origin and report what moved
-model: sonnet
+model: opus
 effort: low
 allowed-tools: Bash(git:*), Read
 ---

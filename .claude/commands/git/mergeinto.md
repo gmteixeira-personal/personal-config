@@ -1,7 +1,7 @@
 ---
 description: Merge the current branch into another branch, ending on that branch
 model: opus
-effort: high
+effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "BRANCH"
 ---

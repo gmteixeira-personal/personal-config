@@ -1,7 +1,7 @@
 ---
 description: Squash the last N commits into one with a regenerated message
 model: opus
-effort: high
+effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "N | *"
 ---

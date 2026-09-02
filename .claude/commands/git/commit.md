@@ -1,6 +1,6 @@
 ---
 description: Stage and commit the current work without pushing it
-model: sonnet
+model: opus
 effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "[all]"

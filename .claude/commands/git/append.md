@@ -1,7 +1,7 @@
 ---
 description: Fold the current changes into the last commit, updating its message
 model: opus
-effort: medium
+effort: low
 allowed-tools: Bash(git:*), Read
 ---
 

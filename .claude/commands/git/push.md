@@ -1,7 +1,7 @@
 ---
 description: Commit and push the current branch, creating its upstream if needed
-model: sonnet
-effort: medium
+model: opus
+effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "[all]"
 ---

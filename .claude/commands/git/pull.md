@@ -1,7 +1,7 @@
 ---
 description: Pull the current branch from its matching remote branch
-model: sonnet
-effort: medium
+model: opus
+effort: low
 allowed-tools: Bash(git:*), Read
 ---
 

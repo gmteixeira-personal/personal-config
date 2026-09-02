@@ -1,6 +1,6 @@
 ---
 description: Show the working tree's changes as an icon-annotated tree
-model: sonnet
+model: opus
 effort: low
 allowed-tools: Bash(git:*), Read
 ---

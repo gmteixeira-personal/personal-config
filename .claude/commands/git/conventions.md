@@ -1,6 +1,6 @@
 ---
 description: Show the shared rules the /git:* commands follow
-model: haiku
+model: opus
 effort: low
 allowed-tools: Bash(git:*), Read
 ---

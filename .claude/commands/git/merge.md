@@ -1,7 +1,7 @@
 ---
 description: Merge a branch into the current branch
-model: sonnet
-effort: medium
+model: opus
+effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "BRANCH"
 ---

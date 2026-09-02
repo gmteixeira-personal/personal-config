@@ -1,7 +1,7 @@
 ---
 description: Switch to a branch, tracking it from the remote or creating it as needed
-model: sonnet
-effort: medium
+model: opus
+effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "BRANCH"
 ---

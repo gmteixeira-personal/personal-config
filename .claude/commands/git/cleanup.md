@@ -1,7 +1,7 @@
 ---
 description: Propose and delete local and remote branches whose work has already landed
 model: opus
-effort: high
+effort: low
 allowed-tools: Bash(git:*), Read
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Initialize a git repository here, optionally registering a remote URL as origin
-model: sonnet
+model: opus
 effort: low
 allowed-tools: Bash(git:*), Read
 argument-hint: "[REPO url]"
