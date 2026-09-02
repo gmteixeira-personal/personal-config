@@ -1,5 +1,7 @@
 ---
 description: List open OpenSpec proposals and suggest the next change to do
+model: opus
+effort: medium
 allowed-tools: Bash(ls:*), Bash(cat:*), Bash(head:*), Bash(grep:*), Bash(find:*), Read, Glob, Grep
 ---
 
