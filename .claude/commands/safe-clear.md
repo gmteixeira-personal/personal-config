@@ -14,7 +14,7 @@ A place where clearing the context loses nothing but the conversation. All of th
 - **No half-finished edit.** Every file touched this session is in a state that parses and that a reader would recognise as deliberate. A function opened and not closed, an import added for a call not yet written, a rename applied to three of five call sites — none of those is a safe point.
 - **Nothing running.** No background command, agent, or task is still in flight whose result only this context knows how to interpret.
 - **Nothing pending in the conversation.** No question waiting on the user, no confirmation half-given.
-- **The next step is describable in a sentence or two.** If it takes a page to say what comes next, the point is not yet safe — either finish to a coarser boundary or write the handoff file described below.
+- **The next step is describable in a few sentenses.** If it takes a page to say what comes next, the point is not yet safe — either finish to a coarser boundary or write the handoff file described below.
 
 If all of that already holds when the command runs, print the block and stop. Change nothing to get there.
 
