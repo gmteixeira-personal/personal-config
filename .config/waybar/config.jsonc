@@ -1,0 +1,20 @@
+// waybar — bar geometry only.
+//
+// The module list, and every module's own options, still come from
+// /etc/xdg/waybar/config.jsonc, pulled in by the include below. Only the keys
+// restated here override it: waybar resolves duplicates in favour of the
+// including file, so this stays a two-value patch rather than a fork of a
+// system file that package updates keep moving.
+//
+// Appearance lives in style.css beside this file.
+{
+    "include": ["/etc/xdg/waybar/config.jsonc"],
+
+    // 30 in the stock file, which leaves a deep band of empty space around
+    // 13px text now that nothing is drawn behind it.
+    "height": 24,
+
+    // Gap between modules. The stylesheet's per-module padding does most of
+    // the separating, so this only has to stop them touching.
+    "spacing": 2
+}

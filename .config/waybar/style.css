@@ -1,0 +1,104 @@
+/* waybar — the session's bar, started by .config/niri/config.kdl.
+ *
+ * Only the appearance is declared here. The module list still comes from
+ * /etc/xdg/waybar/config.jsonc, which config.jsonc beside this file includes
+ * rather than replaces; that file carries the bar's geometry and nothing else.
+ *
+ * waybar loads exactly one stylesheet, so this file replaces the system one
+ * rather than cascading over it: anything not restated here is unstyled.
+ *
+ * Reload without restarting the session: pkill -SIGUSR2 waybar
+ *
+ * Full reference: man 5 waybar-styles
+ */
+
+* {
+    font-family: 'Noto Sans Mono', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', monospace;
+    font-size: 13px;
+    /* Kill GTK's default focus and hover artefacts on every widget at once. */
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+}
+
+/* The bar itself draws nothing. The stock stylesheet fills it with
+ * rgba(43, 48, 59, 0.5) and rules a 3px grey line under it; both are gone, so
+ * the wallpaper reads straight through and the bar is only its text. */
+window#waybar {
+    background: transparent;
+    color: #ffffff;
+}
+
+/* Text over an unknown wallpaper cannot rely on contrast it does not control.
+ * A shadow costs nothing on a dark background and is what keeps the bar legible
+ * over a light one. */
+label {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Every module: no fill, white text. The stock stylesheet gives each one a
+ * saturated block of its own -- white battery, green cpu, purple memory, yellow
+ * pulseaudio, blue network, grey clock -- which is the row of coloured tiles
+ * this file exists to remove. Spacing carries the separation instead. */
+#idle_inhibitor,
+#pulseaudio,
+#network,
+#power-profiles-daemon,
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#battery,
+#clock,
+#tray {
+    background: transparent;
+    color: #ffffff;
+    padding: 0 6px;
+}
+
+/* Trailing module sits clear of the screen edge. */
+.modules-right > widget:last-child > * {
+    padding-right: 10px;
+}
+
+/* State is reported by recolouring the text, since there is no longer a
+ * background to carry it. Values are Catppuccin Mocha, the palette
+ * .config/swaylock/config already uses, so the bar and the lock screen agree on
+ * what red means. */
+
+/* Red: something is wrong now. */
+#battery.critical:not(.charging),
+#network.disconnected,
+#temperature.critical,
+#tray > .needs-attention {
+    color: #f38ba8;
+}
+
+/* Green: charging, and the power profile that costs least. */
+#battery.charging,
+#battery.plugged,
+#power-profiles-daemon.power-saver {
+    color: #a6e3a1;
+}
+
+/* Peach: running hot deliberately. */
+#power-profiles-daemon.performance {
+    color: #fab387;
+}
+
+/* Yellow: the idle inhibitor is holding the screen awake, which suppresses the
+ * 300-second swayidle lock declared in .config/niri/config.kdl. That is a
+ * security-relevant state, so it is the one toggle on the bar that changes
+ * colour when it is on. */
+#idle_inhibitor.activated {
+    color: #f9e2af;
+}
+
+/* Grey: present but silenced. */
+#pulseaudio.muted {
+    color: #6c7086;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}

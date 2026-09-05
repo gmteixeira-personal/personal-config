@@ -66,9 +66,13 @@
 # foot.ini is read once by `foot --server` when the session starts, so it is
 # configuration and not state. The systemd user units that start that server
 # are enabled on the machine and have no tracked file of their own.
+# The two waybar files are the bar's appearance and its geometry only; the
+# module list stays in /etc/xdg/waybar/config.jsonc, which config.jsonc includes.
 !/.config/niri/config.kdl
 !/.config/foot/foot.ini
 !/.config/swaylock/config
+!/.config/waybar/style.css
+!/.config/waybar/config.jsonc
 
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential

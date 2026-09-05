@@ -10,7 +10,7 @@ Defines what this repository must record for the graphical session to be rebuilt
 
 Every program the graphical session depends on SHALL appear in the repository's tracked required-software documentation, including the compositor, the terminal, the bar, the launcher, the lock screen, the idle daemon that drives it, and any helper the compositor needs for compatibility with other window systems.
 
-Configuration for a program is not a substitute for naming it. A tracked configuration file for an absent program produces a session that starts and is missing a piece, which is the failure mode this documentation exists to prevent. The reverse matters just as much here: the bar, the launcher and the idle daemon have no tracked configuration at all, because each runs on its built-in defaults or on arguments the compositor gives it, so the documentation is the only place their absence is ever announced.
+Configuration for a program is not a substitute for naming it. A tracked configuration file for an absent program produces a session that starts and is missing a piece, which is the failure mode this documentation exists to prevent. The reverse matters just as much here: the launcher and the idle daemon have no tracked configuration at all, because each runs on its built-in defaults or on arguments the compositor gives it, so the documentation is the only place their absence is ever announced.
 
 #### Scenario: A reader can tell what the session needs
 
