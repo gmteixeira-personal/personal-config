@@ -1,0 +1,69 @@
+# swaylock — the session's lock screen, bound to Super+Alt+L in
+# .config/niri/config.kdl.
+#
+# Read once when swaylock starts; there is no reload. Every long option from
+# `swaylock --help` is valid here with the leading dashes removed, and options
+# that take no argument are written bare.
+#
+# Full reference: man 1 swaylock
+
+# Background. The unconfigured default is light grey, which is a full-brightness
+# flash every time the screen locks. This is a near-black fill instead.
+# solid_color keeps it authoritative even if an image is ever passed on the
+# command line.
+color=11111b
+scaling=solid_color
+
+# The indicator: a large thin ring rather than the small thick default, with the
+# dividing line and the segment separators turned off, so it reads as one arc
+# instead of the segmented dial swaylock draws out of the box.
+indicator-radius=110
+indicator-thickness=6
+line-uses-inside
+separator-color=00000000
+
+font=Adwaita Sans
+font-size=20
+
+# Resting state. The ring sits just above the background rather than glowing, so
+# a locked screen left alone is not a light source.
+inside-color=1e1e2e
+ring-color=313244
+text-color=cdd6f4
+
+# Typing: each keypress lights one segment in green, a backspace in maroon.
+# Neither reuses the blue of "verifying" or the red of "rejected" below — the
+# seven states the screen has to tell apart each get a value of their own.
+key-hl-color=a6e3a1
+bs-hl-color=eba0ac
+
+# Verifying the password.
+inside-ver-color=1e1e2e
+ring-ver-color=89b4fa
+text-ver-color=89b4fa
+
+# Wrong password.
+inside-wrong-color=1e1e2e
+ring-wrong-color=f38ba8
+text-wrong-color=f38ba8
+
+# Cleared, which is also what an empty Enter now does — see
+# ignore-empty-password below.
+inside-clear-color=1e1e2e
+ring-clear-color=f9e2af
+text-clear-color=f9e2af
+
+# Caps Lock. indicator-caps-lock puts the state on the ring as well as in the
+# text, which is the difference between "wrong password" and "wrong password
+# three times in a row".
+indicator-caps-lock
+inside-caps-lock-color=1e1e2e
+ring-caps-lock-color=fab387
+text-caps-lock-color=fab387
+caps-lock-key-hl-color=fab387
+caps-lock-bs-hl-color=eba0ac
+
+# Enter on an empty field clears rather than counting as a failed attempt, and
+# the failure count is shown so a locked-out account is visible as one.
+ignore-empty-password
+show-failed-attempts

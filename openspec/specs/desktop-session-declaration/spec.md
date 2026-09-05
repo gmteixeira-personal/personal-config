@@ -8,9 +8,9 @@ Defines what this repository must record for the graphical session to be rebuilt
 
 ### Requirement: The session's software is named in tracked documentation
 
-Every program the graphical session depends on SHALL appear in the repository's tracked required-software documentation, including the compositor, the terminal, the desktop shell, and any helper the compositor needs for compatibility with other window systems.
+Every program the graphical session depends on SHALL appear in the repository's tracked required-software documentation, including the compositor, the terminal, the bar, the launcher, the lock screen, and any helper the compositor needs for compatibility with other window systems.
 
-Configuration for a program is not a substitute for naming it. A tracked configuration file for an absent program produces a session that starts and is missing a piece, which is the failure mode this documentation exists to prevent.
+Configuration for a program is not a substitute for naming it. A tracked configuration file for an absent program produces a session that starts and is missing a piece, which is the failure mode this documentation exists to prevent. The reverse matters just as much here: the bar, the launcher and the lock screen have no tracked configuration at all, because each runs on its built-in defaults, so the documentation is the only place their absence is ever announced.
 
 #### Scenario: A reader can tell what the session needs
 
@@ -22,6 +22,12 @@ Configuration for a program is not a substitute for naming it. A tracked configu
 
 - **WHEN** the repository tracks a configuration file for a program
 - **THEN** that program SHALL appear in the required-software documentation
+
+#### Scenario: A named program without tracked configuration
+
+- **WHEN** the session depends on a program that has no tracked configuration file
+- **THEN** it SHALL still be named in the required-software documentation
+- **AND** the documentation SHALL state that it runs on its own defaults
 
 ### Requirement: Settings in an untrackable state directory are declared in the tool's own config layer
 
@@ -73,11 +79,13 @@ An exported configuration is a machine's own state written out, so it carries wh
 - **WHEN** the declaration is inspected
 - **THEN** it SHALL contain no token, key or account identifier
 
-### Requirement: The rebuild procedure is written down and ordered
+### Requirement: The rebuild procedure states what the checkout carries
 
-The tracked documentation SHALL describe how to rebuild the session from a checkout, in an order that works, naming what must be installed before the configuration means anything and how the session is started.
+The tracked documentation SHALL describe how to rebuild the session from a checkout, in an order that works, naming what must be installed before the configuration means anything and how the session is started. It SHALL also state which of the session's programs the checkout configures and which run on their own defaults.
 
 Ordering is the substance of the procedure rather than a presentational detail: the compositor's configuration names programs that must exist before it is loaded, and the session's user units require the compositor to have been started in the way that activates them.
+
+Saying what the checkout does not carry matters for the same reason as the order. Most of this session's programs have no tracked configuration at all, so a reader who assumes a checkout configures everything it names will go looking for files that were never written, and will read their absence as a broken clone rather than as the intended state.
 
 #### Scenario: The procedure is followable on a fresh machine
 
@@ -85,7 +93,8 @@ Ordering is the substance of the procedure rather than a presentational detail: 
 - **THEN** it SHALL name the software to install before the tracked configuration is used
 - **AND** it SHALL name how the session is started
 
-#### Scenario: The procedure covers the shell's settings
+#### Scenario: The procedure states what the checkout does not carry
 
 - **WHEN** the rebuild procedure is read
-- **THEN** it SHALL account for the desktop shell's declared settings without requiring the reader to find them
+- **THEN** it SHALL say which of the session's programs the checkout configures
+- **AND** it SHALL say which of them run on their own defaults, so nothing is looked for that does not exist

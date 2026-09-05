@@ -111,7 +111,7 @@ input {
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
     // Set gaps around windows in logical pixels.
-    gaps 0
+    gaps 8
 
     // When to center a column when changing focus, options are:
     // - "never", default behavior, focusing an off-screen column will keep at the left
@@ -268,7 +268,16 @@ layout {
 // See the binds section below for more spawn examples.
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
-spawn-at-startup "noctalia" "-d"
+spawn-at-startup "waybar"
+
+// The idle manager. It locks the screen after 300 seconds without input, and
+// again before the system sleeps -- suspend is the case a timeout alone cannot
+// cover, since a lid closed inside the five minutes would otherwise resume into
+// an unlocked session. swaylock takes -f here so it daemonizes and the command
+// returns; -w makes swayidle wait for it, which is what makes before-sleep a
+// barrier rather than a race. Both locks read ~/.config/swaylock/config, the
+// same file Super+Alt+L uses, so every way in shows the same screen.
+spawn-at-startup "swayidle" "-w" "timeout" "300" "swaylock -f" "before-sleep" "swaylock -f"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
@@ -363,9 +372,8 @@ binds {
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "footclient"; }
-    Mod+D hotkey-overlay-title="Run an Application: noctalia" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: noctalia" { spawn "noctalia" "msg" "session" "lock"; }
-    Mod+Alt+V hotkey-overlay-title="Clipboard History: noctalia" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
@@ -631,5 +639,3 @@ binds {
     // moving the mouse or pressing any other key.
     Mod+Shift+P { power-off-monitors; }
 }
-
-include "noctalia.kdl"

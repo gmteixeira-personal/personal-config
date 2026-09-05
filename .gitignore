@@ -68,12 +68,7 @@
 # are enabled on the machine and have no tracked file of their own.
 !/.config/niri/config.kdl
 !/.config/foot/foot.ini
-
-# noctalia — the declaration only. Its settings UI writes to
-# ~/.local/state/noctalia/, which block 4 denylists with the rest of .local/;
-# that state overrides this file, so this is the copy a fresh machine reads
-# and it has to be re-exported when the UI changes something.
-!/.config/noctalia/settings.toml
+!/.config/swaylock/config
 
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential

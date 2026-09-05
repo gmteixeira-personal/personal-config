@@ -149,16 +149,40 @@ Without these, the tracked configuration does not work.
   packaged `foot-server.socket` and `foot-server.service` user units start that
   server with the session and must be enabled. Without foot, `Mod+T` opens
   nothing. *A system package.*
-- **`noctalia`** — the desktop shell: the bar, the launcher, the lock screen and
-  the clipboard history, all of which `Mod+D`, `Super+Alt+L` and `Mod+Alt+V`
-  reach over its IPC socket. Without it those three keys do nothing and the
-  session has no bar. Its settings are declared in
-  `.config/noctalia/settings.toml` — see **Rebuilding the desktop session**.
-  *A system package.*
+- **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, the launcher and the
+  lock screen. `config.kdl` starts waybar with the session and binds `Mod+D` to
+  fuzzel and `Super+Alt+L` to swaylock. Only the lock screen is configured here:
+  `.config/swaylock/config` replaces its light-grey default background with a
+  dark one and restyles the unlock indicator, so locking the screen at night is
+  not a flash of white. waybar and fuzzel have no tracked configuration because
+  neither has any — both run on their built-in defaults. Without them the
+  session has no bar and those two keys do nothing. *System packages.*
+- **`swayidle`** — the idle manager, and the only thing that locks the screen
+  without being asked. `config.kdl` starts it with the session and gives it its
+  whole configuration on the one line: lock after 300 seconds without input, and
+  lock again before the system sleeps, both by running the same swaylock that
+  `Super+Alt+L` runs, so every way into the lock screen shows the same screen.
+  The second event covers what the first cannot — a lid closed inside those five
+  minutes would otherwise suspend and resume into an unlocked session. Without
+  it the session still locks on `Super+Alt+L` and nothing else changes, so its
+  absence is a degradation rather than a broken session: the screen simply never
+  locks on its own. *A system package.*
 - **`xwayland-satellite`** — niri has no X11 support of its own and starts this
   to provide it. Without it, X11 clients do not run at all; Wayland clients are
   unaffected, so the failure looks like "some applications are broken" rather
   than anything about X11. *A system package.*
+- **`greetd`** — the login manager, and what makes the machine reach the session
+  at boot rather than sitting at a text console. Its configuration lives in
+  `/etc/greetd/config.toml`, outside this repository's root, so the checkout
+  cannot carry it — **Rebuilding the desktop session** reproduces it in full.
+  Without greetd the machine boots to a console and the session is started by
+  hand, which the fish wrapper still makes a one-word command: a degradation
+  with a working fallback, not a broken session. *A system package.*
+- **`tuigreet`** — the greeter greetd presents: the login prompt itself, and the
+  `F2` picker that lists the entries in `/usr/share/wayland-sessions/`. Without
+  it greetd starts, finds the command it was configured to run missing, and
+  presents nothing at all — which reads as a broken boot rather than as a
+  missing package, and is worth recognising as this. *A system package.*
 
 ### Optional
 
@@ -216,13 +240,6 @@ named; where nothing at all is printed, that is said outright.
   that loader is missing on machines that have the directory. **Absence is
   silent, and by design.**
 
-- **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, launcher and lock screen
-  the desktop shell replaced. They are superseded rather than retired: nothing
-  starts them and no binding names them, but they remain installed so the shell
-  can be abandoned by restoring three lines in `config.kdl`. Losing them costs
-  that fallback and nothing else. waybar has no tracked configuration because it
-  never had any — it ran on its built-in defaults. *System packages.*
-
 ### Carried by the repository
 
 Cloning gives you these. Installing them separately is unnecessary.
@@ -246,14 +263,17 @@ Cloning gives you these. Installing them separately is unnecessary.
 
 ## Rebuilding the desktop session
 
-The session is niri running foot, with noctalia as its shell. A checkout carries
-the configuration for all three; the packages themselves are listed under
-**Software this configuration expects**, above. Order matters here — each step
-below is what makes the next one mean anything.
+The session is niri running foot, with waybar, fuzzel and swaylock providing the
+bar, the launcher and the lock screen, and swayidle locking it after five idle
+minutes. A checkout carries configuration for niri, foot and swaylock, and
+swayidle's whole configuration is the compositor startup line that launches it;
+waybar and fuzzel run on their built-in defaults. The packages themselves are
+listed under **Software this configuration expects**, above. Order matters
+here — each step below is what makes the next one mean anything.
 
-**1. Install the session software.** niri, foot, noctalia and
-xwayland-satellite, all from **Required**. The tracked configuration names
-programs that must already exist when it is read.
+**1. Install the session software.** niri, foot, waybar, fuzzel, swaylock,
+swayidle and xwayland-satellite, all from **Required**. The tracked
+configuration names programs that must already exist when it is read.
 
 **2. Enable the terminal server's units.**
 
@@ -276,29 +296,64 @@ imports the environment into systemd and activates `graphical-session.target`,
 which is what the units from step 2 are wanted by. Start the compositor any
 other way and they never run, and nothing reports it.
 
-### The shell's settings, and how they drift
+**4. Make the session start at boot.** Last, because a greeter configured before
+the session it launches exists is a greeter that launches nothing. Steps 1 to 3
+are already a complete route to a working session without this — which is what
+you want on a machine reached only over SSH.
 
-`.config/noctalia/settings.toml` is tracked and carries the theme, the bar
-widget list and the panel placement. It is not the file noctalia's settings UI
-writes — that is `~/.local/state/noctalia/settings.toml`, under the `.local/`
-tree the ignore policy denylists.
+This repository cannot carry the file that decides it: the repository root is
+`$HOME`, and greetd's configuration is root-owned under `/etc`. So it is
+reproduced here instead. Write `/etc/greetd/config.toml`:
 
-noctalia reads its config directory first and then applies the state file over
-it. So:
+```toml
+[terminal]
+# The VT to run the greeter on. Can be "next", "current" or a number
+# designating the VT.
+vt = 1
 
-- On a fresh machine there is no state file, and the tracked declaration *is*
-  the configuration. Nothing needs restoring.
-- On a machine that already has state, every key present in both comes from
-  state, and the tracked file is inert for those keys.
+# The default session, also known as the greeter.
+[default_session]
+# tuigreet reads /usr/share/wayland-sessions by default, so F2 lists Niri.
+# --cmd is the default session until --remember-user-session records a choice.
+# --remember* state is stored as /var/lib/greetd/tuigreet-last* in Fedora's build.
+command = "tuigreet --time --remember --remember-user-session --asterisks --cmd niri-session"
 
-Which means the declaration can drift arbitrarily far from what you are actually
-looking at, locally, with no symptom — and the machine that finds out is the
-next one. After changing anything in the noctalia UI:
+# The user to run the command as. tuigreet is a TUI on a VT, so it needs no
+# video or input group membership.
+user = "greetd"
+```
+
+Then enable it and make the graphical target the default:
 
 ```sh
-noctalia config export merged > ~/.config/noctalia/settings.toml
-noctalia config validate
+sudo systemctl enable greetd
+sudo systemctl set-default graphical.target
 ```
+
+If the machine already runs another display manager — GDM, SDDM, LightDM —
+resolve that first. Two enabled greeters contend for the same VT, and the one
+that loses is not always the one you disabled.
+
+**All three routes into the session run `niri-session`, never a bare `niri`**,
+and each is decided by a different file:
+
+| route | file | what it says |
+|---|---|---|
+| the greeter's default | `/etc/greetd/config.toml` | `--cmd niri-session` |
+| the `F2` session picker | `/usr/share/wayland-sessions/niri.desktop` | `Exec=niri-session` |
+| typing `niri` at a prompt | `.config/fish/functions/niri.fish` | `exec niri-session` |
+
+They agree because a bare compositor imports nothing into the systemd user
+manager, so `graphical-session.target` never activates and the units from step 2
+stay inactive with no error anywhere. A single route getting this wrong gives a
+session that is broken depending on how you logged in, which is harder to find
+than one that is broken every time.
+
+One caveat on `--remember-user-session`: a remembered choice is stored under
+`/var/lib/greetd/` and takes precedence over `--cmd`. That is harmless while
+`/usr/share/wayland-sessions/` holds one entry, since both name `niri-session`
+anyway. It becomes something to think about the moment a second session type is
+installed.
 
 ## Adding a new dotfile
 
@@ -446,8 +501,8 @@ itself and the `direnv allow` that approves it, and a `layout venv` with no
 | `.config/herdr/plugins/`, `.config/herdr/plugins.json` | herdr's own plugin registry and config: absolute paths, install timestamps, live mode |
 | `.bash_history`, `.psql_history`, `.viminfo` | history can contain anything |
 | `.config/openspec/config.json` | telemetry state; a published `anonymousId` is not anonymous |
-| `.local/state/noctalia/` | the shell's own settings state; declared instead in `.config/noctalia/settings.toml` |
 | `.cache/`, `.local/`, `.npm/`, `.nuget/`, `.cargo/`, `.dotnet/`, `.nvm/`, `.vscode-server/` | bulk, machine-local |
+| `/etc/greetd/config.toml` | not a choice: it is outside the repository root, which is `$HOME`, so no allowlist entry can reach it. Reproduced in full under **Rebuilding the desktop session** instead |
 
 ## Neovim
 
