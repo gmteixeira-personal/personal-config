@@ -50,8 +50,30 @@
 # generated scripts that each tool reinstalls (openspec and herdr both write
 # theirs), and fish_variables is where fish records universal variables, which
 # are set on the machine rather than in a config file. Both are machine-local.
+#
+# The two completions named below are the exception that rule did not
+# anticipate: waybar ships only a section-5 page describing its config file,
+# and npx documents its options in prose, so fish derives nothing from either
+# and both were written by hand. No tool regenerates them, so untracked means
+# lost. They are named as files — re-including the directory would pull in the
+# tool-written scripts the rule above deliberately excludes.
 !/.config/fish/conf.d/**
 !/.config/fish/functions/**
+!/.config/fish/completions/waybar.fish
+!/.config/fish/completions/npx.fish
+
+# wayland session — the compositor's configuration and the terminal it opens.
+# foot.ini is read once by `foot --server` when the session starts, so it is
+# configuration and not state. The systemd user units that start that server
+# are enabled on the machine and have no tracked file of their own.
+!/.config/niri/config.kdl
+!/.config/foot/foot.ini
+
+# noctalia — the declaration only. Its settings UI writes to
+# ~/.local/state/noctalia/, which block 4 denylists with the rest of .local/;
+# that state overrides this file, so this is the copy a fresh machine reads
+# and it has to be re-exported when the UI changes something.
+!/.config/noctalia/settings.toml
 
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential

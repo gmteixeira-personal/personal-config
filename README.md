@@ -96,6 +96,29 @@ Without these, the tracked configuration does not work.
   `$SHELL` still land in bash. Present on any machine this targets; listed so
   that duplication reads as deliberate.
 
+- **`niri`** — the compositor. `.config/niri/config.kdl` is tracked in full: the
+  key bindings, the startup entries, the layout. Without it none of the rest of
+  the session has anything to run in. It also needs to be started as
+  `niri-session` rather than as a bare `niri`, or `graphical-session.target`
+  never activates and the session's user units stay inactive with no error —
+  `.config/fish/functions/niri.fish` makes the bare name do the right thing.
+  *A system package.*
+- **`foot`** — the terminal, run as a server with `footclient` attaching to it,
+  which is what `Mod+T` opens and what `.config/foot/foot.ini` configures. The
+  packaged `foot-server.socket` and `foot-server.service` user units start that
+  server with the session and must be enabled. Without foot, `Mod+T` opens
+  nothing. *A system package.*
+- **`noctalia`** — the desktop shell: the bar, the launcher, the lock screen and
+  the clipboard history, all of which `Mod+D`, `Super+Alt+L` and `Mod+Alt+V`
+  reach over its IPC socket. Without it those three keys do nothing and the
+  session has no bar. Its settings are declared in
+  `.config/noctalia/settings.toml` — see **Rebuilding the desktop session**.
+  *A system package.*
+- **`xwayland-satellite`** — niri has no X11 support of its own and starts this
+  to provide it. Without it, X11 clients do not run at all; Wayland clients are
+  unaffected, so the failure looks like "some applications are broken" rather
+  than anything about X11. *A system package.*
+
 ### Optional
 
 The configuration is written to survive these being absent. What is lost is
@@ -152,6 +175,13 @@ named; where nothing at all is printed, that is said outright.
   that loader is missing on machines that have the directory. **Absence is
   silent, and by design.**
 
+- **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, launcher and lock screen
+  the desktop shell replaced. They are superseded rather than retired: nothing
+  starts them and no binding names them, but they remain installed so the shell
+  can be abandoned by restoring three lines in `config.kdl`. Losing them costs
+  that fallback and nothing else. waybar has no tracked configuration because it
+  never had any — it ran on its built-in defaults. *System packages.*
+
 ### Carried by the repository
 
 Cloning gives you these. Installing them separately is unnecessary.
@@ -172,6 +202,62 @@ Cloning gives you these. Installing them separately is unnecessary.
   workflow it served is covered by the Neovim git plugins and the `/git:*`
   commands. Bringing it back is a deliberate change that supersedes that
   requirement, not merely a reinstall.
+
+## Rebuilding the desktop session
+
+The session is niri running foot, with noctalia as its shell. A checkout carries
+the configuration for all three; the packages themselves are listed under
+**Software this configuration expects**, above. Order matters here — each step
+below is what makes the next one mean anything.
+
+**1. Install the session software.** niri, foot, noctalia and
+xwayland-satellite, all from **Required**. The tracked configuration names
+programs that must already exist when it is read.
+
+**2. Enable the terminal server's units.**
+
+```sh
+systemctl --user enable foot-server.socket foot-server.service
+```
+
+Both, deliberately: the service starts the server with the session, the socket
+covers a client that arrives before it is ready.
+
+**3. Start the session as a session, not as a bare compositor.**
+
+```sh
+niri-session
+```
+
+`.config/fish/functions/niri.fish` makes a bare `niri` do this, while leaving
+`niri msg` and `niri validate` pointed at the binary. This is the step that
+imports the environment into systemd and activates `graphical-session.target`,
+which is what the units from step 2 are wanted by. Start the compositor any
+other way and they never run, and nothing reports it.
+
+### The shell's settings, and how they drift
+
+`.config/noctalia/settings.toml` is tracked and carries the theme, the bar
+widget list and the panel placement. It is not the file noctalia's settings UI
+writes — that is `~/.local/state/noctalia/settings.toml`, under the `.local/`
+tree the ignore policy denylists.
+
+noctalia reads its config directory first and then applies the state file over
+it. So:
+
+- On a fresh machine there is no state file, and the tracked declaration *is*
+  the configuration. Nothing needs restoring.
+- On a machine that already has state, every key present in both comes from
+  state, and the tracked file is inert for those keys.
+
+Which means the declaration can drift arbitrarily far from what you are actually
+looking at, locally, with no symptom — and the machine that finds out is the
+next one. After changing anything in the noctalia UI:
+
+```sh
+noctalia config export merged > ~/.config/noctalia/settings.toml
+noctalia config validate
+```
 
 ## Adding a new dotfile
 
@@ -319,6 +405,7 @@ itself and the `direnv allow` that approves it, and a `layout venv` with no
 | `.config/herdr/plugins/`, `.config/herdr/plugins.json` | herdr's own plugin registry and config: absolute paths, install timestamps, live mode |
 | `.bash_history`, `.psql_history`, `.viminfo` | history can contain anything |
 | `.config/openspec/config.json` | telemetry state; a published `anonymousId` is not anonymous |
+| `.local/state/noctalia/` | the shell's own settings state; declared instead in `.config/noctalia/settings.toml` |
 | `.cache/`, `.local/`, `.npm/`, `.nuget/`, `.cargo/`, `.dotnet/`, `.nvm/`, `.vscode-server/` | bulk, machine-local |
 
 ## Neovim
