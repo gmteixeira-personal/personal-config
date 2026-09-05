@@ -20,22 +20,45 @@ if status is-interactive
         bind -M insert \cb backward-kill-word
 
         # Accept the autosuggestion and run it in one keystroke. The key this is
-        # for is Ctrl+Enter; ctrl-j is what the terminal actually delivers when
-        # it is pressed, measured with fish_key_reader in WezTerm on this
-        # machine -- the terminal sends a bare LF, 0x0A, rather than encoding
-        # the modifier, and 0x0A is ctrl-j. Plain Enter arrives separately as
-        # `enter`, so the two are distinguishable and Ctrl+Enter is reachable;
-        # it just is not spelled `ctrl-enter` here. Ctrl+J does the same thing
-        # as a consequence, which one byte for two chords makes unavoidable.
+        # for is Ctrl+Enter, and which name it arrives under is a property of
+        # the terminal, not of this machine -- so both names are bound and the
+        # terminal stops being a precondition of the key working.
         #
-        # Written as `ctrl-j` rather than the `\cj` of the bindings above
-        # because this is the line whose key is the whole point of it, and the
+        # A terminal speaking the kitty keyboard protocol encodes the modifier,
+        # and fish 4 negotiates that protocol, so the press arrives as a key of
+        # its own named `ctrl-enter`. Binding it is not optional there: fish
+        # ships the preset `ctrl-enter execute`, so an unbound `ctrl-enter` is
+        # not a key that does nothing but a key that runs the line without
+        # accepting the suggestion -- indistinguishable from plain Enter, and
+        # exactly how this binding failed once the session's terminal became
+        # foot. A wrong action rather than an error is why it went unnoticed.
+        #
+        # A terminal without that protocol drops the modifier and sends a bare
+        # LF, 0x0A, which is ctrl-j: measured with fish_key_reader under
+        # WezTerm, whose kitty-protocol support sits behind
+        # `enable_kitty_keyboard` and is off by default. Ctrl+J does the same
+        # thing as a consequence, which one byte for two chords makes
+        # unavoidable -- and it keeps doing it under the protocol, where the two
+        # chords are finally distinct, because Ctrl+J is a chord someone can
+        # press and this action is what it has always done.
+        #
+        # Written as key names rather than the `\cf`/`\cb` escapes above because
+        # these are the lines whose keys are the whole point of them, and the
         # name says which chord to press where the escape does not.
+        bind -M default ctrl-enter accept-autosuggestion-and-run
+        bind -M insert ctrl-enter accept-autosuggestion-and-run
+
         bind -M default ctrl-j accept-autosuggestion-and-run
         bind -M insert ctrl-j accept-autosuggestion-and-run
     end
 
     # The bindings above lose ctrl-j to tide, and this puts it back.
+    #
+    # Only ctrl-j collides -- tide binds no protocol key name -- so ctrl-enter
+    # is re-bound here for symmetry rather than necessity. The two lists are
+    # read as a pair, and a reader who finds them different has to work out
+    # which collision made them differ; two lines cost less than that. It also
+    # means a future tide that binds ctrl-enter is already covered.
     #
     # tide's transient prompt binds \r and \n at file scope in
     # functions/fish_prompt.fish, and \n is the same byte as ctrl-j. fish
@@ -70,6 +93,9 @@ if status is-interactive
     # than re-binding at every prompt forever.
     function _accept_and_run_after_tide --on-event fish_prompt
         functions fish_prompt >/dev/null 2>&1
+
+        bind -M default ctrl-enter accept-autosuggestion-and-run
+        bind -M insert ctrl-enter accept-autosuggestion-and-run
 
         bind -M default ctrl-j accept-autosuggestion-and-run
         bind -M insert ctrl-j accept-autosuggestion-and-run
