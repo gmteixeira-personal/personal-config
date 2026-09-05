@@ -59,9 +59,50 @@ Without this, `git commit` fails with exit 128 before the hook even runs. Use
 the GitHub noreply address: commit objects are published even though
 `.gitconfig` is not.
 
+**4. Authenticate, so you can push.** Step 1 clones over HTTPS deliberately —
+a fresh machine has no keys yet, and an SSH clone would fail before you could
+make one. Pushing is a different matter: with no credential helper configured,
+the first `git push` fails with
+
+```
+fatal: could not read Username for 'https://github.com': No such device or address
+```
+
+which reads like a missing password and is not one. Point the remote at SSH:
+
+```sh
+git remote set-url origin git@github.com:<user>/<repo>.git
+ssh -T git@github.com          # should greet you by the expected account name
+```
+
+**If this machine carries more than one account on the same forge**, give each
+one an SSH host alias with its own key, and write the remote against the alias
+rather than against `github.com`:
+
+```
+# ~/.ssh/config — deliberately not tracked; it sits with the private keys
+Host github-work
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_work
+```
+
+```sh
+git remote set-url origin git@github-work:<org>/<repo>.git
+```
+
+The account whose key answers for plain `github.com` needs no alias. Check which
+one that is with the `ssh -T` above before assuming.
+
+**Do not configure a credential helper globally.** A helper is asked by host,
+and every account here shares one host, so it would answer with one account's
+credentials for another account's repository — and succeed. That failure is
+silent and lands in the published history. `gh auth setup-git` configures one, so
+do not run it on a machine with more than one account.
+
 ## Software this configuration expects
 
-The three bootstrap steps above need only `git`. Everything the tracked
+The four bootstrap steps above need only `git` and an SSH client. Everything the tracked
 configuration itself reaches for is below, in three groups: what has to be
 there, what is tolerated when absent, and what the repository already carries so
 you do not go installing it. Each entry says where it comes from, but not with
@@ -398,7 +439,7 @@ itself and the `direnv allow` that approves it, and a `layout venv` with no
 | path | why |
 |---|---|
 | `.gitconfig` | per-machine identity and credential helpers |
-| `.ssh/` | private keys |
+| `.ssh/` | private keys, and `config` — the per-account host aliases live there, so the convention is documented under **Bootstrap a new machine** instead |
 | `.config/gh/hosts.yml` | OAuth token |
 | `.claude/.credentials.json`, `.claude.json` | credentials and session state |
 | `.claude/plugins/` | derived from the declaration above |
