@@ -26,10 +26,10 @@
 
 ## 5. Verify the session
 
-- [ ] 5.1 Restart the session with `niri-session` and verify `pgrep -a swayidle` shows exactly one process carrying the `timeout 300` arguments
-- [ ] 5.2 Press `Super+Alt+L` and verify the screen that appears is dark rather than light grey, with a single large ring and no segment separators
-- [ ] 5.3 Leave the session untouched for five minutes and verify it locks on its own, presenting the same screen as 5.2
-- [ ] 5.4 Type a character, then a backspace, then submit a wrong password, and verify the ring reports each of those three states differently and that the failed-attempt count is shown
-- [ ] 5.5 Press Enter on an empty field and verify the failed-attempt count does not increase
-- [ ] 5.6 Enable Caps Lock at the lock screen and verify the ring itself changes colour rather than only the text
-- [ ] 5.7 Suspend the machine and resume it, and verify it comes back to a lock screen
+- [x] 5.1 Restart the session with `niri-session` and verify `pgrep -a swayidle` shows exactly one process carrying the `timeout 300` arguments
+- [x] 5.2 Press `Super+Alt+L` and verify the screen that appears is dark rather than light grey, with a single large ring and no segment separators
+- [x] 5.3 Leave the session untouched for five minutes and verify it locks on its own, presenting the same screen as 5.2
+- [x] 5.4 Type a character, then a backspace, then submit a wrong password, and verify the ring reports each of those three states differently and that the failed-attempt count is shown
+- [x] 5.5 Press Enter on an empty field and verify the failed-attempt count does not increase
+- [x] 5.6 Enable Caps Lock at the lock screen and verify the ring itself changes colour rather than only the text
+- [x] 5.7 Suspend the machine and resume it, and verify it comes back to a lock screen
