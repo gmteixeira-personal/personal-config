@@ -21,7 +21,7 @@
 
 ## 4. Commit and apply
 
-- [ ] 4.1 Commit the tracked changes — `.config/foot/foot.ini`, `README.md`, and the change directory — before anything disruptive runs; verify `git status` is clean afterwards for those paths
+- [x] 4.1 Commit the tracked changes — `.config/foot/foot.ini`, `README.md`, and the change directory — before anything disruptive runs; verify `git status` is clean afterwards for those paths
 - [ ] 4.2 Restart the terminal server with `systemctl --user restart foot-server.service`. **This closes every open terminal window, including the one running this work.** Verify `systemctl --user is-active foot-server.service` reports active from a new window
 - [ ] 4.3 In a new terminal window, verify the prompt's tide segment icons render as icons rather than replacement boxes
 - [ ] 4.4 In that window, open Neovim and verify the file explorer and status line draw `mini.icons` glyphs rather than boxes
