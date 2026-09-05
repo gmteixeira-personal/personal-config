@@ -127,10 +127,22 @@ Without these, the tracked configuration does not work.
   `bob`, the version manager: `env.fish` already prepends
   `~/.local/share/bob/nvim-bin` to `PATH`.* That configuration states its own
   prerequisites — see **Neovim** below, and `.config/nvim/README.md`.
-- **A Nerd Font in the terminal** — the prompt's segment icons and Neovim's
-  filetype and status-line glyphs both come from one. Without it they render as
-  replacement boxes; nothing else breaks. *Installed into the terminal
-  emulator, not onto the machine.*
+- **JetBrains Mono Nerd Font** — `.config/foot/foot.ini` names
+  `JetBrainsMono Nerd Font Mono` outright, and the prompt's segment icons and
+  Neovim's filetype and status-line glyphs both come from that font's Nerd Font
+  ranges. Without it the terminal falls back to whatever fontconfig prefers and
+  every one of those icons renders as a replacement box — silently, with nothing
+  reporting why, so the session looks broken rather than incomplete. Nothing
+  else breaks. **Fedora's `jetbrains-mono-fonts` is not a substitute**: it
+  packages the unpatched upstream under the same name and carries none of the
+  glyphs, so installing it satisfies a search and fixes nothing. *Installed onto
+  the machine, per-user: unpack `JetBrainsMono.zip` from the
+  [`ryanoasis/nerd-fonts`](https://github.com/ryanoasis/nerd-fonts) v3.5.1
+  release into `~/.local/share/fonts/JetBrainsMonoNerdFont/`, keep only the 16
+  `JetBrainsMonoNerdFontMono-*.ttf` faces — the base and `Propo` families draw
+  the icons double-width and misalign the cell grid, and the `NL` variants are
+  unused — then run `fc-cache -f ~/.local/share/fonts`. 40M, and `.local/` is
+  denylisted, so none of it is tracked and `git status` stays clean.*
 - **`bash`** — `.bashrc`, `.profile`, `.inputrc`, and `.bash_logout` are
   tracked, and `.bashrc` keeps its own copy of the environment block rather than
   deferring to fish, because ssh sessions, `sudo -s`, and anything invoking
@@ -261,6 +273,14 @@ Cloning gives you these. Installing them separately is unnecessary.
 
 ### Must not be installed
 
+- **`alacritty`** — retired, and required to stay that way:
+  `openspec/specs/retired-tooling/spec.md` wants the package absent, no
+  configuration tracked, no allowlist entry naming it, and no state or cache
+  directory left behind. foot serves the session as a client/server pair and
+  `Mod+T` opens a `footclient`; a second terminal that nothing binds and nothing
+  tracks would need the same Nerd Font as the first, in a file no checkout
+  restores. Bringing it back is a deliberate change that supersedes that
+  requirement, not merely a reinstall.
 - **`lazygit`** — retired, and required to stay that way:
   `openspec/specs/retired-tooling/spec.md` wants the package absent, no
   configuration tracked, and no state or cache directory left behind. The git
