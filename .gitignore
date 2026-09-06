@@ -94,8 +94,9 @@
 
 # The application launcher. Its `terminal` line, which is what desktop entries
 # marked `Terminal=true` are launched through -- fuzzel's default names
-# $TERMINAL, which this session does not set -- and its colours, which the
-# package ships as Solarized Light in a session that is dark everywhere else.
+# $TERMINAL, which this session does not set -- its `fields` line, without which
+# every `Keywords=` line in block 5 is read and ignored, and its colours, which
+# the package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
 # Which application opens what, when a file is opened from outside a shell. Any
@@ -106,11 +107,15 @@
 !/.config/mimeapps.list
 
 # The Bluetooth, calculator and Wi-Fi menus, each run by its own launcher entry
-# -- and the two radio menus also by the bar icon beside them. They live here
-# rather than in `.local/bin` because block 4 ignores `.local/` wholesale, and a
-# block 3 entry cannot re-include a file whose parent directory block 4 excludes.
+# -- and the two radio menus also by the bar icon beside them. `fuzzel-power` is
+# the fourth and takes its verb as an argument, so one file serves the three
+# entries that shut the machine down, restart it and lock it; the confirmation
+# in front of the first two exists once because of that. They live here rather
+# than in `.local/bin` because block 4 ignores `.local/` wholesale, and a block 3
+# entry cannot re-include a file whose parent directory block 4 excludes.
 !/.config/fuzzel/fuzzel-bluetooth
 !/.config/fuzzel/fuzzel-calc
+!/.config/fuzzel/fuzzel-power
 !/.config/fuzzel/fuzzel-wifi
 
 # The notification daemon. Its colours are the same Catppuccin Mocha the
@@ -373,6 +378,20 @@ adbkey*
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-calc.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-wifi.svg
 
+# The three power entries and their icons. All three call the one
+# `fuzzel-power` script with a different verb, so the icons are named for the
+# entry rather than for the script the other three are named for. The glyphs are
+# Adwaita's `system-shutdown-symbolic`, `system-reboot-symbolic` and
+# `system-lock-screen-symbolic`, recoloured to the launcher's text colour for
+# the same reason the radio icons were: the originals are #2e3436 on a #1e1e2e
+# background, which is a glyph that is present, correct and invisible.
+!/.local/share/applications/lock.desktop
+!/.local/share/applications/poweroff.desktop
+!/.local/share/applications/reboot.desktop
+!/.local/share/icons/hicolor/scalable/apps/fuzzel-lock.svg
+!/.local/share/icons/hicolor/scalable/apps/fuzzel-poweroff.svg
+!/.local/share/icons/hicolor/scalable/apps/fuzzel-reboot.svg
+
 # The symbolic links that put those three scripts on PATH. They are tracked, not
 # derived, because the desktop entries above and the bar's click handlers name
 # the scripts by bare command name rather than by path -- a desktop entry cannot
@@ -381,6 +400,7 @@ adbkey*
 # same reason, so a clone into a differently named home resolves them.
 !/.local/bin/fuzzel-bluetooth
 !/.local/bin/fuzzel-calc
+!/.local/bin/fuzzel-power
 !/.local/bin/fuzzel-wifi
 !/.local/bin/brightness-step
 !/.local/bin/waybar-capslock

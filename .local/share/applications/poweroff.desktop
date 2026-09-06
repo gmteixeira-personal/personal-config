@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Shut Down
+GenericName=Power Off
+Comment=Confirm, then power the machine off
+Exec=fuzzel-power poweroff
+Icon=fuzzel-poweroff
+Terminal=false
+Categories=System;
+Keywords=shutdown;shut down;poweroff;power off;halt;turn off;

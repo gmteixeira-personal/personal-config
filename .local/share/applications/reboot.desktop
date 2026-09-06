@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Restart
+GenericName=Reboot
+Comment=Confirm, then restart the machine
+Exec=fuzzel-power reboot
+Icon=fuzzel-reboot
+Terminal=false
+Categories=System;
+Keywords=reboot;restart;reset;

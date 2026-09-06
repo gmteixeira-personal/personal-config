@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Lock Screen
+GenericName=Screen Lock
+Comment=Lock the screen immediately
+Exec=fuzzel-power lock
+Icon=fuzzel-lock
+Terminal=false
+Categories=System;
+Keywords=lock;lock screen;screensaver;swaylock;away;

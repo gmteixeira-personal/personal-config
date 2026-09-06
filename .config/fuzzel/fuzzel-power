@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+#
+# Power off, restart and lock, driven by fuzzel's dmenu mode. Companion to
+# fuzzel-wifi, fuzzel-bluetooth and fuzzel-calc, and the same shape: the window
+# is a fuzzel window, and the session gains a verb without gaining a GUI.
+#
+# One script rather than three because the confirmation below has to exist
+# exactly once. Two copies of a safety mechanism drift -- a fix to the ordering
+# lands in one file and not the other, and the file that missed it is the one
+# nobody re-reads, because it still appears to work. The three desktop entries
+# that call this each pass their verb as the only argument.
+#
+# Why the confirmation is here at all: the launcher is a fuzzy matcher over
+# every desktop entry on the machine, so `sh` matches `Shut Down` and two
+# letters plus Enter is enough to select an entry the user was not looking for.
+# For every other entry in that list a wrong pick opens a window that can be
+# closed. For these two it discards whatever is unsaved everywhere.
+#
+# Why Cancel is the first row: fuzzel starts with the first row selected and
+# offers no way to start with none selected. The Enter that chose `Shut Down`
+# in the launcher can still be in flight when this menu maps, so the row it
+# lands on has to be the harmless one. That ordering is the whole mechanism --
+# two Enters in a row is a cancel, and powering off takes a deliberate Down.
+#
+# Why lock is not confirmed: a lock screen is dismissed by the password the
+# user was about to type anyway, so an accidental lock costs one password and
+# nothing else. A prompt in front of it would slow down the one action whose
+# value is being instant.
+#
+# Why `systemctl poweroff` and not `shutdown -h`: `shutdown` schedules the
+# transition a minute out and broadcasts a wall message meanwhile, which is a
+# different action from the one the entry names. `systemctl poweroff` asks
+# logind to begin now. `shutdown -h now` is a compatibility wrapper around that
+# same call with a wall message nobody in a single-user session reads.
+
+set -uo pipefail
+
+readonly APP_NAME='Power'
+readonly MENU_WIDTH=46
+
+# --- fuzzel plumbing --------------------------------------------------------
+
+# Menu returning the 0-based index of the choice, the same shape fuzzel-wifi's
+# pick has. --only-match rules out custom entries: an index menu has no meaning
+# for text that matches no row, and without it a typo plus Enter would be
+# indistinguishable from a cancel -- which here is the difference between the
+# machine staying up and not.
+pick() {
+    local prompt=$1
+    shift
+
+    local choice
+    choice=$(printf '%s\n' "$@" |
+        fuzzel --dmenu --index --only-match --prompt "$prompt " \
+               --lines "$#" --width "$MENU_WIDTH" \
+               --log-level=none 2>/dev/null)
+
+    [[ $choice =~ ^[0-9]+$ ]] || return 1
+    printf '%s' "$choice"
+}
+
+# Nothing owned org.freedesktop.Notifications in this session until mako was
+# added, and notify-send against a bus with no such name fails silently. The
+# check is the one fuzzel-wifi makes, for the same reason: a script that
+# reports only through a daemon that may be absent reports nothing at all.
+have_notifications() {
+    gdbus call --session \
+        --dest org.freedesktop.DBus \
+        --object-path /org/freedesktop/DBus \
+        --method org.freedesktop.DBus.NameHasOwner \
+        org.freedesktop.Notifications 2>/dev/null | grep -q true
+}
+
+# Failures only. There is no success message to send: the machine either goes
+# down, which is its own report, or the screen locks, which is as well.
+#
+# Critical is what stops the daemon expiring it, and the fallback window is
+# what covers the daemon being absent. By the time either fires the launcher
+# has closed, so without one of them the user is looking at a desktop that did
+# nothing and has no way to find out why.
+report() {
+    if have_notifications; then
+        notify-send --app-name="$APP_NAME" --urgency=critical "$1" "${2-}"
+        return 0
+    fi
+    pick "${1}${2:+ -- $2}" 'OK' >/dev/null
+}
+
+# Cancel first, so Enter on an unread menu is the harmless answer. The
+# proceeding row names the verb rather than saying Yes: a confirmation met at
+# speed is skimmed rather than read, and fuzzel's prompt is a short string
+# beside an input box, not a paragraph a reader is going to take in.
+#
+# The test is `== 1`, not `!= 0`. A dismissal, an empty return and any value
+# this does not expect all have to land on the side that does nothing; the
+# second form would send an unrecognised answer to the machine.
+confirm() {
+    local choice
+    choice=$(pick "$1" 'Cancel' "$2") || return 1
+    [[ $choice == 1 ]]
+}
+
+# --- verbs ------------------------------------------------------------------
+
+# systemctl is not exec'd. Replacing the shell would leave nothing behind to
+# report a refused request with, and the frame that survives instead costs one
+# sleeping bash for the length of a shutdown that kills it anyway. The
+# transition belongs to logind once the request is made and does not depend on
+# this process outliving it, so there is nothing here to wait for either.
+transition() {
+    local verb=$1 label=$2
+
+    confirm "$label?" "$label" || return 0
+
+    local failure
+    if ! failure=$(systemctl "$verb" 2>&1); then
+        report "$label failed" "${failure:-systemctl $verb returned non-zero}"
+        return 1
+    fi
+}
+
+# swaylock with no arguments, exactly as the compositor's Super+Alt+L spawns
+# it, so the screen keeps coming from .config/swaylock/config and this is not a
+# fourth place where lock screen options could be set. No -f: that flag exists
+# for swayidle, which needs the process to daemonize so its own timeout
+# bookkeeping continues. A launcher entry wants the opposite -- swaylock holds
+# the screen for its own lifetime.
+#
+# A lock that fails to start is the one silent failure here that matters, since
+# the user walks away from a session they believe is locked.
+lock() {
+    local failure
+    if ! failure=$(swaylock 2>&1); then
+        report 'Lock failed' "${failure:-swaylock returned non-zero}"
+        return 1
+    fi
+}
+
+main() {
+    case "${1-}" in
+        poweroff) transition poweroff 'Shut Down' ;;
+        reboot)   transition reboot   'Restart'   ;;
+        lock)     lock                            ;;
+        *)
+            printf 'usage: %s poweroff|reboot|lock\n' "${0##*/}" >&2
+            return 2
+            ;;
+    esac
+}
+
+main "$@"
