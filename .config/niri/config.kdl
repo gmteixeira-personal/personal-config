@@ -311,6 +311,13 @@ layout {
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "waybar"
 
+// The notification daemon. Nothing else in the session owns
+// org.freedesktop.Notifications, so without this every notify-send in the
+// session fails with "The name is not activatable" and shows nothing --
+// silently, since notify-send's own error goes to a stderr no one reads.
+// Configured in ~/.config/mako/config.
+spawn-at-startup "mako"
+
 // The idle manager. It locks the screen after 300 seconds without input, and
 // again before the system sleeps -- suspend is the case a timeout alone cannot
 // cover, since a lid closed inside the five minutes would otherwise resume into

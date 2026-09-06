@@ -1,0 +1,61 @@
+# mako -- the session's notification daemon.
+#
+# Before this the session had none: nothing owned org.freedesktop.Notifications,
+# so every notify-send failed with "The name is not activatable" and showed
+# nothing. The Bluetooth and Wi-Fi menus in .config/fuzzel detect that and fall
+# back to a fuzzel window for failures; with mako running they use this instead.
+
+# The family every other surface already resolves to: waybar names Noto Sans
+# Mono outright, and fuzzel's unset font falls back to `monospace`, which
+# fc-match answers with the same file. Naming it here rather than writing
+# `monospace` means the three agree even if fontconfig's answer changes.
+#
+# Size is in points here and in pixels in style.css, so the two numbers cannot
+# match by looking alike: the bar's 13px is about 9.75pt at 96dpi, and 10pt
+# comes back to about 13.3px. That is the pairing, not 13 against 13.
+font=Noto Sans Mono 10
+
+# Under the bar on the same side as the clock and the tray, which is the corner
+# the eye already goes to for status. waybar reserves an exclusive zone, so
+# top-right anchors below it rather than behind it -- no margin has to know the
+# bar's height.
+anchor=top-right
+margin=8
+padding=10,14
+
+# Catppuccin Mocha, the fifth file to restate it: .config/fuzzel/fuzzel.ini,
+# .config/waybar/style.css, .config/swaylock/config and .config/niri/config.kdl
+# are the other four, each in its own format. There is no shared definition any
+# of them can read, so this file names where its values came from for the same
+# reason those do.
+#
+# base, text and surface0 below are the same three fuzzel.ini names background,
+# text and border/selection; the critical border is swaylock's ring-wrong-color.
+background-color=#1e1e2e
+text-color=#cdd6f4
+border-color=#313244
+progress-color=over #313244
+border-size=1
+
+# fuzzel's own default, which .config/fuzzel/fuzzel.ini leaves unset and so
+# inherits: `[border] radius` is commented out in the system file at radius 10.
+# mako is matched to the launcher rather than to the bar because the two are
+# the same kind of surface -- a panel that appears over the session and leaves
+# again -- while waybar is a fixed edge and squares its corners at 0.
+border-radius=10
+
+# Wide enough for an SSID or a device name plus the line under it without
+# wrapping mid-word. Beyond this it wraps rather than growing.
+width=380
+max-visible=5
+
+# Three seconds. A scan finishing or a device connecting is worth a glance and
+# nothing more; the state it reports is on the bar afterwards either way.
+default-timeout=3000
+
+# Failures stay until dismissed. A notification that reports a connect did not
+# happen is the one the user has to actually read, and a timeout on it would
+# make it indistinguishable from one they simply looked away from.
+[urgency=critical]
+border-color=#f38ba8
+default-timeout=0

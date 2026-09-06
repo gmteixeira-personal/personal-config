@@ -82,6 +82,18 @@
 # package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
+# The Bluetooth and Wi-Fi menus, each run by its own launcher entry and by the
+# bar icon beside it. They live here rather than in `.local/bin` because block
+# 4 ignores `.local/` wholesale, and a block 3 entry cannot re-include a file
+# whose parent directory block 4 excludes.
+!/.config/fuzzel/fuzzel-bluetooth
+!/.config/fuzzel/fuzzel-wifi
+
+# The notification daemon. Its colours are the same Catppuccin Mocha the
+# launcher and the bar restate, and its timeouts decide which of the Bluetooth
+# and Wi-Fi menus' messages stay on screen.
+!/.config/mako/config
+
 # Font ordering, not fonts. The rule keeps Font Awesome from answering for
 # emoji codepoints it declares but is not wanted for; the font files it names
 # are installed by package and by hand, and are not tracked here.
