@@ -140,9 +140,13 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-  # Bright slots named outright, for the same reason as LS_COLORS below:
-  # Windows Terminal promotes bold to bright, herdr keeps the normal slot.
-  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;92m\]\u@\h\[\033[00m\]:\[\033[01;94m\]\w\[\033[00m\]\$ '
+  # 24-bit values, for the same reason as LS_COLORS below: a palette index is
+  # answered by the terminal's own theme, so the prompt was whatever colour that
+  # theme held in slot 10 and slot 12 rather than the one chosen here. 35d450
+  # and 5dc5f8 are what those slots resolve to under foot's shipped palette.
+  # The \[ \] wrappers mark the escapes non-printing; without them bash
+  # miscounts the prompt width and a long command line wraps over itself.
+  PS1='${debian_chroot:+($debian_chroot)}\[\033[1;38;2;53;212;80m\]\u@\h\[\033[00m\]:\[\033[1;38;2;93;197;248m\]\w\[\033[00m\]\$ '
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
@@ -179,9 +183,11 @@ PS0=$'\e[0 q'
 # Neovim does not need this -- lua/config/options.lua sets 'termguicolors'
 # outright -- but nearly everything else gates truecolor on COLORTERM: delta,
 # bat, fzf, supports-color in Node, rich in Python. terminfo cannot carry the
-# answer, because TERM is xterm-256color and its colors# capability is 256; the
-# entries that do declare direct color, xterm-direct among them, are absent on
-# remote hosts, and TERM travels over ssh.
+# answer: the entry each of these terminals names -- xterm-256color under
+# Windows Terminal, `foot` under foot -- declares colors#256 and none of RGB,
+# Tc, setrgbf or setrgbb. The entries that do declare direct color, xterm-direct
+# and foot-direct among them, are the ones absent on remote hosts, and TERM
+# travels over ssh while COLORTERM does not.
 #
 # Named only where the terminal is known to support it, and never over a value
 # something else already set. Exporting it unconditionally would claim truecolor
@@ -197,23 +203,37 @@ if [ -z "${COLORTERM:-}" ] && { [ -n "${WT_SESSION:-}" ] ||
 fi
 
 # enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
+#
+# The colours are named as 24-bit values rather than asked for by palette index,
+# which is a question the terminal answers from its own palette: the same
+# listing rendered differently under every terminal whose theme differed, and
+# none of those answers was the colour chosen here. The values live in
+# .config/vivid/themes/starlight.yml, and conf.d/env.fish does exactly this.
+#
+# vivid is optional and its absence is silent: the dircolors branch is what this
+# was before, and it keeps its bright-slot rewrite, because that workaround
+# still means something on the one path where the colours are still palette
+# indices. Windows Terminal promotes bold to bright (intenseTextStyle "all");
+# herdr renders bold as weight and keeps the normal slot, so the same listing
+# came out darker inside herdr. A 38;2 triple has nothing to promote.
+if command -v vivid >/dev/null 2>&1; then
+  export LS_COLORS="$(vivid generate starlight)"
+elif [ -x /usr/bin/dircolors ]; then
   test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
 
-  # Ask for the bright palette slots outright instead of relying on the
-  # terminal to promote bold to bright. Windows Terminal does that promotion
-  # (intenseTextStyle "all"); herdr renders bold as weight and keeps the
-  # normal slot, so the same listing came out darker inside herdr.
   LS_COLORS=${LS_COLORS//=01;3/=01;9}
-
-  alias ls='ls --color=auto'
-  #alias dir='dir --color=auto'
-  #alias vdir='vdir --color=auto'
-
-  alias grep='grep --color=auto'
-  alias fgrep='fgrep --color=auto'
-  alias egrep='egrep --color=auto'
 fi
+
+# Unconditional, unlike the block above: `ls --color=auto` picks its own
+# defaults where neither generator is present, and gating the aliases on
+# dircolors would leave a machine that has only vivid without them.
+alias ls='ls --color=auto'
+#alias dir='dir --color=auto'
+#alias vdir='vdir --color=auto'
+
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
 
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
@@ -284,7 +304,7 @@ fi
 # only the shell a human types at changes.
 #
 # Placed last so everything above is already exported into the environment fish
-# inherits -- PATH, EDITOR, COLORTERM, the LS_COLORS bright-slot fix. exec
+# inherits -- PATH, EDITOR, COLORTERM, LS_COLORS. exec
 # replaces bash rather than nesting under it, so no idle parent survives and a
 # single exit ends the session.
 #

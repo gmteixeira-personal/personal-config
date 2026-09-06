@@ -1,0 +1,148 @@
+# LS_COLORS for a directory listing, as 24-bit values rather than palette
+# indices. Selected by `vivid generate starlight` from conf.d/env.fish.
+#
+# The colours are transcribed, not chosen. Each is what the palette index this
+# listing used before resolves to under foot 1.27's shipped "starlight V4"
+# palette -- `man 5 foot.ini`, the defaults given for regular0..7 and
+# bright0..7. Naming them outright is the whole point of the file: an index is a
+# question the terminal answers from its own theme, so the same configuration
+# rendered differently wherever that theme differed.
+#
+# Keep them in step with foot only if you want to; nothing breaks if foot
+# reships starlight, because these values no longer ask foot anything.
+colors:
+  # regular0..regular7
+  black: '242424'
+  red: 'f62b5a'
+  green: '47b413'
+  yellow: 'e3c401'
+  blue: '24acd4'
+  magenta: 'f2affd'
+  cyan: '13c299'
+  white: 'e6e6e6'
+
+  # bright0..bright7
+  bright_black: '616161'
+  bright_red: 'ff4d51'
+  bright_green: '35d450'
+  bright_yellow: 'e9e836'
+  bright_blue: '5dc5f8'
+  bright_magenta: 'feabf2'
+  bright_cyan: '24dfc4'
+  bright_white: 'ffffff'
+
+# Bold here is weight and nothing else. foot's bold-text-in-bright defaults to
+# `no`, so a bold attribute never promotes a colour; where the bright form is
+# wanted the bright value is named. That is also why this survives herdr, which
+# draws bold as weight and keeps the colour.
+core:
+  normal_text: {}
+  regular_file: {}
+  reset_to_normal: {}
+
+  directory:
+    foreground: bright_blue
+    font-style: bold
+
+  symlink:
+    foreground: bright_cyan
+    font-style: bold
+
+  # mh, mi and ca were already uncoloured.
+  multi_hard_link: {}
+  missing_symlink_target: {}
+  file_with_capability: {}
+
+  fifo:
+    foreground: yellow
+    background: black
+
+  socket:
+    foreground: bright_magenta
+    font-style: bold
+
+  door:
+    foreground: bright_magenta
+    font-style: bold
+
+  block_device:
+    foreground: yellow
+    background: black
+    font-style: bold
+
+  character_device:
+    foreground: yellow
+    background: black
+    font-style: bold
+
+  broken_symlink:
+    foreground: red
+    background: black
+    font-style: bold
+
+  setuid:
+    foreground: white
+    background: red
+
+  setgid:
+    foreground: black
+    background: yellow
+
+  sticky_other_writable:
+    foreground: black
+    background: green
+
+  other_writable:
+    foreground: blue
+    background: green
+
+  sticky:
+    foreground: white
+    background: blue
+
+  executable_file:
+    foreground: bright_green
+    font-style: bold
+
+# text, markup, programming and office are empty on purpose: `dircolors` leaves
+# those files at the default foreground and so does this. Colouring them would
+# be a look this configuration has never had, and vivid's usual green for source
+# would put source files and executables in the same colour. Giving one a colour
+# is one entry.
+#
+# `font-style: []` rather than `{}`: vivid demands a style for every category its
+# database defines, and an empty map does not satisfy the nested ones -- it fails
+# with "Could not find style for category 'programming.source.shell'". An empty
+# font-style list does, and generates an entry with no escape sequence in it, so
+# `ls` emits a bare reset and the name renders in the default foreground.
+text: {font-style: []}
+markup: {font-style: []}
+programming: {font-style: []}
+office: {font-style: []}
+
+media:
+  image:
+    foreground: bright_magenta
+    font-style: bold
+
+  video:
+    foreground: bright_magenta
+    font-style: bold
+
+  audio:
+    foreground: cyan
+
+  # Neither of these groups was coloured before.
+  fonts: {font-style: []}
+  3d: {font-style: []}
+
+archives:
+  foreground: bright_red
+  font-style: bold
+
+executable:
+  foreground: bright_green
+  font-style: bold
+
+unimportant:
+  foreground: bright_black

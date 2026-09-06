@@ -106,6 +106,12 @@
 !/.config/herdr/equalize-slots/**
 !/.config/caveman/config.json
 
+# vivid: the themes, not `/.config/vivid/**`. A theme is a colour scheme this
+# repository chose and carries; the filetype database is vivid's own and is
+# compiled into the binary, so anything else that lands in this directory came
+# from the machine rather than from here.
+!/.config/vivid/themes/*.yml
+
 # claude code — declaration only; the install tree is derived (see block 4)
 !/.claude/settings.json
 !/.claude/statusline-command.sh

@@ -39,12 +39,18 @@ if test -n "$nvim_path"
 end
 
 # Advertise 24-bit color to programs that gate on COLORTERM: delta, bat, fzf,
-# supports-color in Node, rich in Python. terminfo cannot carry the answer,
-# because TERM is xterm-256color and its colors# capability is 256, and TERM
-# travels over ssh. Named only where the terminal is known to support it, and
-# never over a value something else already set: claiming truecolor on a bare
-# tty is worse than saying nothing, because a program that believes the claim
-# emits escapes the terminal then draws as literal text.
+# supports-color in Node, rich in Python. terminfo cannot carry the answer: the
+# entry each of these terminals names -- `foot` under foot, xterm-256color under
+# Windows Terminal -- declares colors#256 and none of RGB, Tc, setrgbf or
+# setrgbb. The entries that do declare direct color, foot-direct and
+# xterm-direct among them, are the ones absent on remote hosts, and TERM travels
+# over ssh while COLORTERM does not.
+#
+# Named only where the terminal is known to support it, and never over a value
+# something else already set -- foot exports COLORTERM itself, so under foot
+# this block never fires. Claiming truecolor on a bare tty is worse than saying
+# nothing, because a program that believes the claim emits escapes the terminal
+# then draws as literal text.
 if not set -q COLORTERM
     if set -q WT_SESSION; or set -q WEZTERM_EXECUTABLE; or set -q KITTY_WINDOW_ID
         set -gx COLORTERM truecolor
@@ -53,10 +59,20 @@ if not set -q COLORTERM
     end
 end
 
-# Ask for the bright palette slots outright instead of relying on the terminal
-# to promote bold to bright. Windows Terminal does that promotion; herdr renders
-# bold as weight and keeps the normal slot, so the same listing came out darker
-# inside herdr.
-if type -q dircolors
+# Colours for a directory listing, named outright as 24-bit values rather than
+# asked for by palette index. An index is a question the terminal answers from
+# its own palette, so the same listing rendered differently under every terminal
+# whose theme differed -- and none of those answers was the colour chosen here.
+# The values live in .config/vivid/themes/starlight.yml.
+#
+# vivid is optional and its absence is silent: the dircolors build below is what
+# this line was before, and it keeps its bright-slot rewrite, because that
+# workaround still means something on the one path where the colours are still
+# palette indices. Windows Terminal promotes bold to bright; herdr renders bold
+# as weight and keeps the normal slot, so the same listing came out darker
+# inside herdr. A 38;2 triple has nothing to promote and needs no rewrite.
+if type -q vivid
+    set -gx LS_COLORS (vivid generate starlight)
+else if type -q dircolors
     set -gx LS_COLORS (string replace -a '=01;3' '=01;9' -- (dircolors -b | string match -rg "LS_COLORS='([^']*)'"))
 end

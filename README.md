@@ -238,6 +238,21 @@ named; where nothing at all is printed, that is said outright.
   when its output is not a terminal, so pipelines are unchanged, and `command
   cat` reaches the original. **Absence is silent**: the alias is never defined
   and `cat` is plain `cat`. *A system package.*
+- **`vivid`** — generates `LS_COLORS` from
+  `.config/vivid/themes/starlight.yml`, so a directory listing names its colours
+  as 24-bit values instead of asking for palette slots that each terminal
+  answers from its own theme. `conf.d/env.fish` and `.bashrc` both check for it
+  with `type -q` / `command -v` and fall back to the `dircolors` build otherwise,
+  which still colours a listing — through the terminal's sixteen slots, which is
+  the behaviour that predates the theme. **Absence is silent**: no message, and
+  the fallback keeps its bright-slot rewrite, which exists for terminals that
+  disagree about whether bold means brighter. *Not packaged for Fedora and no
+  Rust toolchain is needed to install it: take the `vivid` binary out of the
+  `x86_64-unknown-linux-gnu` tarball on the
+  [`sharkdp/vivid`](https://github.com/sharkdp/vivid) release page and put it in
+  `~/.local/bin`, which `env.fish` already has on `PATH`. The filetype database
+  and the bundled themes are compiled into the binary, so that one file is the
+  whole install.*
 - **`herdr` 0.8.0 or newer** — the multiplexer that `.config/herdr/config.toml`
   configures: the prefix and keybindings, the theme, the agent panes, and the
   pane-equalizer plugin, whose `min_herdr_version` is where that floor comes
