@@ -9,16 +9,31 @@
 input {
     keyboard {
         xkb {
-            // You can set rules, model, layout, variant and options.
-            // For more information, see xkeyboard-config(7).
+            // Rules, model, layout, variant and options -- see
+            // xkeyboard-config(7). This also reaches X11 clients: Xwayland
+            // takes its keymap from niri, so there is no X11 keyboard
+            // configuration anywhere in this repository and should not be.
+            //
+            // Named explicitly rather than left empty. An empty section makes
+            // niri fetch the keymap from org.freedesktop.locale1, which is
+            // per-machine state set by `localectl set-x11-keymap` and not
+            // tracked here -- so the same checkout would produce a different
+            // keyboard on a machine whose locale1 says something else.
+            layout "us"
 
-            // For example:
-            // layout "us,ru"
-            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
-
-            // If this section is empty, niri will fetch xkb settings
-            // from org.freedesktop.locale1. You can control these using
-            // localectl set-x11-keymap.
+            // ctrl:nocaps is stock: it makes the Caps Lock key a Control.
+            // custom:capslock_shift_f12 is this repository's own, defined in
+            // .config/xkb/symbols/custom and named by .config/xkb/rules/evdev;
+            // it puts the displaced Caps Lock function on Shift+F12.
+            //
+            // Both are layout-independent on purpose. Layout is a per-keyboard
+            // preference and this remap is not: every keyboard gets Control in
+            // the Caps Lock position, whatever it is laid out as. When a second
+            // layout is added to the line above, neither option needs touching.
+            //
+            // The virtual consoles are not covered from here. They have their
+            // own keymap -- see the console step in README.md.
+            options "ctrl:nocaps,custom:capslock_shift_f12"
         }
 
         // Enable numlock on startup, omitting this setting disables it.

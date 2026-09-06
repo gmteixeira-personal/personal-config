@@ -1,0 +1,15 @@
+// User xkb rules, layered over the system ones.
+//
+// libxkbcommon searches $XDG_CONFIG_HOME/xkb before /usr/share/X11/xkb and uses
+// the FIRST rules file it finds rather than merging them. A user file that only
+// declared the option below would therefore be the whole rule set, silently
+// discarding every stock layout, variant and option -- ctrl:nocaps among them,
+// which is the other half of this same remap.
+//
+// The `! include` at the end is what makes this a layer instead of a
+// replacement. It goes last so the declaration above is matched first.
+
+! option = symbols
+  custom:capslock_shift_f12 = +custom(capslock_shift_f12)
+
+! include %S/evdev

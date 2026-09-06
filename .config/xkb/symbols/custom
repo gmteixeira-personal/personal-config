@@ -1,0 +1,27 @@
+// Keyboard remapping that is not available as a stock xkb option.
+//
+// Reached by name from .config/xkb/rules/evdev, which is what turns the section
+// below into the option "custom:capslock_shift_f12" that
+// .config/niri/config.kdl names. libxkbcommon 1.13.1 searches
+// $XDG_CONFIG_HOME/xkb ahead of /usr/share/X11/xkb, so this file is found
+// without anything being installed outside $HOME.
+
+// Caps Lock is taken by Control -- the stock option ctrl:nocaps does that half
+// -- so the Caps Lock function moves here, onto Shift+F12.
+//
+// One group, deliberately. A key defines its own number of groups, and xkb
+// resolves an effective group beyond that back into the key's own range, so a
+// single-group definition answers in every layout. Writing symbols[Group1] and
+// symbols[Group2] explicitly would mean a new stanza for every layout ever
+// added, and the remap is meant to hold whatever the layout is: layout is a
+// per-keyboard preference and this is not.
+//
+// F12 stays on the first level, so unshifted F12 is untouched. The keysym does
+// the rest: compat/complete carries `augment "caps(caps_lock)"`, whose
+// interpret binds a Caps_Lock keysym to LockMods(modifiers = Lock) wherever it
+// sits. Its own comment says that exists precisely so Caps_Lock can be used off
+// the first level, which is this.
+partial modifier_keys
+xkb_symbols "capslock_shift_f12" {
+    replace key <FK12> { [ F12, Caps_Lock ] };
+};

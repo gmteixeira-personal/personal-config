@@ -1,0 +1,29 @@
+# Console keymap: the same remap the graphical session gets from xkb.
+#
+# This file is the tracked master copy and nothing reads it here. It is
+# installed to /usr/lib/kbd/keymaps/xkb/ and named by KEYMAP in
+# /etc/vconsole.conf -- both outside $HOME, so they cannot be tracked in place.
+# README.md carries the one step that installs it.
+#
+# The console is where a broken graphical session gets repaired, which is
+# exactly when a keyboard that behaves differently costs the most. A remap that
+# stops at the compositor is absent on the one occasion it is most needed.
+#
+# The include is an absolute path rather than `include "us"`. loadkeys resolves
+# a bare name only for a file already inside its keymap search path; from
+# anywhere else it fails with `cannot open include file us`. An absolute path
+# makes this file self-contained, so where it is installed stops being
+# load-bearing and the tracked copy is the same file as the installed one.
+include "/usr/lib/kbd/keymaps/xkb/us.map.gz"
+
+# Caps Lock carries Control, in every modifier column. Matches ctrl:nocaps on
+# the xkb side.
+keycode 58 = Control
+
+# The displaced Caps Lock function, on Shift+F12. Column two is the shift
+# column; the shipped map has F24 there, which nothing uses. Matches
+# custom:capslock_shift_f12 on the xkb side.
+#
+# Per-keyboard layout can never reach here: the kernel console has one keymap
+# for every attached keyboard. That is a ceiling of the console, not a choice.
+shift keycode 88 = Caps_Lock

@@ -508,6 +508,56 @@ per-machine and deliberately not tracked, and neither is anything else herdr
 writes for a plugin: `plugins.json` records absolute paths and an install
 timestamp, and `.plugins.lock` is an empty lock file, not a manifest.
 
+## Caps Lock is Control
+
+The key in the Caps Lock position carries Control, and the Caps Lock function it
+displaced sits on `Shift+F12`. Nothing was installed for this: the graphical
+half is xkb, the console half is `kbd`, and both were already on the machine.
+
+The graphical session gets it from `.config/niri/config.kdl`, whose `xkb` block
+names the stock `ctrl:nocaps` option and this repository's own
+`custom:capslock_shift_f12`. That second one is defined in
+`.config/xkb/symbols/custom` and given its name by `.config/xkb/rules/evdev`,
+which ends with `! include %S/evdev` so the stock rules still apply — a user
+rules file that omitted that line would silently become the *whole* rule set and
+take every stock layout and option down with it. X11 clients are covered too,
+without an X11 configuration: Xwayland takes its keymap from niri.
+
+The virtual consoles have their own keymap and need one command:
+
+```sh
+sudo install -m644 ~/.config/kbd/caps-ctrl.map /usr/lib/kbd/keymaps/xkb/
+sudo sed -i 's/^KEYMAP=.*/KEYMAP="caps-ctrl"/' /etc/vconsole.conf
+sudo systemctl restart systemd-vconsole-setup
+```
+
+Both targets are outside `$HOME`, so `.config/kbd/caps-ctrl.map` is the tracked
+master copy and nothing here reads it. **Until that command is run the remap
+applies in the graphical session and not at tty1–tty6.** That is worse than
+either extreme — the console is where a broken session gets repaired, which is
+exactly when a keyboard that behaves differently costs the most.
+
+Two things worth knowing before changing any of it:
+
+- **The remap is deliberately layout-independent.** `<FK12>` is defined as a
+  single-group key, and xkb resolves an out-of-range group back into the key's
+  own range, so it answers whatever the active layout is. Writing
+  `symbols[Group1]`/`symbols[Group2]` stanzas instead would need a new stanza
+  for every layout ever added. Layout is a per-keyboard preference; this remap
+  is not.
+- **A new `~/.config/xkb` is not seen until the next login.** libxkbcommon adds
+  that directory to a context's include path only if it exists when the context
+  is created, and the compositor's context dates from login. A fresh checkout is
+  unaffected, since the directory is there before the session starts. Adding it
+  to a running session shows up as
+  `Unrecognized RMLVO option ... was ignored` in the compositor's log.
+
+Per-keyboard layouts — `pt-pt` on one, `en-us` on another — are not configured
+here. niri has no per-device keyboard block, so that will be a hotplug trigger
+calling `niri msg action switch-layout` over a layout list in the same `xkb`
+block. The consoles can never have it: the kernel keeps one keymap for every
+attached keyboard.
+
 ## Python virtual environments
 
 `.config/direnv/direnvrc` defines `layout venv`. Entering a project puts its

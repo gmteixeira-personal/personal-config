@@ -112,6 +112,17 @@
 # from the machine rather than from here.
 !/.config/vivid/themes/*.yml
 
+# xkb: the whole directory. Everything under it is a keyboard definition this
+# repository wrote -- the custom symbols and the rules file that layers them
+# over the system ones. libxkbcommon creates nothing here itself, so there is no
+# machine-generated state to keep out.
+!/.config/xkb/**
+
+# kbd: the console keymap. Tracked here and read from nowhere -- it is the
+# master copy of a file installed under /usr/lib/kbd/keymaps/, which is outside
+# $HOME and so cannot be tracked in place. README.md carries the install step.
+!/.config/kbd/*.map
+
 # claude code — declaration only; the install tree is derived (see block 4)
 !/.claude/settings.json
 !/.claude/statusline-command.sh
