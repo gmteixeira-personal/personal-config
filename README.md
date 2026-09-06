@@ -182,12 +182,17 @@ Without these, the tracked configuration does not work.
   it, so each module's own options still come from the packaged file and a
   package update to them still reaches the bar; the two module lists are
   restated, because the packaged ones name `sway/*` modules that cannot start
-  under niri. `.config/fuzzel/fuzzel.ini` is one line, `terminal=footclient`:
-  fuzzel launches a desktop entry marked `Terminal=true` through that setting,
-  whose default is `$TERMINAL -e`, and this session sets no `TERMINAL` — so
-  without the line every such entry, Neovim's among them, fails with no window
-  and no error. Without the three packages the session has no bar and those two
-  keys do nothing. *System packages.*
+  under niri. `.config/fuzzel/fuzzel.ini` carries two things. The first is
+  `terminal=footclient`: fuzzel launches a desktop entry marked `Terminal=true`
+  through that setting, whose default is `$TERMINAL -e`, and this session sets
+  no `TERMINAL` — so without the line every such entry, Neovim's among them,
+  fails with no window and no error. The second is a `[colors]` section, because
+  fuzzel's packaged colours are Solarized Light and the launcher is opened more
+  often than any other surface here; it is set to the same Catppuccin Mocha the
+  lock screen and the bar use, and it sets every colour fuzzel defines rather
+  than only the background, so no state reached after typing is left light.
+  Without the three packages the session has no bar and those two keys do
+  nothing. *System packages.*
 - **`swayidle`** — the idle manager, and the only thing that locks the screen
   without being asked. `config.kdl` starts it with the session and gives it its
   whole configuration on the one line: lock after 300 seconds without input, and
@@ -320,8 +325,9 @@ Cloning gives you these. Installing them separately is unnecessary.
 The session is niri running foot, with waybar, fuzzel and swaylock providing the
 bar, the launcher and the lock screen, and swayidle locking it after five idle
 minutes. A checkout carries configuration for niri, foot, swaylock, waybar and
-fuzzel — the bar's appearance, height and module list, and the one launcher
-setting that makes a `Terminal=true` desktop entry open in foot — and swayidle's
+fuzzel — the bar's appearance, height and module list, and the launcher's
+colours and the setting that makes a `Terminal=true` desktop entry open in foot
+— and swayidle's
 whole configuration is the compositor startup line that launches it. The
 packages themselves are listed under **Software this configuration expects**,
 above. Order matters here — each step below is what makes the next one mean

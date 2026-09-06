@@ -76,9 +76,10 @@
 !/.config/waybar/style.css
 !/.config/waybar/config.jsonc
 
-# The application launcher. Only its `terminal` line, which is what desktop
-# entries marked `Terminal=true` are launched through; fuzzel's default names
-# $TERMINAL, which this session does not set.
+# The application launcher. Its `terminal` line, which is what desktop entries
+# marked `Terminal=true` are launched through -- fuzzel's default names
+# $TERMINAL, which this session does not set -- and its colours, which the
+# package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
 # Font ordering, not fonts. The rule keeps Font Awesome from answering for
