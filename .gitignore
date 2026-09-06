@@ -74,6 +74,11 @@
 !/.config/waybar/style.css
 !/.config/waybar/config.jsonc
 
+# Font ordering, not fonts. The rule keeps Font Awesome from answering for
+# emoji codepoints it declares but is not wanted for; the font files it names
+# are installed by package and by hand, and are not tracked here.
+!/.config/fontconfig/conf.d/*.conf
+
 # git
 # NOTE: .gitconfig is deliberately NOT tracked — identity and credential
 # helpers differ per machine and per user. Set those locally instead.
