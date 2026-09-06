@@ -46,6 +46,13 @@ git add -f .ghtoken 2>/dev/null; git commit -m test    # must be REJECTED
 git reset
 ```
 
+You do not have to remember to check again. `.config/fish/conf.d/commit-guard.fish`
+reports at every interactive prompt when the guard is not running — either
+because `core.hooksPath` is unset, as it was found on this machine after two
+commits had already landed, or because `.githooks/pre-commit` lost its
+executable bit. It prints nothing once the guard is active, so an untouched
+prompt is the confirmation.
+
 **3. Set your identity.** It is deliberately not tracked — machines and
 accounts differ, and `~/.gitconfig` would carry one machine's answers to every
 other. Set it per repository:
