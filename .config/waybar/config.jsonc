@@ -1,10 +1,10 @@
-// waybar — bar geometry only.
+// waybar — bar geometry, and the left half of the module list.
 //
-// The module list, and every module's own options, still come from
+// Every module's own options, and the whole of modules-right, still come from
 // /etc/xdg/waybar/config.jsonc, pulled in by the include below. Only the keys
 // restated here override it: waybar resolves duplicates in favour of the
-// including file, so this stays a two-value patch rather than a fork of a
-// system file that package updates keep moving.
+// including file, so this stays a patch rather than a fork of a system file
+// that package updates keep moving.
 //
 // Appearance lives in style.css beside this file.
 {
@@ -16,5 +16,180 @@
 
     // Gap between modules. The stylesheet's per-module padding does most of
     // the separating, so this only has to stop them touching.
-    "spacing": 2
+    "spacing": 2,
+
+    // The system file is written for sway: it puts sway/workspaces, sway/mode
+    // and sway/scratchpad on the left and sway/window in the centre. This
+    // session runs niri, where those four modules find no SWAYSOCK and render
+    // nothing at all -- the left of the bar is empty, and the emptiness is
+    // silent rather than an error. Restating both lists is what it costs to
+    // name the niri modules instead.
+    //
+    // The focused window sits beside the workspaces rather than in the centre.
+    // Centred, it is measured against the bar and not against what is to its
+    // left, so the gap between it and the workspaces is whatever the title's
+    // length leaves over -- it moves as you switch windows, and the two read as
+    // unrelated fragments. Left-aligned they read as one group: which
+    // workspace, then what is on it.
+    "modules-left": [
+        "niri/workspaces",
+        "niri/window"
+    ],
+
+    // Emptied rather than dropped. Dropping the key would let the include put
+    // the system file's sway/window back in the centre, where it finds no
+    // SWAYSOCK and renders nothing -- an invisible module is still one waybar
+    // builds and polls.
+    "modules-center": [],
+
+    // Restated to put a microphone beside the speaker. The system file's
+    // pulseaudio module already reports the input, but only as text inside the
+    // output's widget: waybar gives a module one scroll handler and
+    // pulseaudio's is wired to the sink, so the input reading was one you could
+    // read and not touch. A separate module is the only thing that has its own
+    // scroll.
+    //
+    // Two modules from the system list are dropped rather than carried across.
+    // sway/language needs a SWAYSOCK it will not find here, and the xkb block
+    // in .config/niri/config.kdl declares one layout, so there is nothing for
+    // it to report even once ported to niri/language. temperature reported
+    // thermal zone 0, acpitz, which is a board sensor rather than the CPU --
+    // a number on the bar all day that nobody acts on.
+    "modules-right": [
+        "idle_inhibitor",
+        "pulseaudio",
+        "wireplumber",
+        "network",
+        "bluetooth",
+        "power-profiles-daemon",
+        "cpu",
+        "memory",
+        "backlight",
+        "battery",
+        "clock",
+        "tray"
+    ],
+
+    // The output alone now. {format_source} comes out of every format because
+    // the wireplumber module beside it says the same thing and can act on it.
+    //
+    // All four formats, not just the two for the built-in sink. waybar swaps to
+    // format-bluetooth as soon as the sink is a bluetooth device, and the system
+    // file's copy of that one carries {format_source} as well -- override only
+    // the first pair and the mic icon reappears the moment a headset connects,
+    // beside the one wireplumber is already drawing.
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "\uf6a9",
+        "format-bluetooth": "{icon} {volume}%",
+        "format-bluetooth-muted": "\uf6a9"
+    },
+
+    // The input. node-type is what points the module at the source rather than
+    // the sink, and is what makes the scroll wheel land on the microphone.
+    "wireplumber": {
+        "node-type": "Audio/Source",
+        "format": "\uf130 {volume}%",
+        "format-muted": "\uf131",
+        "scroll-step": 5,
+        "max-volume": 100,
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
+        "tooltip-format": "{node_name}"
+    },
+
+    // Bluetooth, beside the network module because both report a radio link.
+    // The system file lists no bluetooth module at all, so this adds one rather
+    // than overriding anything.
+    //
+    // Off, disabled and no-controller all format to the empty string. waybar
+    // hides a module whose label comes out empty, so the bar carries the icon
+    // only while the radio is on -- a bar that reports a radio doing nothing is
+    // a bar with one more thing to read and nothing to act on.
+    //
+    // The count comes with the connected format because one connection and two
+    // look identical otherwise, and this machine already pairs a mouse: without
+    // the number, a connected headset cannot be told from the mouse that was
+    // there all along. Which devices they are is in the tooltip.
+    //
+    // fa-bluetooth-b and fa-bluetooth are Brands glyphs, which the font-family
+    // in style.css lists after the Free faces.
+    //
+    // Clicking opens bluetoothctl in a foot window. blueman is not installed,
+    // so this is the pairing interface the session actually has.
+    "bluetooth": {
+        "format-on": "\uf294",
+        "format-connected": "\uf293 {num_connections}",
+        "format-off": "",
+        "format-disabled": "",
+        "format-no-controller": "",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+        "on-click": "footclient -e bluetoothctl"
+    },
+
+    // Icon first, number second, matching the audio modules. The system file
+    // writes these the other way round -- number, then glyph -- which butts a
+    // column of digits against whatever module sits to the left and reads as one
+    // continuous run of numbers across the bar. Leading with the glyph puts a
+    // label in front of each reading instead.
+    //
+    // Only the format strings are restated. battery's states thresholds and its
+    // format-icons array stay with the system file, which is what decides the
+    // glyph {icon} resolves to at a given capacity.
+    "cpu": {
+        "format": "\uf2db {usage}%"
+    },
+
+    "memory": {
+        "format": "\uf0c9 {}%"
+    },
+
+    "battery": {
+        "format": "{icon} {capacity}%",
+        "format-full": "{icon} {capacity}%",
+        "format-charging": "\uf5e7 {capacity}%",
+        "format-plugged": "\uf1e6 {capacity}%",
+        "format-alt": "{icon} {time}"
+    },
+
+    // Same flip, and both of these needed their glyph replaced to take it. The
+    // system file gives backlight a moon-phase ramp and network a warning sign,
+    // and both are emoji: the font stack in style.css lists Font Awesome, so
+    // emoji fall through to whatever colour-emoji face fontconfig supplies and
+    // arrive at a different size and weight from every other glyph on the bar,
+    // ignoring the state colours besides. The replacements are Font Awesome 6
+    // Free Solid, like the rest.
+    //
+    // backlight keeps a three-step ramp rather than one fixed glyph, since the
+    // icon is the only part of that module worth reading at a glance.
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["\uf186", "\uf042", "\uf185"]
+    },
+
+    "network": {
+        "format-wifi": "\uf1eb {essid} ({signalStrength}%)",
+        "format-ethernet": "\uf796 {ipaddr}/{cidr}",
+        "format-linked": "\uf796 {ifname} (No IP)",
+        "format-disconnected": "\uf127 Disconnected",
+        "tooltip-format": "\uf796 {ifname} via {gwaddr}"
+    },
+
+    // Weekday, date and time in one label. The system file leaves format unset,
+    // so waybar falls back to the time alone and the date is reachable only by
+    // clicking through to format-alt.
+    //
+    // format-alt inverts that: the click drops to the time alone, which is the
+    // part worth reading at a glance now that the date sits on the bar anyway.
+    // The system file aimed it at {:%Y-%m-%d}, a date-only label that said less
+    // than the default standing beside it.
+    //
+    // The calendar tooltip is not restated and survives from the system file.
+    // waybar merges an included object key by key rather than replacing it
+    // whole, so only the two keys named here override it.
+    "clock": {
+        "format": "{:%a,%m/%d/%Y %H:%M}",
+        "format-alt": "{:%H:%M}"
+    }
 }

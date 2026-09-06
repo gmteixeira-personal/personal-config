@@ -1,8 +1,9 @@
 /* waybar — the session's bar, started by .config/niri/config.kdl.
  *
- * Only the appearance is declared here. The module list still comes from
- * /etc/xdg/waybar/config.jsonc, which config.jsonc beside this file includes
- * rather than replaces; that file carries the bar's geometry and nothing else.
+ * Only the appearance is declared here. Everything on the right of the bar
+ * still comes from /etc/xdg/waybar/config.jsonc, which config.jsonc beside
+ * this file includes rather than replaces; that file carries the bar's
+ * geometry and the niri modules on its left.
  *
  * waybar loads exactly one stylesheet, so this file replaces the system one
  * rather than cascading over it: anything not restated here is unstyled.
@@ -40,13 +41,16 @@ label {
  * saturated block of its own -- white battery, green cpu, purple memory, yellow
  * pulseaudio, blue network, grey clock -- which is the row of coloured tiles
  * this file exists to remove. Spacing carries the separation instead. */
+#workspaces,
+#window,
 #idle_inhibitor,
 #pulseaudio,
+#wireplumber,
 #network,
+#bluetooth,
 #power-profiles-daemon,
 #cpu,
 #memory,
-#temperature,
 #backlight,
 #battery,
 #clock,
@@ -61,6 +65,43 @@ label {
     padding-right: 10px;
 }
 
+/* The workspace entries are GTK buttons, not labels, so they arrive with a
+ * frame, a fill and a hover highlight that the rules above do not reach.
+ * Stripping all three is what makes them read as the same line of text as the
+ * rest of the bar. */
+#workspaces button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #ffffff;
+    padding: 0 6px;
+    margin: 0;
+}
+
+/* Blue: the workspace being looked at. Which workspace is focused is the one
+ * thing the module exists to say, and with no fill to carry it the text has
+ * to. Catppuccin Mocha blue, the same palette the state colours below use. */
+#workspaces button.focused,
+#workspaces button.active {
+    color: #89b4fa;
+}
+
+/* Grey: a workspace that exists but holds nothing. niri keeps one empty
+ * workspace past the last used one and hands you that same workspace when you
+ * move down off the end, so an empty workspace is routinely the focused one.
+ * waybar leaves the empty class on it when that happens, and without the
+ * guards below it would sit at the same specificity as the rule above and win
+ * on source order -- focus would stop being visible exactly when you moved to
+ * a fresh workspace. */
+#workspaces button.empty:not(.focused):not(.active) {
+    color: #6c7086;
+}
+
+/* Red: a workspace asking to be looked at. Same red as a critical battery. */
+#workspaces button.urgent {
+    color: #f38ba8;
+}
+
 /* State is reported by recolouring the text, since there is no longer a
  * background to carry it. Values are Catppuccin Mocha, the palette
  * .config/swaylock/config already uses, so the bar and the lock screen agree on
@@ -69,7 +110,6 @@ label {
 /* Red: something is wrong now. */
 #battery.critical:not(.charging),
 #network.disconnected,
-#temperature.critical,
 #tray > .needs-attention {
     color: #f38ba8;
 }
@@ -94,8 +134,14 @@ label {
     color: #f9e2af;
 }
 
-/* Grey: present but silenced. */
-#pulseaudio.muted {
+/* Grey: present but silenced, or a radio on with nothing on the other end.
+ * The bluetooth module keeps white for .connected, so the icon going white is
+ * the report that something is actually attached. */
+#pulseaudio.muted,
+#wireplumber.muted,
+#bluetooth.on,
+#bluetooth.discoverable,
+#bluetooth.discovering {
     color: #6c7086;
 }
 
