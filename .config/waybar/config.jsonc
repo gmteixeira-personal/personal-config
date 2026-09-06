@@ -49,12 +49,18 @@
     // read and not touch. A separate module is the only thing that has its own
     // scroll.
     //
-    // Two modules from the system list are dropped rather than carried across.
+    // Four modules from the system list are dropped rather than carried across.
     // sway/language needs a SWAYSOCK it will not find here, and the xkb block
     // in .config/niri/config.kdl declares one layout, so there is nothing for
     // it to report even once ported to niri/language. temperature reported
-    // thermal zone 0, acpitz, which is a board sensor rather than the CPU --
-    // a number on the bar all day that nobody acts on.
+    // thermal zone 0, acpitz, which is a board sensor rather than the CPU.
+    // cpu and memory reported a percentage each.
+    //
+    // All three of those last are the same thing: a number that moves all day
+    // and that nobody acts on from the bar. When load actually matters, the
+    // question is which process, and the bar cannot answer that -- a terminal
+    // and btop can. Dropping them also stops waybar polling /proc every
+    // interval to redraw a figure nobody reads.
     "modules-right": [
         "idle_inhibitor",
         "pulseaudio",
@@ -62,8 +68,6 @@
         "network",
         "bluetooth",
         "power-profiles-daemon",
-        "cpu",
-        "memory",
         "backlight",
         "battery",
         "clock",
@@ -137,14 +141,6 @@
     // Only the format strings are restated. battery's states thresholds and its
     // format-icons array stay with the system file, which is what decides the
     // glyph {icon} resolves to at a given capacity.
-    "cpu": {
-        "format": "\uf2db {usage}%"
-    },
-
-    "memory": {
-        "format": "\uf0c9 {}%"
-    },
-
     "battery": {
         "format": "{icon} {capacity}%",
         "format-full": "{icon} {capacity}%",

@@ -38,8 +38,8 @@ label {
 }
 
 /* Every module: no fill, white text. The stock stylesheet gives each one a
- * saturated block of its own -- white battery, green cpu, purple memory, yellow
- * pulseaudio, blue network, grey clock -- which is the row of coloured tiles
+ * saturated block of its own -- white battery, yellow pulseaudio, blue network,
+ * grey clock -- which is the row of coloured tiles
  * this file exists to remove. Spacing carries the separation instead. */
 #workspaces,
 #window,
@@ -49,8 +49,6 @@ label {
 #network,
 #bluetooth,
 #power-profiles-daemon,
-#cpu,
-#memory,
 #backlight,
 #battery,
 #clock,

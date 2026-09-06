@@ -163,19 +163,24 @@ Without these, the tracked configuration does not work.
   nothing. *A system package.*
 - **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, the launcher and the
   lock screen. `config.kdl` starts waybar with the session and binds `Mod+D` to
-  fuzzel and `Super+Alt+L` to swaylock. Two of the three are configured here.
+  fuzzel and `Super+Alt+L` to swaylock. All three are configured here.
   `.config/swaylock/config` replaces the lock screen's light-grey default
   background with a dark one and restyles the unlock indicator, so locking the
   screen at night is not a flash of white. `.config/waybar/style.css` and
-  `.config/waybar/config.jsonc` give the bar its appearance and its height and
-  nothing else: the bar draws no background, its modules carry no coloured
-  fills, and the states those fills used to report — a critical battery, a
-  dropped network, a muted output — are reported by the text colour instead.
-  Which modules the bar shows is still `/etc/xdg/waybar/config.jsonc`'s
-  decision, included rather than copied, so a package update to that list still
-  reaches the bar. fuzzel is the one of the three with no tracked configuration,
-  because it has none — it runs on its built-in defaults. Without them the
-  session has no bar and those two keys do nothing. *System packages.*
+  `.config/waybar/config.jsonc` give the bar its appearance, its height and its
+  module list: the bar draws no background, its modules carry no coloured fills,
+  and the states those fills used to report — a critical battery, a dropped
+  network, a muted output — are reported by the text colour instead. The
+  configuration `include`s `/etc/xdg/waybar/config.jsonc` rather than copying
+  it, so each module's own options still come from the packaged file and a
+  package update to them still reaches the bar; the two module lists are
+  restated, because the packaged ones name `sway/*` modules that cannot start
+  under niri. `.config/fuzzel/fuzzel.ini` is one line, `terminal=footclient`:
+  fuzzel launches a desktop entry marked `Terminal=true` through that setting,
+  whose default is `$TERMINAL -e`, and this session sets no `TERMINAL` — so
+  without the line every such entry, Neovim's among them, fails with no window
+  and no error. Without the three packages the session has no bar and those two
+  keys do nothing. *System packages.*
 - **`swayidle`** — the idle manager, and the only thing that locks the screen
   without being asked. `config.kdl` starts it with the session and gives it its
   whole configuration on the one line: lock after 300 seconds without input, and
@@ -292,12 +297,13 @@ Cloning gives you these. Installing them separately is unnecessary.
 
 The session is niri running foot, with waybar, fuzzel and swaylock providing the
 bar, the launcher and the lock screen, and swayidle locking it after five idle
-minutes. A checkout carries configuration for niri, foot, swaylock and waybar —
-the bar's appearance and height only, not the modules it shows — and swayidle's
-whole configuration is the compositor startup line that launches it; fuzzel runs
-on its built-in defaults. The packages themselves are
-listed under **Software this configuration expects**, above. Order matters
-here — each step below is what makes the next one mean anything.
+minutes. A checkout carries configuration for niri, foot, swaylock, waybar and
+fuzzel — the bar's appearance, height and module list, and the one launcher
+setting that makes a `Terminal=true` desktop entry open in foot — and swayidle's
+whole configuration is the compositor startup line that launches it. The
+packages themselves are listed under **Software this configuration expects**,
+above. Order matters here — each step below is what makes the next one mean
+anything.
 
 **1. Install the session software.** niri, foot, waybar, fuzzel, swaylock,
 swayidle and xwayland-satellite, all from **Required**. The tracked

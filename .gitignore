@@ -66,13 +66,20 @@
 # foot.ini is read once by `foot --server` when the session starts, so it is
 # configuration and not state. The systemd user units that start that server
 # are enabled on the machine and have no tracked file of their own.
-# The two waybar files are the bar's appearance and its geometry only; the
-# module list stays in /etc/xdg/waybar/config.jsonc, which config.jsonc includes.
+# The two waybar files carry the bar's appearance, its geometry and its module
+# lists. Each module's own options still come from /etc/xdg/waybar/config.jsonc,
+# which config.jsonc includes rather than copies; the lists are restated because
+# the packaged ones name sway modules that cannot start under niri.
 !/.config/niri/config.kdl
 !/.config/foot/foot.ini
 !/.config/swaylock/config
 !/.config/waybar/style.css
 !/.config/waybar/config.jsonc
+
+# The application launcher. Only its `terminal` line, which is what desktop
+# entries marked `Terminal=true` are launched through; fuzzel's default names
+# $TERMINAL, which this session does not set.
+!/.config/fuzzel/fuzzel.ini
 
 # Font ordering, not fonts. The rule keeps Font Awesome from answering for
 # emoji codepoints it declares but is not wanted for; the font files it names
