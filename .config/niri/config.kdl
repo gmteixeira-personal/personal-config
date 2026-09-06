@@ -269,8 +269,7 @@ layout {
 
     // You can enable drop shadows for windows.
     shadow {
-        // Uncomment the next line to enable shadows.
-        // on
+        on
 
         // By default, the shadow draws only around its window, and not behind it.
         // Uncomment this setting to make the shadow draw behind its window.
@@ -410,9 +409,8 @@ window-rule {
     // block-out-from "screencast"
 }
 
-// Example: enable rounded corners for all windows.
-// (This example rule is commented out with a "/-" in front.)
-/-window-rule {
+// Enable rounded corners for all windows.
+window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
 }
@@ -459,6 +457,18 @@ binds {
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
     XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+
+    // Fn+F4 is the microphone mute key on this Acer TravelMate, and the
+    // firmware does not send KEY_MICMUTE for it -- the AT keyboard reports
+    // KEY_F15, so XF86AudioMicMute above never matched and the key did nothing.
+    //
+    // The name below is not F15, which is the surprise. KEY_F15 is keycode 193,
+    // and symbols/pc does not include the fkeys file that would give 193 the
+    // F15 keysym; the inet(evdev) model symbols claim it first and name it
+    // XF86Launch6. That is what the compiled keymap carries, so that is what a
+    // bind has to say. The target is the source, not the sink: this key stops
+    // the microphone, which is the state the wireplumber module in waybar draws.
+    XF86Launch6 allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
     // The same two steps for the microphone. The keyboard has one microphone
@@ -478,11 +488,11 @@ binds {
     XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
     XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl next"; }
 
-    // Example brightness key mappings for brightnessctl.
-    // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
-    // but you need to manually put each argument in separate "" quotes.
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+    // Brightness keys. brightness-step drives the backlight through logind, so
+    // the session needs neither the brightnessctl package nor write access to
+    // /sys/class/backlight.
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightness-step" "+10"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightness-step" "-10"; }
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,

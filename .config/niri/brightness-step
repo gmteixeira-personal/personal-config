@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# Backlight steps for the Fn brightness keys.
+#
+# The obvious tool here is brightnessctl, but Fedora's build is not setuid and
+# ships no udev rule -- it reaches the backlight through logind's SetBrightness,
+# exactly as the busctl call below does. So the package would add a dependency
+# that buys nothing this session does not already have: busctl comes with
+# systemd, and /sys/class/backlight is world-readable for the current value.
+# SetBrightness is granted to whichever session owns the seat, so none of this
+# needs root or membership of the video group.
+#
+# A step is a percentage of max_brightness rather than a raw count, so one press
+# moves the same visible amount whatever scale the panel reports.
+
+set -euo pipefail
+
+# Zero is a black screen, and the key that undoes it is no longer readable in
+# the dark. One percent is the bottom of the range and still lit.
+readonly FLOOR_PERCENT=1
+
+main() {
+    local step=${1-}
+    if [[ ! $step =~ ^[+-][0-9]+%?$ ]]; then
+        echo "usage: ${0##*/} <+percent|-percent>" >&2
+        exit 2
+    fi
+
+    # A laptop has one internal panel, and it is the only backlight class device.
+    local device
+    device=$(ls /sys/class/backlight | head -1)
+    if [[ -z $device ]]; then
+        echo "${0##*/}: no backlight device" >&2
+        exit 1
+    fi
+
+    local sys=/sys/class/backlight/$device
+    local current max
+    current=$(< "$sys/brightness")
+    max=$(< "$sys/max_brightness")
+
+    local floor=$(( max * FLOOR_PERCENT / 100 ))
+    local target=$(( current + max * ${step%\%} / 100 ))
+    if (( target < floor )); then
+        target=$floor
+    fi
+    if (( target > max )); then
+        target=$max
+    fi
+
+    busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto \
+        org.freedesktop.login1.Session SetBrightness ssu \
+        backlight "$device" "$target" >/dev/null
+}
+
+main "$@"

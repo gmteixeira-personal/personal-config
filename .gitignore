@@ -76,6 +76,12 @@
 # which config.jsonc includes rather than copies; the lists are restated because
 # the packaged ones name sway modules that cannot start under niri.
 !/.config/niri/config.kdl
+# The backlight stepper the compositor's brightness bindings spawn. It sits with
+# the compositor configuration rather than in `.local/bin` for the same reason
+# the launcher's menus sit with the launcher: block 4 ignores `.local/`
+# wholesale, and a block 3 entry cannot re-include a file whose parent directory
+# block 4 excludes.
+!/.config/niri/brightness-step
 !/.config/foot/foot.ini
 !/.config/swaylock/config
 !/.config/waybar/style.css
@@ -356,3 +362,4 @@ adbkey*
 !/.local/bin/fuzzel-bluetooth
 !/.local/bin/fuzzel-calc
 !/.local/bin/fuzzel-wifi
+!/.local/bin/brightness-step
