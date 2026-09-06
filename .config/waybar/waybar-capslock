@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#
+# Caps Lock state for the bar, read from the kernel's LED rather than from the
+# keyboard.
+#
+# waybar ships a keyboard-state module for exactly this and it reads /dev/input
+# through libevdev, which means joining the `input` group -- and that grants
+# every process this user runs the ability to read every keystroke on every
+# device, permanently, to draw one letter in a bar. The lock is also published
+# as an LED under /sys/class/leds, world-readable, so the same indicator costs
+# no group membership at all.
+#
+# Observing the state is the only option open here. The Caps Lock key on this
+# machine is Control and the lock itself is on Shift+F12, through the custom
+# XKB option; XKB resolves that inside the keymap, so no compositor binding
+# ever sees it -- and a binding that did see it would consume the key and stop
+# the lock from happening.
+#
+# Output is one JSON line per change, which is what waybar's continuous exec
+# reads. An unchanged state prints nothing, so the bar redraws only when the
+# lock actually flips.
+
+set -uo pipefail
+
+# Fast enough that the indicator appears with the keypress rather than after it.
+readonly INTERVAL=0.1
+
+main() {
+    local node state last=''
+
+    # Every keyboard publishes its own capslock LED and they all carry the one
+    # lock, so whichever is found first answers for the machine.
+    node=$(ls -d /sys/class/leds/*::capslock 2>/dev/null | head -1)
+    if [[ -z $node ]]; then
+        printf '%s\n' '{"text":"","tooltip":"no capslock LED found"}'
+        return 1
+    fi
+
+    # A `sleep` in the loop would fork a process ten times a second for as long
+    # as the session lasts. Reading with a timeout from a file descriptor that
+    # never delivers anything waits exactly as well and forks once, here. The
+    # descriptor is opened read-write so the pipe keeps a writer and the read
+    # blocks for the timeout instead of returning end-of-file immediately.
+    local waitfd
+    exec {waitfd}<> <(:)
+
+    while :; do
+        state=$(< "$node/brightness")
+        if [[ $state != "$last" ]]; then
+            if [[ $state == 0 ]]; then
+                # Empty text collapses the widget, so the bar carries the
+                # indicator only while the lock is on.
+                printf '%s\n' '{"text":""}'
+            else
+                printf '%s\n' '{"text":"CAPS","class":"on","tooltip":"Caps Lock is on"}'
+            fi
+            last=$state
+        fi
+        read -rt "$INTERVAL" -u "$waitfd" || true
+    done
+}
+
+main "$@"

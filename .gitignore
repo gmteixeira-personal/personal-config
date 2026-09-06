@@ -86,6 +86,11 @@
 !/.config/swaylock/config
 !/.config/waybar/style.css
 !/.config/waybar/config.jsonc
+# The Caps Lock indicator the bar's custom module runs. It sits with the bar's
+# configuration for the same reason the launcher's menus sit with the launcher:
+# block 4 ignores `.local/` wholesale, and a block 3 entry cannot re-include a
+# file whose parent directory block 4 excludes.
+!/.config/waybar/waybar-capslock
 
 # The application launcher. Its `terminal` line, which is what desktop entries
 # marked `Terminal=true` are launched through -- fuzzel's default names
@@ -363,3 +368,4 @@ adbkey*
 !/.local/bin/fuzzel-calc
 !/.local/bin/fuzzel-wifi
 !/.local/bin/brightness-step
+!/.local/bin/waybar-capslock

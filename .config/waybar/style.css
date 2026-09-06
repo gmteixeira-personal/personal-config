@@ -42,6 +42,7 @@ label {
  * grey clock -- which is the row of coloured tiles
  * this file exists to remove. Spacing carries the separation instead. */
 #workspaces,
+#custom-capslock,
 #language,
 #window,
 #idle_inhibitor,
@@ -75,6 +76,19 @@ label {
  * switch reads as a change rather than as a different word. */
 #language.pt {
     color: #e3c401;
+}
+
+/* Caps Lock, coloured rather than filled like everything else here.
+ *
+ * The widget is empty while the lock is off, so waybar collapses it and the
+ * padding above draws nothing -- the colour is the whole indicator and it is
+ * only ever seen in one state. Mauve is the one Catppuccin Mocha accent this
+ * bar does not already spend: red, peach and yellow all mean a reading has gone
+ * wrong somewhere, and a lock that is on is not a fault. It also has to be
+ * unmistakable against the layout indicator's warm yellow two modules over,
+ * which is the other thing here that says the keyboard is in a mode. */
+#custom-capslock.on {
+    color: #cba6f7;
 }
 
 /* Trailing module sits clear of the screen edge. */

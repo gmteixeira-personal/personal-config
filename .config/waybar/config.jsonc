@@ -37,8 +37,15 @@
     // grows, so anything after it moves whenever the focused window changes, and
     // an indicator that moves is one the eye has to find again. Pinned against
     // the fixed-width workspaces instead.
+    //
+    // Caps Lock goes first of the two, hard against the workspaces. It is empty
+    // almost always -- the widget collapses while the lock is off -- so placing
+    // it here costs the layout indicator no fixed position: nothing to the left
+    // of it changes width, and the one module that does appear and disappear is
+    // the last thing before the group that follows it.
     "modules-left": [
         "niri/workspaces",
+        "custom/capslock",
         "niri/language",
         "niri/window"
     ],
@@ -225,5 +232,23 @@
     // everything else about the module still comes from the packaged file.
     "niri/language": {
         "format": "{short}"
+    },
+
+    // Caps Lock. waybar's own keyboard-state module reads /dev/input through
+    // libevdev, which needs this user in the `input` group -- every process the
+    // user runs gaining the ability to read every keystroke on every device, to
+    // draw one word in a bar. The script reads the kernel's LED under
+    // /sys/class/leds instead, which is world-readable and reports the same
+    // lock, so the indicator costs no group membership.
+    //
+    // The script runs for the life of the bar and prints a line only when the
+    // lock changes, so there is no interval here: an interval would re-run it
+    // from the start every tick and throw away the process that is already
+    // watching. restart-interval is the guard for the other case, the script
+    // exiting -- which it does when no capslock LED exists at all.
+    "custom/capslock": {
+        "exec": "waybar-capslock",
+        "return-type": "json",
+        "restart-interval": 5
     }
 }
