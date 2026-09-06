@@ -207,6 +207,45 @@ Without these, the tracked configuration does not work.
   to provide it. Without it, X11 clients do not run at all; Wayland clients are
   unaffected, so the failure looks like "some applications are broken" rather
   than anything about X11. *A system package.*
+- **`grim`** and **`slurp`** — the screenshot pair `Mod+Shift+S` runs: slurp
+  draws the region and grim captures exactly that region, handing it to the
+  annotator on a pipe. Both talk to niri directly, slurp through layer-shell and
+  grim through `wlr-screencopy`, so neither needs a portal or a desktop
+  environment. Without them the chord fails with nothing on screen — a pipeline
+  started by the compositor has nowhere to report a missing program — and the
+  session's only reachable screenshot is gone, because the `Print` binds beside
+  it need a key this keyboard does not have. Note that grim captures at the
+  output's scale, so a 200×120 selection on a 1.25-scaled display is a 250×150
+  image; that is correct and not a bug to chase. *System packages.*
+- **`satty` 0.22.0 or newer** — the annotator the captured region opens in, and
+  the reason the chord exists at all: niri's own screenshot action copies and
+  saves in one step with no point at which to draw an arrow or cover an address.
+  The binding gives it `--copy-command wl-copy`, because satty has no Wayland
+  clipboard of its own, and `--early-exit`, so it closes on the keystroke that
+  copies. It is given no `--output-filename`, which disables saving outright:
+  the clipboard is the only output by design. Its Save As, and every other file
+  dialog in the session, needs **`nautilus`** below. *Not packaged for Fedora
+  and no Rust toolchain is needed: take `satty` out of the
+  `satty-x86_64-unknown-linux-gnu.tar.gz` on the
+  [`Satty-org/Satty`](https://github.com/Satty-org/Satty/releases) release page —
+  v0.22.0 is what is installed here — and put it in `~/.local/bin`, which
+  `env.fish` already has on `PATH`. It links against the GTK4 and libadwaita
+  runtimes the session already has, so that one file is the whole install, and
+  updates are a thing to check for rather than something a package manager
+  does.*
+- **`nautilus`** — the file manager, and the reason any file dialog in this
+  session opens at all. `xdg-desktop-portal-gnome` is what
+  `/usr/share/xdg-desktop-portal/niri-portals.conf` routes the file chooser to,
+  and it implements no chooser itself: it delegates to `org.gnome.Nautilus`.
+  Without nautilus installed the portal is running, answers on the bus and looks
+  healthy, while every delegated call fails with `Delegated FileChooser call
+  failed: The name is not activatable` in the journal and the asking application
+  shows no window and no error. It is not one application that breaks but all of
+  them at once — a browser attaching a file, the annotator saving one — which
+  reads as file dialogs being broken in general rather than as one absent
+  package, so it is worth recognising as this. Nothing here configures it; it
+  runs on its own defaults and follows the session's dark preference. *A system
+  package.*
 - **`greetd`** — the login manager, and what makes the machine reach the session
   at boot rather than sitting at a text console. Its configuration lives in
   `/etc/greetd/config.toml`, outside this repository's root, so the checkout
@@ -334,8 +373,12 @@ above. Order matters here — each step below is what makes the next one mean
 anything.
 
 **1. Install the session software.** niri, foot, waybar, fuzzel, swaylock,
-swayidle and xwayland-satellite, all from **Required**. The tracked
-configuration names programs that must already exist when it is read.
+swayidle, xwayland-satellite, grim, slurp, satty and nautilus, all from
+**Required**. The tracked configuration names programs that must already exist
+when it is read. Two of these are less obviously part of a session than the
+rest: satty is the only one not packaged for Fedora, so its entry above carries
+its own install; and nautilus is here for its file chooser rather than as a file
+manager, because without it no file dialog in the session opens at all.
 
 **2. Enable the terminal server's units.**
 

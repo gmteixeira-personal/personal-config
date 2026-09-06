@@ -715,6 +715,28 @@ binds {
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
 
+    // The three binds above are unreachable on a keyboard without a Print key,
+    // which is what this machine has. They are kept rather than deleted because
+    // this configuration is shared across machines and the next one may have the
+    // key; this chord is the one that works everywhere. Mod+Shift+S is the
+    // Windows Snipping Tool shortcut, so it is the muscle memory already there.
+    //
+    // niri's own `screenshot` action captures, saves and copies in a single step
+    // and offers no point at which to annotate the result. This bind gives up
+    // that integration to buy an editor: slurp draws the region, grim captures
+    // exactly that region to stdout, and satty opens it for annotation.
+    // --early-exit closes satty as soon as the copy is made, keeping the whole
+    // operation to one chord in and one chord out, and --copy-command wl-copy is
+    // what reaches the clipboard -- satty has no Wayland clipboard of its own.
+    //
+    // Cancelling slurp with Escape leaves grim with no geometry; it exits with an
+    // error, nothing is captured and the pipeline ends. That is the intended way
+    // to abort, and it is silent.
+    //
+    // Mod+Alt+S was the other candidate and is not free: it is Super+Alt+S, the
+    // orca toggle above.
+    Mod+Shift+S hotkey-overlay-title="Screenshot a Region: satty" { spawn-sh "grim -g \"$(slurp)\" - | satty -f - --early-exit --copy-command wl-copy"; }
+
     // Applications such as remote-desktop clients and software KVM switches may
     // request that niri stops processing the keyboard shortcuts defined here
     // so they may, for example, forward the key presses as-is to a remote machine.
