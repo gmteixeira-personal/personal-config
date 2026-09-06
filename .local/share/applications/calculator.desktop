@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Calculator
+GenericName=Calculator
+Comment=Evaluate an arithmetic expression and copy the result
+Exec=fuzzel-calc
+Icon=fuzzel-calc
+Terminal=false
+Categories=Utility;Calculator;
+Keywords=calc;calculator;math;maths;arithmetic;sum;convert;

@@ -87,11 +87,12 @@
 # package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
-# The Bluetooth and Wi-Fi menus, each run by its own launcher entry and by the
-# bar icon beside it. They live here rather than in `.local/bin` because block
-# 4 ignores `.local/` wholesale, and a block 3 entry cannot re-include a file
-# whose parent directory block 4 excludes.
+# The Bluetooth, calculator and Wi-Fi menus, each run by its own launcher entry
+# -- and the two radio menus also by the bar icon beside them. They live here
+# rather than in `.local/bin` because block 4 ignores `.local/` wholesale, and a
+# block 3 entry cannot re-include a file whose parent directory block 4 excludes.
 !/.config/fuzzel/fuzzel-bluetooth
+!/.config/fuzzel/fuzzel-calc
 !/.config/fuzzel/fuzzel-wifi
 
 # The notification daemon. Its colours are the same Catppuccin Mocha the
@@ -333,20 +334,25 @@ adbkey*
 !/.local/share/icons/hicolor/scalable/apps/
 /.local/share/icons/hicolor/scalable/apps/*
 
-# The launcher entries for the Bluetooth and Wi-Fi menus, and the two icons they
-# name. The icons are Adwaita's symbolic glyphs recoloured to the launcher's text
-# colour: the originals are #2e3436 on a #1e1e2e background, which is a glyph
-# that is present, correct and invisible.
+# The launcher entries for the Bluetooth, calculator and Wi-Fi menus, and the
+# three icons they name. The radio icons are Adwaita's symbolic glyphs recoloured
+# to the launcher's text colour: the originals are #2e3436 on a #1e1e2e
+# background, which is a glyph that is present, correct and invisible. The
+# calculator's is drawn to the same 16px grid in the same colour, because Adwaita
+# ships no calculator glyph in the symbolic set.
 !/.local/share/applications/bluetooth.desktop
+!/.local/share/applications/calculator.desktop
 !/.local/share/applications/wifi.desktop
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-bluetooth.svg
+!/.local/share/icons/hicolor/scalable/apps/fuzzel-calc.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-wifi.svg
 
-# The symbolic links that put those two scripts on PATH. They are tracked, not
+# The symbolic links that put those three scripts on PATH. They are tracked, not
 # derived, because the desktop entries above and the bar's click handlers name
 # the scripts by bare command name rather than by path -- a desktop entry cannot
 # say $HOME, and a tracked file naming this machine's home directory is the thing
 # the ignore policy exists to keep out. The links carry relative targets for the
 # same reason, so a clone into a differently named home resolves them.
 !/.local/bin/fuzzel-bluetooth
+!/.local/bin/fuzzel-calc
 !/.local/bin/fuzzel-wifi

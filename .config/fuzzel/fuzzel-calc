@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+#
+# Calculator driven by fuzzel's dmenu mode. Companion to fuzzel-wifi and
+# fuzzel-bluetooth, and the same shape: the window is a fuzzel window, and the
+# session gains a tool without gaining a GUI application.
+#
+# fuzzel has no live-evaluating filter -- it cannot show a result as the
+# expression is typed, the way rofi's calc mode does, and nothing in the config
+# file can add one. What it does have is dmenu mode's custom entry: text that
+# matches no input line comes back on stdout as typed. That is the whole
+# mechanism here. Each Enter is one round trip -- type an expression, get the
+# result back as the single entry of the next window -- and the loop below
+# turns those round trips into a calculator that stays open.
+#
+# The result is also pre-filled into the input box (--search), so the next
+# expression can continue from it: `2+2`, Enter, `*3`, Enter yields 12. Enter on
+# the untouched result copies it to the clipboard and exits, which is the only
+# reason this writes anywhere outside its own window.
+
+set -uo pipefail
+
+readonly APP_NAME='Calculator'
+readonly MENU_WIDTH=46
+
+# --- evaluation -------------------------------------------------------------
+
+# python3 is the only interpreter the session is guaranteed to have -- there is
+# no qalc and no bc here -- but `python3 -c` on a typed string would hand the
+# input box the rest of the machine. So the expression is parsed to an AST and
+# walked against an allowlist of nodes: no attribute access, no subscripts, no
+# comprehensions, no names beyond the constants below, and calls only to the
+# named math functions. Anything else is a syntax error rather than a feature.
+readonly EVAL_PY='
+import ast, math, operator, sys
+
+BINARY = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+          ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv,
+          ast.Mod: operator.mod, ast.Pow: operator.pow}
+UNARY = {ast.UAdd: operator.pos, ast.USub: operator.neg}
+
+class CalcError(Exception):
+    """A refusal the input box can show as it stands, not a Python traceback."""
+
+
+CONSTANTS = {"pi": math.pi, "e": math.e, "tau": math.tau}
+FUNCTIONS = {name: getattr(math, name) for name in (
+    "sqrt", "exp", "log", "log2", "log10", "sin", "cos", "tan", "asin",
+    "acos", "atan", "atan2", "hypot", "floor", "ceil", "fabs", "factorial",
+    "degrees", "radians", "gcd", "trunc")}
+FUNCTIONS.update(abs=abs, round=round, min=min, max=max, sum=sum)
+
+# A three-character expression can ask for a number with more digits than the
+# machine has memory: 9**9**9 is not a slow answer, it is a hung window with no
+# way to cancel it. Integer powers are capped where the largest plausible
+# deliberate one still fits.
+POWER_LIMIT = 4096
+
+
+def power(base, exponent):
+    if isinstance(exponent, int) and abs(exponent) > POWER_LIMIT and abs(base) > 1:
+        raise CalcError("exponent too large")
+    return operator.pow(base, exponent)
+
+
+BINARY[ast.Pow] = power
+
+
+def evaluate(node):
+    if isinstance(node, ast.Expression):
+        return evaluate(node.body)
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):
+            raise CalcError("unsupported value")
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in BINARY:
+        return BINARY[type(node.op)](evaluate(node.left), evaluate(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in UNARY:
+        return UNARY[type(node.op)](evaluate(node.operand))
+    if isinstance(node, ast.Name) and node.id in CONSTANTS:
+        return CONSTANTS[node.id]
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            and node.func.id in FUNCTIONS and not node.keywords
+            and not any(isinstance(a, ast.Starred) for a in node.args)):
+        return FUNCTIONS[node.func.id](*[evaluate(a) for a in node.args])
+    raise CalcError("unsupported expression")
+
+
+def render(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if math.isinf(value) or math.isnan(value):
+            return str(value)
+        # 0.1+0.2 is 0.30000000000000004 in full precision, which is a correct
+        # answer to a question nobody asked a launcher. Ten significant digits
+        # is past a double`s honest precision and short enough to read.
+        if value == int(value) and abs(value) < 1e16:
+            return str(int(value))
+        return "%.10g" % value
+    raise CalcError("unsupported result")
+
+
+# `^` is exclusive-or in Python and exponentiation everywhere a calculator is
+# written down; a launcher input box is the second case. A trailing `=` is what
+# a hand types out of habit on a calculator keypad.
+source = sys.argv[1].replace("^", "**").strip().rstrip("=").strip()
+if not source:
+    sys.exit(1)
+
+try:
+    print(render(evaluate(ast.parse(source, mode="eval"))))
+except CalcError as refusal:
+    print(refusal)
+    sys.exit(1)
+except ZeroDivisionError:
+    print("divide by zero")
+    sys.exit(1)
+except (SyntaxError, ValueError, TypeError):
+    print("syntax error")
+    sys.exit(1)
+except OverflowError:
+    print("number too large")
+    sys.exit(1)
+except RecursionError:
+    print("expression too deep")
+    sys.exit(1)
+'
+
+# --- fuzzel plumbing --------------------------------------------------------
+
+# One window. $1 is the single entry to offer, empty for none; $2 pre-fills the
+# input box. Output is the entry when one was picked and the typed text when it
+# matched nothing, which is the distinction the loop is built on -- so the entry
+# is the bare result, never `expression = result`: the longer the entry, the
+# more typed expressions fuzzy-match it by accident and copy instead of compute.
+ask() {
+    local entry=$1 prefill=$2
+
+    { [[ -n $entry ]] && printf '%s\n' "$entry"; } |
+        fuzzel --dmenu --prompt '= ' --placeholder 'Expression' \
+               --search "$prefill" --lines "$([[ -n $entry ]] && echo 1 || echo 0)" \
+               --width "$MENU_WIDTH" --log-level=none 2>/dev/null
+}
+
+main() {
+    local expression='' result='' error='' entry prefill answer
+
+    while :; do
+        if [[ -n $result ]]; then
+            entry=$result prefill=$result
+        elif [[ -n $error ]]; then
+            entry=$error prefill=$expression
+        else
+            entry='' prefill=''
+        fi
+
+        answer=$(ask "$entry" "$prefill")
+
+        # Escape, or Enter on an empty box. Both mean stop, and neither is a
+        # failure worth an exit code the launcher would have nowhere to show.
+        [[ -n $answer ]] || return 0
+
+        if [[ -n $result && $answer == "$result" ]]; then
+            printf '%s' "$result" | wl-copy
+            notify-send --app-name="$APP_NAME" 'Copied' "$result"
+            return 0
+        fi
+
+        # The error message picked as an entry: nothing to copy and nothing to
+        # compute, so redraw rather than treat the message as an expression.
+        [[ -n $error && $answer == "$error" ]] && continue
+
+        expression=$answer
+        if answer=$(python3 -c "$EVAL_PY" "$expression"); then
+            result=$answer error=''
+        else
+            result='' error=${answer:-syntax error}
+        fi
+    done
+}
+
+main "$@"
