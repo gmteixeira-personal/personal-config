@@ -69,20 +69,53 @@ Every logical pixel the bar reserves is taken from every window on the output fo
 - **WHEN** the bar's configured height is compared with its font size
 - **THEN** the height SHALL NOT be more than roughly twice the font size
 
-### Requirement: The repository declares the bar's appearance without owning its module list
+### Requirement: The repository declares the bar's appearance and names the modules it shows
 
-Tracked configuration for the bar SHALL declare how it looks and how much space it takes, and SHALL obtain the set of modules it displays from the system configuration rather than restating it.
+Tracked configuration for the bar SHALL declare how it looks and how much space it takes, and SHALL name the modules it displays. It SHALL obtain each module's own options from the system configuration by including that file rather than copying it, and SHALL restate only the keys it intends to override.
 
-The module list is long, it belongs to a packaged file that updates, and none of it is a decision this repository has made. Copying it in to change two geometry keys would take ownership of every module default as a side effect, and the copy would silently stop tracking the packaged file the moment it changed.
+The module list and the module options are two different things, and only one of them is the repository's business. The packaged list is written for a different compositor: most of its entries cannot start under this session's compositor, and a module that cannot start is still one the bar builds and polls to render nothing. Inheriting that list means shipping a bar whose contents are decided by a file that does not know what is running. Naming the list is the only way to be rid of those entries.
 
-#### Scenario: Geometry is overridden without copying the module list
+The options are the opposite case. They are long, they belong to a packaged file that updates, and none of them is a decision made here. Copying them in to change a format string would take ownership of every default as a side effect, and the copy would silently stop tracking the packaged file the moment it changed.
+
+#### Scenario: Module options are overridden without copying them
 
 - **WHEN** the tracked bar configuration is inspected
 - **THEN** it SHALL include the system configuration rather than replace it
-- **AND** it SHALL restate only the keys it intends to override
+- **AND** it SHALL restate only the module option keys it intends to override
+
+#### Scenario: The module list names what the session can run
+
+- **WHEN** the tracked bar configuration's module lists are inspected
+- **THEN** every module named SHALL be one this session's compositor can drive
+- **AND** no module SHALL be present that cannot start under it
 
 #### Scenario: The bar starts from the tracked files
 
 - **WHEN** the bar is started
 - **THEN** it SHALL report using the tracked configuration and the tracked stylesheet
 - **AND** it SHALL report including the system configuration
+
+### Requirement: A module earns its place by being acted on
+
+The bar SHALL carry a module only where the reading it presents is one the user acts on from the bar, or one whose change the user needs to notice without looking. A module presenting a figure that moves continuously and prompts no action SHALL NOT be carried.
+
+The bar is read passively, all day, and every module on it is a standing claim on attention. A percentage that changes every second trains the reader to stop looking, which costs the modules beside it their glanceability too. Load is the clearest case: when it matters, the question is which process, and the bar cannot answer that — the tools that can are one keystroke away. Removing such a module is not hiding information; it is declining to present information in the one place where it cannot be followed up.
+
+This is not a rule against numbers. A battery percentage prompts an action and is worth carrying; a volume level is one the user changes from the bar itself. The test is whether the reading leads anywhere.
+
+#### Scenario: A continuously moving figure with no action is absent
+
+- **WHEN** the bar is displayed
+- **THEN** no module SHALL present a continuously varying utilisation figure that the bar offers no way to act on
+
+#### Scenario: A reading that prompts an action is kept
+
+- **WHEN** the bar is displayed on a machine running on battery
+- **THEN** the battery reading SHALL be present
+
+#### Scenario: Removing a module removes its whole footprint
+
+- **WHEN** a module is removed from the bar
+- **THEN** it SHALL be absent from the tracked module list
+- **AND** the tracked configuration SHALL carry no options for it
+- **AND** the tracked stylesheet SHALL carry no rules naming it
