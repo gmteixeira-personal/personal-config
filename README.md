@@ -585,13 +585,36 @@ Two things not to undo:
   half of a vertical-motion set, and taking one would leave a hole in an
   otherwise complete `H/J/K/L` row.
 
-Layouts do **not** follow the keyboard automatically. niri has no per-device
-keyboard block, so that would be a hotplug trigger calling
-`niri msg action switch-layout`. Note that niri keeps one active layout for the
-whole session rather than one per device, so such a trigger and your fingers
-write the same piece of state and the last one wins. The consoles can never have
-it at all: the kernel keeps one keymap for every attached keyboard, so a console
-is `eu` always.
+### Every keyboard behaves the same
+
+There is no per-device keyboard configuration and none is possible: niri rejects
+a `keyboard "<device>"` block with `unexpected argument`. A keyboard plugged in
+later gets the same layouts, the same Caps Lock, the same `Shift+F12`, with
+nothing to configure for it.
+
+niri also keeps **one** active layout for the whole session rather than one per
+device, so `Mod+Alt+Space` switches every attached keyboard at once, and a new
+device joins whatever layout is already current rather than resetting it. Plug a
+US-printed board in while the session is on `pt` and it types `pt`.
+
+Layouts therefore do **not** follow the keyboard automatically. Doing that would
+mean a hotplug trigger calling `niri msg action switch-layout`, writing the same
+single piece of state your fingers write — so the two can disagree, and whichever
+acted last wins.
+
+### The consoles are `us`, not EurKEY
+
+The console keymap includes `/usr/lib/kbd/keymaps/xkb/us.map.gz`, and there is no
+EurKEY console keymap in `kbd` to include instead. EurKEY is US-positioned, so
+every letter, digit and unshifted symbol is identical and ordinary typing is
+unaffected — but **EurKEY's AltGr layer is absent at a console**: no `ä`, no `€`,
+none of the reason to run EurKEY. `grep -c adiaeresis` over the compiled console
+keymap returns 0.
+
+The consoles do not switch layouts either. That keymap is one static file, and
+the kernel keeps one keymap for every attached keyboard, so a console is `us`
+whatever the graphical session is set to. Neither is fixable from here; both are
+worth knowing before typing a password with an accent in it at tty3.
 
 ## Python virtual environments
 
