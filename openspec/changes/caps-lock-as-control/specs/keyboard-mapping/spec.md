@@ -64,6 +64,11 @@ Layout is a per-keyboard preference and the remap is not: a machine may carry on
 - **THEN** the Caps Lock position SHALL still carry Control
 - **AND** `Shift+F12` SHALL still lock and unlock
 
+#### Scenario: The remap is not merely compiled but survives a live switch
+
+- **WHEN** the layout is switched at runtime rather than only at the moment the keymap is built
+- **THEN** the remap SHALL hold in the layout switched to, without the keymap being rebuilt
+
 ### Requirement: The remap reaches the virtual consoles
 
 The remap SHALL apply at the virtual consoles as well as in the graphical session.
@@ -112,3 +117,33 @@ Where a part of the remap must live outside `$HOME` and therefore cannot be trac
 - **WHEN** the tracked bootstrap documentation is read
 - **THEN** it SHALL name the command that installs that copy
 - **AND** it SHALL say that until it is run the remap applies in the graphical session and not at the consoles
+
+### Requirement: The configured layouts are switchable from the keyboard
+
+Where more than one layout is configured, a key SHALL switch between them, and the active one SHALL be reportable so that something other than typing a character can tell which is live.
+
+Exactly one mechanism SHALL do the switching. Both the compositor and the keymap can bind a layout-switch key, and a chord bound in both switches twice and lands back where it started — so where the compositor binds it, the keymap SHALL NOT.
+
+The key SHALL be one that nothing else in this configuration binds.
+
+#### Scenario: A key switches layout
+
+- **WHEN** the switch key is pressed with two layouts configured
+- **THEN** the other layout SHALL become active
+- **AND** pressing it again SHALL return to the first
+
+#### Scenario: The active layout can be read back
+
+- **WHEN** the compositor is asked which layouts are configured
+- **THEN** it SHALL list them
+- **AND** it SHALL indicate which is active
+
+#### Scenario: Switching is not doubled
+
+- **WHEN** the keyboard options are inspected
+- **THEN** no layout-switching option SHALL be among them, the compositor's own binding being the one mechanism
+
+#### Scenario: The key is free
+
+- **WHEN** the compositor configuration is searched for the switch key
+- **THEN** no other binding SHALL claim it

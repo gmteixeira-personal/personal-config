@@ -19,7 +19,20 @@ input {
             // per-machine state set by `localectl set-x11-keymap` and not
             // tracked here -- so the same checkout would produce a different
             // keyboard on a machine whose locale1 says something else.
-            layout "us"
+            //
+            // eu is EurKEY: a US layout carrying Western European letters and
+            // symbols on the AltGr levels. xkeyboard-config ships it as a
+            // first-class layout, so it is named like any other and needs no
+            // xmodmap -- the project's own page distributes one, which predates
+            // the layout being upstreamed and is X-only. It brings its own AltGr
+            // wiring too, `include "level3(ralt_switch)"`, so no lv3: option
+            // belongs on the options line below.
+            //
+            // The physical keyboard is pt-PT, which is what the second layout is
+            // for. eu is first, and therefore active at login, by preference:
+            // the legends will not match what the keys do until Mod+Alt+Space is
+            // pressed. Reversing that is one word.
+            layout "eu,pt"
 
             // ctrl:nocaps is stock: it makes the Caps Lock key a Control.
             // custom:capslock_shift_f12 is this repository's own, defined in
@@ -30,6 +43,12 @@ input {
             // preference and this remap is not: every keyboard gets Control in
             // the Caps Lock position, whatever it is laid out as. When a second
             // layout is added to the line above, neither option needs touching.
+            //
+            // No grp: option here on purpose. The layout switch is a niri bind
+            // -- see Mod+Alt+Space below -- and a chord bound in both niri and
+            // xkb switches twice for one press, landing back where it started.
+            // grp:caps_toggle and grp:caps_switch would be unavailable anyway,
+            // both wanting the Caps Lock key that ctrl:nocaps just took.
             //
             // The virtual consoles are not covered from here. They have their
             // own keymap -- see the console step in README.md.
@@ -395,6 +414,7 @@ binds {
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "footclient"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+    Mod+Space hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
@@ -641,13 +661,25 @@ binds {
     // rather than stacked on top of each other.
     Mod+W { toggle-column-tabbed-display; }
 
-    // Actions to switch layouts.
-    // Note: if you uncomment these, make sure you do NOT have
-    // a matching layout switch hotkey configured in xkb options above.
-    // Having both at once on the same hotkey will break the switching,
-    // since it will switch twice upon pressing the hotkey (once by xkb, once by niri).
-    // Mod+Space       { switch-layout "next"; }
-    // Mod+Shift+Space { switch-layout "prev"; }
+    // Switch between the layouts named in the xkb block above -- eu and pt.
+    // There are only two, so "next" toggles and no "prev" bind is needed; add
+    // one on a free chord if a third layout ever arrives.
+    //
+    // niri does the switching, not an xkb grp: option. A chord bound in both
+    // switches twice for one press and lands back where it started, and niri
+    // knowing the state is what makes `niri msg keyboard-layouts` able to report
+    // which layout is live.
+    //
+    // Not on a K chord, though one was wanted: K is the busiest letter here.
+    // Mod+K, Mod+Ctrl+K, Mod+Shift+K and Mod+Shift+Ctrl+K are all the vim half
+    // of a vertical-motion set whose arrow twin still works, so taking any of
+    // them would have left a hole in an otherwise complete H/J/K/L row.
+    //
+    // The cost of this chord instead: it is the launcher's Mod+Space with one
+    // modifier added, so a slipped Alt on the way to the launcher changes the
+    // layout rather than opening it, and nothing announces that. The recovery is
+    // the same chord again.
+    Mod+Alt+Space hotkey-overlay-title="Switch Keyboard Layout: eu / pt" { switch-layout "next"; }
 
     Print { screenshot; }
     Ctrl+Print { screenshot-screen; }

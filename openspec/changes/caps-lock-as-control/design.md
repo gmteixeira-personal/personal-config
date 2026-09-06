@@ -147,6 +147,67 @@ session starts. It is recorded in the README because the symptom — an option
 silently ignored while the file on disk is correct — reads like a broken
 configuration rather than a stale context.
 
+### The compositor binds the layout switch, not an xkb `grp:` option
+
+Both can do it, and the config's own note says why not both: a chord bound in
+each switches twice and lands back where it started.
+
+The compositor's bind wins on two counts. It keeps layout policy with the other
+keybindings instead of on the same `options` line as the remap, where two
+unrelated subjects would share a string. And the compositor knows the state:
+`niri msg keyboard-layouts` reports the list and marks the active one, which a
+`grp:` option leaves invisible to everything outside xkb — including anything
+that might later want to display it.
+
+Two `grp:` options that would otherwise be the obvious choices are unavailable
+regardless. `grp:caps_toggle` and `grp:caps_switch` both want the Caps Lock key,
+which is Control now.
+
+### `Mod+Alt+Space`, chosen over `Mod+K` and every other K chord
+
+K was asked for first and is the busiest letter in the file: `Mod+K` is
+`focus-window-up`, `Mod+Ctrl+K` is `move-window-up`, `Mod+Shift+K` is
+`focus-monitor-up`, `Mod+Shift+Ctrl+K` moves a window to the monitor above.
+Each is the vim half of a set whose arrow twin still works, so any of them could
+have been taken at the cost of a hole in an otherwise complete H/J/K/L row.
+Leaving the four sets intact was preferred.
+
+The accepted trade-off: `Mod+Alt+Space` is the launcher's `Mod+Space` with one
+modifier added, so a slipped Alt on the way to the launcher changes the keyboard
+layout instead of opening it. That is a quiet failure — the next thing typed
+comes out in the other layout with nothing having announced the change. It is
+chosen deliberately over a key that is harder to reach, and
+`niri msg keyboard-layouts` is what tells you which layout you are in when it
+happens.
+
+### EurKEY as `eu`, not as the `xmodmap` file its page distributes
+
+EurKEY is shipped by xkeyboard-config as the layout `eu`, so it is selected by
+name like any other and works under Wayland with no X and no `xmodmap`. The
+project's page offers an `xmodmap` file because it predates the layout being
+upstreamed; using it would mean an X-only mechanism to configure a session that
+runs no X server.
+
+It brings its own AltGr wiring — `symbols/eu` line 70 is
+`include "level3(ralt_switch)"` — so no `lv3:` option is needed alongside it.
+Verified: `ä` is AltGr+a, reported as keycode 38 `AC01`, level 3,
+`[ Mod5 LevelThree ]`.
+
+The shipped layout is **not byte-identical** to the page's current release, and
+the file says so in its own header: it follows EurKEY 1.2 with two deliberate
+maintainer changes. `<AE11>` carries `[minus, underscore, endash, emdash]` where
+1.3 has ✓ and ✗, and `<AC03>` carries `[d, D, eth, ETH]`, added to stay
+consistent with having þ. The AltGr letter layer, which is what EurKEY exists
+for, is the same. Recorded because "the same keymap" is the reason for choosing
+it and the difference is small but real.
+
+### `eu` is first, on a pt-PT keyboard
+
+The physical keyboard is Portuguese, so `eu` first means the legends do not
+match what the keys do at login — `eu` is US-positioned, so the key marked `ç`
+types `;`. That is the stated preference rather than an oversight, and reversing
+it is a one-word edit to `"pt,eu"`.
+
 ## Risks / Trade-offs
 
 - **A `kbd` package update replaces the stock `us` map the console map includes
@@ -161,3 +222,10 @@ configuration rather than a stale context.
   grabs it would shadow the lock in that window only.
 - **The console step is never run on some machine** → The remap is then
   graphical-only there. Named in the README as the cost of skipping it.
+- **A slipped Alt while reaching for the launcher switches layout silently** →
+  Accepted, with its reasoning above. The recovery is the same key again, and
+  `niri msg keyboard-layouts` says which layout is live.
+- **The consoles keep `us` whatever the graphical session is switched to** →
+  The console keymap is one file with no switching, and the kernel has one
+  keymap for every keyboard. A console is `us` always. Recorded rather than
+  fixed, because it cannot be fixed.

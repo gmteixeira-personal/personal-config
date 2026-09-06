@@ -508,7 +508,7 @@ per-machine and deliberately not tracked, and neither is anything else herdr
 writes for a plugin: `plugins.json` records absolute paths and an install
 timestamp, and `.plugins.lock` is an empty lock file, not a manifest.
 
-## Caps Lock is Control
+## Keyboard mapping
 
 The key in the Caps Lock position carries Control, and the Caps Lock function it
 displaced sits on `Shift+F12`. Nothing was installed for this: the graphical
@@ -552,11 +552,46 @@ Two things worth knowing before changing any of it:
   to a running session shows up as
   `Unrecognized RMLVO option ... was ignored` in the compositor's log.
 
-Per-keyboard layouts — `pt-pt` on one, `en-us` on another — are not configured
-here. niri has no per-device keyboard block, so that will be a hotplug trigger
-calling `niri msg action switch-layout` over a layout list in the same `xkb`
-block. The consoles can never have it: the kernel keeps one keymap for every
-attached keyboard.
+### Two layouts
+
+The `xkb` block names `eu,pt`. `eu` is **EurKEY** — a US layout carrying Western
+European letters and symbols on the AltGr levels — and it is active at login.
+`pt` is what the physical keyboard is actually printed for, so until you switch,
+the legends do not match what the keys do. Reversing that is one word, `"pt,eu"`.
+
+`Mod+Alt+Space` switches. With two layouts `switch-layout "next"` toggles, so
+there is no `prev` bind; add one on a free chord if a third layout arrives.
+`niri msg keyboard-layouts` says which is live.
+
+EurKEY needs no `xmodmap`, despite its project page distributing one — that
+predates the layout being upstreamed, and it is X-only. xkeyboard-config ships
+it as a first-class layout that also carries its own AltGr wiring
+(`include "level3(ralt_switch)"`), so nothing extra goes on the `options` line.
+It is **not** byte-identical to the page's current release: the shipped file
+follows EurKEY 1.2 with two deliberate changes, `endash`/`emdash` on the minus
+key where 1.3 has ✓ and ✗, and `eth`/`ETH` on `d`. The AltGr letter layer is the
+same.
+
+Two things not to undo:
+
+- **No `grp:` option belongs on the `options` line.** niri does the switching; a
+  chord bound in both switches twice for one press and lands back where it
+  started. `grp:caps_toggle` and `grp:caps_switch` are unavailable regardless —
+  both want the Caps Lock key.
+- **`Mod+Alt+Space` is the launcher's `Mod+Space` with one modifier added.** A
+  slipped Alt changes the layout instead of opening the launcher, silently. The
+  recovery is the same chord again. It was chosen over the K chords because
+  `Mod+K`, `Mod+Ctrl+K`, `Mod+Shift+K` and `Mod+Shift+Ctrl+K` are each the vim
+  half of a vertical-motion set, and taking one would leave a hole in an
+  otherwise complete `H/J/K/L` row.
+
+Layouts do **not** follow the keyboard automatically. niri has no per-device
+keyboard block, so that would be a hotplug trigger calling
+`niri msg action switch-layout`. Note that niri keeps one active layout for the
+whole session rather than one per device, so such a trigger and your fingers
+write the same piece of state and the last one wins. The consoles can never have
+it at all: the kernel keeps one keymap for every attached keyboard, so a console
+is `eu` always.
 
 ## Python virtual environments
 

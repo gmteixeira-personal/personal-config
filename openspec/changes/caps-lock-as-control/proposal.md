@@ -32,6 +32,18 @@ repair happens.
   `include "us"`. It is installed by a documented step, since `/etc` is outside
   `$HOME` and cannot be tracked here.
 - `README.md` records that step and what is lost without it.
+- The `xkb` block carries **two layouts**, `eu` and `pt`, with `eu` first and so
+  active at login, and `Mod+Alt+Space` switches between them. `eu` is EurKEY,
+  shipped by xkeyboard-config as a first-class layout — a US layout carrying
+  Western European letters and symbols on the AltGr levels. The project's own
+  page distributes an `xmodmap` file, which is not wanted and not needed: that
+  predates the layout being upstreamed, and nothing here touches X.
+  The physical keyboard is pt-PT, which is what `pt` is for; `eu` is the default
+  deliberately.
+- `Mod+Space` becomes a second binding for the launcher, alongside the existing
+  `Mod+D`. Unrelated to the remap and named here rather than left as a silent
+  passenger: it is the same file, the same sitting, and the key it takes is the
+  one the layout switch would otherwise have had.
 
 ## Capabilities
 
@@ -49,7 +61,9 @@ None.
 
 ## Impact
 
-- `.config/niri/config.kdl` — the `xkb` block, currently all comments.
+- `.config/niri/config.kdl` — the `xkb` block, currently all comments, and the
+  binds section, where two commented-out `switch-layout` examples are replaced
+  by one real bind and the launcher gains a second key.
 - `.config/xkb/symbols/custom`, `.config/xkb/rules/evdev` — new.
 - A tracked console keymap, and `.gitignore` allow entries for all three.
 - `README.md` — the install step for the console half.
@@ -60,18 +74,25 @@ None.
 
 ## Non-Goals
 
-Layout following the keyboard — `pt-pt` on one, `en-us` on another — is wanted
-and is deliberately not built here. It is a separate mechanism: niri has no
-per-device keyboard configuration, which was verified rather than assumed
-(`keyboard "usb-0000:00-1"` is rejected with `unexpected argument`), so it will
-be a hotplug trigger calling `niri msg action switch-layout` over an xkb layout
-list.
+Layout following the keyboard **automatically** — the right one selected because
+of which keyboard is attached — is wanted and is still not built here. Switching
+by hand is; choosing for you is not.
+
+niri has no per-device keyboard configuration, which was verified rather than
+assumed: a `keyboard "usb-0000:00-1"` block is rejected with
+`unexpected argument`. So that work will be a hotplug trigger calling
+`niri msg action switch-layout` over the layout list this change creates, and it
+is a mechanism of its own rather than a setting.
 
 Two consequences are designed for now rather than discovered later:
 
-- The layout list will live in the same `xkb` block this change creates, so the
-  later work edits one line rather than introducing a mechanism.
+- niri keeps **one** active layout for the whole session, not one per device. A
+  keypress switches every attached keyboard at once, and a hotplug trigger would
+  write that same single piece of state — so the two can disagree, and whichever
+  acted last wins. Nothing here can make the state per-device; only the choosing
+  can be automated.
 - The remap SHALL NOT depend on which layout is active, because every keyboard
-  gets the remap while only some get a given layout. The kernel console has one
-  keymap for all keyboards regardless, so per-device layout can never reach the
-  virtual consoles by any mechanism.
+  gets the remap while only some get a given layout. That requirement now has a
+  real second layout to be tested against rather than a hypothetical one. The
+  kernel console has one keymap for all keyboards regardless, so per-device
+  layout can never reach the virtual consoles by any mechanism.
