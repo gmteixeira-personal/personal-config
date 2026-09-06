@@ -144,8 +144,17 @@ input {
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
-    // Set gaps around windows in logical pixels.
-    gaps 8
+    // The same number as the focus ring's width below, and it is that number
+    // for a reason: the ring is drawn outward from the focused window into
+    // the gap, so at an equal value it fills exactly the gap belonging to
+    // that window. Wider and the ring floats inside a band of desktop;
+    // narrower -- zero included -- and the ring has no space of its own.
+    //
+    // Change one of the two and change the other. They are converted to
+    // physical pixels the same way, so they stay aligned at any scale: on a
+    // 1.25 output 2 logical becomes 2.5 physical, rounded to 3, which is why
+    // a column loses 2.4 logical per edge rather than 2.
+    gaps 2
 
     // The empty workspace behind the windows. Nothing else draws it -- no
     // wallpaper daemon runs, so without this niri's own built-in default shows
@@ -200,7 +209,12 @@ layout {
         // off
 
         // How many logical pixels the ring extends out from the windows.
-        width 4
+        // Half niri's default of 4, which reads as a band of colour rather
+        // than a division; 2 reads as a line and still names the active
+        // window at a glance. Only the focused window draws a ring, so this
+        // is the whole marker and not half of it, and `gaps` above is set to
+        // the same number so the ring fills the gap exactly.
+        width 2
 
         // Colors can be set in a variety of ways:
         // - CSS named colors: "red"
