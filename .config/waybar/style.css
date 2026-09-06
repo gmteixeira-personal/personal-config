@@ -42,6 +42,7 @@ label {
  * grey clock -- which is the row of coloured tiles
  * this file exists to remove. Spacing carries the separation instead. */
 #workspaces,
+#language,
 #window,
 #idle_inhibitor,
 #pulseaudio,
@@ -56,6 +57,24 @@ label {
     background: transparent;
     color: #ffffff;
     padding: 0 6px;
+}
+
+/* The keyboard layout, coloured per layout rather than filled.
+ *
+ * waybar adds a CSS class named for the active layout's short name alongside
+ * #language, which is the hook that lets state be carried by text colour -- the
+ * rule this stylesheet exists to keep. Two layouts, two colours, so which one is
+ * live is legible before the two letters are read.
+ *
+ * The label is {short}, so it names the layout whatever happens here: if a class
+ * ever stops matching, both layouts fall back to the white above and the reading
+ * is still correct -- only the glance is lost. A third layout added later gets
+ * white until it is given a line of its own.
+ *
+ * eu keeps the resting white, being the default. pt is warmed so that a layout
+ * switch reads as a change rather than as a different word. */
+#language.pt {
+    color: #e3c401;
 }
 
 /* Trailing module sits clear of the screen edge. */

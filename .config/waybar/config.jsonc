@@ -31,8 +31,15 @@
     // length leaves over -- it moves as you switch windows, and the two read as
     // unrelated fragments. Left-aligned they read as one group: which
     // workspace, then what is on it.
+    // The layout indicator goes second, between the two. The left group is what
+    // you are looking at and the right group is how the machine is set, which is
+    // where this would otherwise belong -- but niri/window is variable width and
+    // grows, so anything after it moves whenever the focused window changes, and
+    // an indicator that moves is one the eye has to find again. Pinned against
+    // the fixed-width workspaces instead.
     "modules-left": [
         "niri/workspaces",
+        "niri/language",
         "niri/window"
     ],
 
@@ -49,10 +56,10 @@
     // read and not touch. A separate module is the only thing that has its own
     // scroll.
     //
-    // Four modules from the system list are dropped rather than carried across.
-    // sway/language needs a SWAYSOCK it will not find here, and the xkb block
-    // in .config/niri/config.kdl declares one layout, so there is nothing for
-    // it to report even once ported to niri/language. temperature reported
+    // Three modules from the system list are dropped rather than carried across.
+    // sway/language needed a SWAYSOCK it would not find here; it is now carried
+    // as niri/language in modules-left, the xkb block in .config/niri/config.kdl
+    // having gained a second layout for it to report. temperature reported
     // thermal zone 0, acpitz, which is a board sensor rather than the CPU.
     // cpu and memory reported a percentage each.
     //
@@ -187,5 +194,22 @@
     "clock": {
         "format": "{:%a,%m/%d/%Y %H:%M}",
         "format-alt": "{:%H:%M}"
+    },
+
+    // {short} is the layout name as .config/niri/config.kdl writes it -- eu, pt
+    // -- so the bar and the keyboard configuration say the same word and neither
+    // needs translating into the other.
+    //
+    // {long} is what niri itself reports, "EurKEY (US)" and "Portuguese". It is
+    // wide enough to shove the window title along on every switch, and it is not
+    // the name in the config. {shortDescription} is worse still: a language code
+    // rather than a layout name, so EurKEY would surface as something like en,
+    // which neither matches the config nor distinguishes it from a plain US
+    // layout.
+    //
+    // Only format is restated. waybar merges an included object key by key, so
+    // everything else about the module still comes from the packaged file.
+    "niri/language": {
+        "format": "{short}"
     }
 }
