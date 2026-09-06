@@ -98,6 +98,13 @@
 # package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
+# Which application opens what, when a file is opened from outside a shell. Any
+# program that offers to become the default for a type rewrites this file in
+# place, so untracked it is whatever the last such prompt left behind and a
+# clone gets none of it. Names `nvim-foot.desktop` from block 5 for text, and
+# the packaged Loupe and Zathura entries for images and documents.
+!/.config/mimeapps.list
+
 # The Bluetooth, calculator and Wi-Fi menus, each run by its own launcher entry
 # -- and the two radio menus also by the bar icon beside them. They live here
 # rather than in `.local/bin` because block 4 ignores `.local/` wholesale, and a
@@ -344,6 +351,14 @@ adbkey*
 /.local/share/icons/hicolor/scalable/*
 !/.local/share/icons/hicolor/scalable/apps/
 /.local/share/icons/hicolor/scalable/apps/*
+
+# The Neovim entry the file type mapping names. It is here rather than in
+# `.config/` for the same reason the three below are: a launcher and GIO read
+# desktop entries from this directory and no other, because the path is the XDG
+# base directory specification's rather than a preference. It exists because GIO
+# picks a terminal from a fixed list -- none of which this session installs --
+# and cannot be told to use foot; the entry's own comment says so at length.
+!/.local/share/applications/nvim-foot.desktop
 
 # The launcher entries for the Bluetooth, calculator and Wi-Fi menus, and the
 # three icons they name. The radio icons are Adwaita's symbolic glyphs recoloured

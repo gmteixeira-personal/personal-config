@@ -1,0 +1,244 @@
+# Which application opens what, when a file is opened from outside a shell —
+# from Nautilus, from a Chrome download, or through xdg-open.
+#
+# Tracked because this file is rewritten in place by any program that offers to
+# become the default for a type. Untracked, the session's defaults are whatever
+# the last such prompt left behind, and a clone gets none of them.
+#
+# Text goes to .local/share/applications/nvim-foot.desktop, which is tracked
+# beside this file and carries its own explanation. Images go to Loupe and
+# documents to Zathura, both packaged entries named here and not copied.
+
+[Default Applications]
+
+# Web content and URL schemes. text/html stays here: a saved page is something
+# to view rather than edit, and it is the one text type the browser answers for.
+text/html=google-chrome.desktop
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
+x-scheme-handler/unknown=google-chrome.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/mailto=google-chrome.desktop
+
+# Text, in Neovim. Every type the shared MIME database files under text/, less
+# text/html above. The media type is not a guide to what is text — the database
+# files Rust under text/rust and Go under text/x-go, Ruby under
+# application/x-ruby and Python under text/x-python — so this is the whole
+# media type rather than a prefix, and the source types filed under
+# application/ are listed after it.
+#
+# Markdown appears as two types on purpose: resolution by filename glob gives
+# text/markdown and resolution by content gives text/plain, because a Markdown
+# file is plain text and its magic says so. GIO globs, file(1) inspects, so
+# mapping one of them leaves the other caller broken.
+text/cache-manifest=nvim-foot.desktop
+text/calendar=nvim-foot.desktop
+text/css=nvim-foot.desktop
+text/csv=nvim-foot.desktop
+text/csv-schema=nvim-foot.desktop
+text/enriched=nvim-foot.desktop
+text/htmlh=nvim-foot.desktop
+text/javascript=nvim-foot.desktop
+text/jscript.encode=nvim-foot.desktop
+text/julia=nvim-foot.desktop
+text/markdown=nvim-foot.desktop
+text/org=nvim-foot.desktop
+text/plain=nvim-foot.desktop
+text/rfc822-headers=nvim-foot.desktop
+text/richtext=nvim-foot.desktop
+text/rust=nvim-foot.desktop
+text/sgml=nvim-foot.desktop
+text/spreadsheet=nvim-foot.desktop
+text/tab-separated-values=nvim-foot.desktop
+text/tcl=nvim-foot.desktop
+text/troff=nvim-foot.desktop
+text/turtle=nvim-foot.desktop
+text/vbscript=nvim-foot.desktop
+text/vbscript.encode=nvim-foot.desktop
+text/vcard=nvim-foot.desktop
+text/vnd.familysearch.gedcom=nvim-foot.desktop
+text/vnd.graphviz=nvim-foot.desktop
+text/vnd.rn-realtext=nvim-foot.desktop
+text/vnd.senx.warpscript=nvim-foot.desktop
+text/vnd.sun.j2me.app-descriptor=nvim-foot.desktop
+text/vnd.trolltech.linguist=nvim-foot.desktop
+text/vnd.wap.wml=nvim-foot.desktop
+text/vnd.wap.wmlscript=nvim-foot.desktop
+text/vtt=nvim-foot.desktop
+text/x-adasrc=nvim-foot.desktop
+text/x-authors=nvim-foot.desktop
+text/x-basic=nvim-foot.desktop
+text/x-bibtex=nvim-foot.desktop
+text/x-blueprint=nvim-foot.desktop
+text/x-changelog=nvim-foot.desktop
+text/x-c++hdr=nvim-foot.desktop
+text/x-chdr=nvim-foot.desktop
+text/x-cmake=nvim-foot.desktop
+text/x-cobol=nvim-foot.desktop
+text/x-common-lisp=nvim-foot.desktop
+text/x-component=nvim-foot.desktop
+text/x-copying=nvim-foot.desktop
+text/x-credits=nvim-foot.desktop
+text/x-crystal=nvim-foot.desktop
+text/x-csharp=nvim-foot.desktop
+text/x-c++src=nvim-foot.desktop
+text/x-csrc=nvim-foot.desktop
+text/x-dbus-service=nvim-foot.desktop
+text/x-dcl=nvim-foot.desktop
+text/x-devicetree-binary=nvim-foot.desktop
+text/x-devicetree-source=nvim-foot.desktop
+text/x-dsl=nvim-foot.desktop
+text/x-dsrc=nvim-foot.desktop
+text/x-eiffel=nvim-foot.desktop
+text/x-elixir=nvim-foot.desktop
+text/x-emacs-lisp=nvim-foot.desktop
+text/x-erlang=nvim-foot.desktop
+text/x-fortran=nvim-foot.desktop
+text/x.gcode=nvim-foot.desktop
+text/x-gcode-gx=nvim-foot.desktop
+text/x-genie=nvim-foot.desktop
+text/x-gettext-translation=nvim-foot.desktop
+text/x-gettext-translation-template=nvim-foot.desktop
+text/x-gherkin=nvim-foot.desktop
+text/x-go=nvim-foot.desktop
+text/x-google-video-pointer=nvim-foot.desktop
+text/x-gradle=nvim-foot.desktop
+text/x-groovy=nvim-foot.desktop
+text/x-haskell=nvim-foot.desktop
+text/x-idl=nvim-foot.desktop
+text/x-imelody=nvim-foot.desktop
+text/x-install=nvim-foot.desktop
+text/x-iptables=nvim-foot.desktop
+text/x-java=nvim-foot.desktop
+text/x-kaitai-struct=nvim-foot.desktop
+text/x-kotlin=nvim-foot.desktop
+text/x-ldif=nvim-foot.desktop
+text/x-lilypond=nvim-foot.desktop
+text/x-literate-haskell=nvim-foot.desktop
+text/x-log=nvim-foot.desktop
+text/x-lua=nvim-foot.desktop
+text/x-makefile=nvim-foot.desktop
+text/x-matlab=nvim-foot.desktop
+text/x-maven+xml=nvim-foot.desktop
+text/xmcd=nvim-foot.desktop
+text/x-meson=nvim-foot.desktop
+text/x-microdvd=nvim-foot.desktop
+text/x-moc=nvim-foot.desktop
+text/x-modelica=nvim-foot.desktop
+text/x-mof=nvim-foot.desktop
+text/x-mpl2=nvim-foot.desktop
+text/x-mpsub=nvim-foot.desktop
+text/x-mrml=nvim-foot.desktop
+text/x-ms-regedit=nvim-foot.desktop
+text/x-mup=nvim-foot.desktop
+text/x-nfo=nvim-foot.desktop
+text/x-nim=nvim-foot.desktop
+text/x-nimscript=nvim-foot.desktop
+text/x-objc++src=nvim-foot.desktop
+text/x-objcsrc=nvim-foot.desktop
+text/x-ocaml=nvim-foot.desktop
+text/x-ocl=nvim-foot.desktop
+text/x-ooc=nvim-foot.desktop
+text/x-opencl-src=nvim-foot.desktop
+text/x-opml+xml=nvim-foot.desktop
+text/x-pascal=nvim-foot.desktop
+text/x-patch=nvim-foot.desktop
+text/x-python=nvim-foot.desktop
+text/x-python3=nvim-foot.desktop
+text/x-qml=nvim-foot.desktop
+text/x-readme=nvim-foot.desktop
+text/x-reject=nvim-foot.desktop
+text/x-rpm-spec=nvim-foot.desktop
+text/x-rst=nvim-foot.desktop
+text/x-sagemath=nvim-foot.desktop
+text/x-sass=nvim-foot.desktop
+text/x-scala=nvim-foot.desktop
+text/x-scheme=nvim-foot.desktop
+text/x-scons=nvim-foot.desktop
+text/x-scss=nvim-foot.desktop
+text/x-setext=nvim-foot.desktop
+text/x-ssa=nvim-foot.desktop
+text/x-subviewer=nvim-foot.desktop
+text/x-svhdr=nvim-foot.desktop
+text/x-svsrc=nvim-foot.desktop
+text/x-systemd-unit=nvim-foot.desktop
+text/x-tex=nvim-foot.desktop
+text/x-texinfo=nvim-foot.desktop
+text/x-todo-txt=nvim-foot.desktop
+text/x-troff-me=nvim-foot.desktop
+text/x-troff-mm=nvim-foot.desktop
+text/x-troff-ms=nvim-foot.desktop
+text/x-twig=nvim-foot.desktop
+text/x-txt2tags=nvim-foot.desktop
+text/x-typst=nvim-foot.desktop
+text/x-uil=nvim-foot.desktop
+text/x-uri=nvim-foot.desktop
+text/x-uuencode=nvim-foot.desktop
+text/x-vala=nvim-foot.desktop
+text/x-vb=nvim-foot.desktop
+text/x-verilog=nvim-foot.desktop
+text/x-vhdl=nvim-foot.desktop
+text/x-xmi=nvim-foot.desktop
+text/x-xslfo=nvim-foot.desktop
+
+# The source types the database files under application/ rather than under
+# text/. Binary types filed there are deliberately absent — x-executable,
+# x-python-bytecode, x-sqlite2 — and so is x-desktop, where opening a desktop
+# entry means running it rather than editing it.
+application/json=nvim-foot.desktop
+application/toml=nvim-foot.desktop
+application/yaml=nvim-foot.desktop
+application/xml=nvim-foot.desktop
+application/x-shellscript=nvim-foot.desktop
+application/x-ruby=nvim-foot.desktop
+application/x-perl=nvim-foot.desktop
+application/x-php=nvim-foot.desktop
+application/x-awk=nvim-foot.desktop
+application/x-csh=nvim-foot.desktop
+application/x-m4=nvim-foot.desktop
+application/ecmascript=nvim-foot.desktop
+application/json5=nvim-foot.desktop
+application/sql=nvim-foot.desktop
+application/xml-dtd=nvim-foot.desktop
+
+# Images, in Loupe. The list is exactly the MimeType= line of
+# /usr/share/applications/org.gnome.Loupe.desktop — naming a type Loupe does not
+# declare would route a file to a viewer that cannot open it.
+image/apng=org.gnome.Loupe.desktop
+image/bmp=org.gnome.Loupe.desktop
+image/gif=org.gnome.Loupe.desktop
+image/jp2=org.gnome.Loupe.desktop
+image/jpeg=org.gnome.Loupe.desktop
+image/png=org.gnome.Loupe.desktop
+image/qoi=org.gnome.Loupe.desktop
+image/tiff=org.gnome.Loupe.desktop
+image/vnd.microsoft.icon=org.gnome.Loupe.desktop
+image/webp=org.gnome.Loupe.desktop
+image/x-dds=org.gnome.Loupe.desktop
+image/x-exr=org.gnome.Loupe.desktop
+image/x-portable-anymap=org.gnome.Loupe.desktop
+image/x-portable-bitmap=org.gnome.Loupe.desktop
+image/x-portable-graymap=org.gnome.Loupe.desktop
+image/x-portable-pixmap=org.gnome.Loupe.desktop
+image/x-qoi=org.gnome.Loupe.desktop
+image/x-tga=org.gnome.Loupe.desktop
+image/x-win-bitmap=org.gnome.Loupe.desktop
+image/x-xbitmap=org.gnome.Loupe.desktop
+image/x-xpixmap=org.gnome.Loupe.desktop
+image/svg+xml=org.gnome.Loupe.desktop
+image/svg+xml-compressed=org.gnome.Loupe.desktop
+image/avif=org.gnome.Loupe.desktop
+image/heic=org.gnome.Loupe.desktop
+image/jxl=org.gnome.Loupe.desktop
+
+# Documents, in Zathura. The org.pwmt.zathura-pdf-mupdf entry is the one that
+# declares these types; org.pwmt.zathura.desktop declares none at all. Zathura's
+# entry also claims image/png, image/jpeg, image/bmp, image/tiff and
+# image/svg+xml — those stay with Loupe above, since Zathura's image support
+# exists to render pages, not to be where a photo opens.
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
+application/oxps=org.pwmt.zathura-pdf-mupdf.desktop
+application/epub+zip=org.pwmt.zathura-pdf-mupdf.desktop
+application/x-fictionbook=org.pwmt.zathura-pdf-mupdf.desktop
+application/x-mobipocket-ebook=org.pwmt.zathura-pdf-mupdf.desktop

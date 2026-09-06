@@ -1,0 +1,31 @@
+[Desktop Entry]
+Type=Application
+Name=Neovim (foot)
+GenericName=Text Editor
+Comment=Edit text files in Neovim, in the session's terminal
+
+# This entry exists because GIO — which launches desktop entries for Nautilus,
+# for Chrome's downloads and for xdg-open — cannot be told which terminal this
+# session runs. For an entry marked Terminal=true it picks one from a fixed
+# list: xdg-terminal-exec, gnome-terminal, konsole, ptyxis, tilix. None of them
+# is installed here and foot is not on the list, so the packaged nvim.desktop
+# fails to launch with no window and nothing logged. Opening the terminal in
+# Exec below removes the question: nothing launching this has to know.
+#
+# The packaged nvim.desktop is deliberately left in place; this is a separate
+# entry beside it, not an override of it. NoDisplay keeps the launcher from
+# showing a second "Neovim" — fuzzel opens the packaged entry correctly through
+# its own terminal=footclient setting, so nothing is lost by hiding this one.
+# It is reached by MIME association from .config/mimeapps.list, not from a menu.
+#
+# --no-wait detaches footclient so it exits as soon as the window exists. GIO
+# does not care either way, but xdg-open execs this line as its own child:
+# without the flag `xdg-open file.md` ties up the terminal it was run from
+# until the editor is quit, and Ctrl-C there kills the editor.
+Terminal=false
+NoDisplay=true
+TryExec=footclient
+Exec=footclient --no-wait nvim %F
+Icon=nvim
+Categories=Utility;TextEditor;Development;
+Keywords=Text;editor;vim;neovim;

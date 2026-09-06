@@ -134,6 +134,24 @@ Without these, the tracked configuration does not work.
   `bob`, the version manager: `env.fish` already prepends
   `~/.local/share/bob/nvim-bin` to `PATH`.* That configuration states its own
   prerequisites — see **Neovim** below, and `.config/nvim/README.md`.
+
+  Neovim is also what a text file opens in when it is opened from outside a
+  shell — from nautilus, from a Chrome download, or through `xdg-open`.
+  `.config/mimeapps.list` is what says so: it names every type the shared MIME
+  database files under `text/` except `text/html`, plus the source types filed
+  under `application/`, and points them at
+  `.local/share/applications/nvim-foot.desktop`. That entry is tracked here
+  rather than being the packaged `nvim.desktop`, because the packaged one is
+  marked `Terminal=true` and GIO — the library that launches desktop entries for
+  nautilus, for Chrome and for `xdg-open` — picks a terminal from a fixed list
+  of `xdg-terminal-exec`, `gnome-terminal`, `konsole`, `ptyxis` and `tilix`.
+  None of them is installed here and foot is not on the list, so the packaged
+  entry fails with no window and nothing logged. Unlike fuzzel, which has the
+  `terminal=footclient` setting described above, GIO cannot be told which
+  terminal to use — so the tracked entry declares `Terminal=false` and opens
+  `footclient` itself, which makes it depend on the same `foot-server` units the
+  **`foot`** entry above requires. The packaged `nvim.desktop` is left in place
+  and still what the launcher lists.
 - **JetBrains Mono Nerd Font** — `.config/foot/foot.ini` names
   `JetBrainsMono Nerd Font Mono` outright, and the prompt's segment icons and
   Neovim's filetype and status-line glyphs both come from that font's Nerd Font
@@ -246,6 +264,28 @@ Without these, the tracked configuration does not work.
   package, so it is worth recognising as this. Nothing here configures it; it
   runs on its own defaults and follows the session's dark preference. *A system
   package.*
+- **`loupe`** — the image viewer, and where every image type opens.
+  `.config/mimeapps.list` names `org.gnome.Loupe.desktop` for exactly the types
+  that entry's own `MimeType=` line declares, so the list cannot claim a format
+  Loupe will not display. Without it every one of those types falls back to
+  opening in Chrome, which shows an image as a document in a tab — no zoom
+  control, no rotate, no stepping to the next file in the directory. That is a
+  degradation rather than a break, and it is the state this configuration came
+  from: `image/svg+xml` resolved to Loupe and everything else to Chrome, so one
+  directory of pictures opened in two programs depending on the file. *A system
+  package.*
+- **`zathura` and `zathura-pdf-mupdf`** — the document viewer, and where PDF,
+  OpenXPS, EPUB, FictionBook and Mobipocket open. These are two packages, and
+  the second one matters: `zathura` alone is a viewer with no format backend, so
+  it starts, opens a window and fails to render every file it is given —
+  a worse failure than not being installed, because the program appears to work.
+  `.config/mimeapps.list` names `org.pwmt.zathura-pdf-mupdf.desktop` rather than
+  `org.pwmt.zathura.desktop`, because the backend entry is the one that declares
+  the types; the plain entry declares none at all and is what the launcher
+  lists. Zathura's entry also claims `image/png`, `image/jpeg`, `image/bmp`,
+  `image/tiff` and `image/svg+xml` — those are left with Loupe, since Zathura's
+  image support exists to render pages rather than to be where a photo opens.
+  Without either package PDFs fall back to Chrome. *System packages.*
 - **`greetd`** — the login manager, and what makes the machine reach the session
   at boot rather than sitting at a text console. Its configuration lives in
   `/etc/greetd/config.toml`, outside this repository's root, so the checkout
