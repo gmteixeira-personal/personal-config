@@ -125,8 +125,10 @@
     // fa-bluetooth-b and fa-bluetooth are Brands glyphs, which the font-family
     // in style.css lists after the Free faces.
     //
-    // Clicking opens bluetoothctl in a foot window. blueman is not installed,
-    // so this is the pairing interface the session actually has.
+    // Clicking opens fuzzel-bluetooth, the same menu the launcher's Bluetooth
+    // entry runs. blueman is not installed, so that script is the pairing
+    // interface the session actually has; before it, this click opened bare
+    // bluetoothctl in a foot window, which is the interface it replaces.
     "bluetooth": {
         "format-on": "\uf294",
         "format-connected": "\uf293 {num_connections}",
@@ -136,7 +138,7 @@
         "tooltip-format": "{controller_alias}\t{controller_address}",
         "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
-        "on-click": "footclient -e bluetoothctl"
+        "on-click": "/home/gmteixeira/.config/fuzzel/fuzzel-bluetooth"
     },
 
     // Icon first, number second, matching the audio modules. The system file
@@ -171,7 +173,19 @@
         "format-icons": ["\uf186", "\uf042", "\uf185"]
     },
 
+    // Clicking opens fuzzel-wifi, the same menu the launcher's Wi-Fi entry runs.
+    //
+    // format-alt is nulled rather than left alone because waybar fires both
+    // actions on the same click: the module toggles to its alternate format
+    // AND runs on-click. The system file sets format-alt to
+    // "{ifname}: {ipaddr}/{cidr}", so without this the label swaps to the
+    // interface and address every time the menu is opened, and swaps back the
+    // next time -- a bar that reads differently depending on how many times it
+    // has been clicked. The address it was swapping in is on the menu's own
+    // first row now, so nothing is lost by removing the alternate.
     "network": {
+        "on-click": "/home/gmteixeira/.config/fuzzel/fuzzel-wifi",
+        "format-alt": null,
         "format-wifi": "\uf1eb {essid} ({signalStrength}%)",
         "format-ethernet": "\uf796 {ipaddr}/{cidr}",
         "format-linked": "\uf796 {ifname} (No IP)",

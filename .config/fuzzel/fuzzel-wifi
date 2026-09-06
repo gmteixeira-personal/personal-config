@@ -1,0 +1,523 @@
+#!/usr/bin/env bash
+#
+# Wi-Fi manager driven by fuzzel's dmenu mode. Companion to fuzzel-bluetooth,
+# and the same shape: every menu is a fuzzel window, and a pick returns an
+# index rather than text so nothing here parses a label back into an SSID.
+#
+# The session runs no nm-applet and no GNOME settings panel, which also means
+# no secret agent: when NetworkManager needs a passphrase there is nothing
+# listening to supply one. This script is that agent, in the only form a shell
+# script can be -- it collects the passphrase up front and stores it on the
+# profile before bringing the profile up.
+
+set -uo pipefail
+
+readonly APP_NAME='Wi-Fi'
+
+# Menus are as wide as the longest thing they have to hold. SSIDs and verbs fit
+# in 46; a labelled IPv6 address is 46 on its own and would truncate mid-address
+# at that width, which is worse than useless for a value meant to be read off
+# the screen. show_info raises WIDTH for its own menu only.
+readonly MENU_WIDTH=46
+readonly INFO_WIDTH=62
+
+# --- fuzzel plumbing --------------------------------------------------------
+
+# Menu returning the 0-based index of the choice. --only-match rules out
+# custom entries: an index menu has no meaning for text that matches no row,
+# and without it a typo plus Enter is indistinguishable from a cancel.
+pick() {
+    local prompt=$1
+    shift
+
+    local choice
+    choice=$(printf '%s\n' "$@" |
+        fuzzel --dmenu --index --only-match --prompt "$prompt " \
+               --lines 12 --width "${WIDTH:-$MENU_WIDTH}" \
+               --log-level=none 2>/dev/null)
+
+    [[ $choice =~ ^[0-9]+$ ]] || return 1
+    printf '%s' "$choice"
+}
+
+# Free text, no list. Custom entries are the point here, so --only-match is
+# absent; --lines 0 drops the empty match list that would otherwise sit under
+# the input box.
+prompt_text() {
+    local value
+    value=$(printf '' |
+        fuzzel --dmenu --prompt "$1 " --lines 0 --width "$MENU_WIDTH" \
+               --log-level=none 2>/dev/null)
+
+    [[ -n $value ]] || return 1
+    printf '%s' "$value"
+}
+
+# As prompt_text, with the input rendered as asterisks. The masking is display
+# only: the passphrase is plaintext on the pipe out of fuzzel and plaintext
+# again on the pipe into `nmcli con edit`. What it buys is that the passphrase
+# never reaches a command line, so it is not in `ps` for the seconds a connect
+# takes -- which is what `nmcli device wifi connect ... password ...` would do.
+prompt_password() {
+    local value
+    value=$(printf '' |
+        fuzzel --dmenu --password --prompt "$1 " --lines 0 --width "$MENU_WIDTH" \
+               --log-level=none 2>/dev/null)
+
+    [[ -n $value ]] || return 1
+    printf '%s' "$value"
+}
+
+# Nothing in this session implements org.freedesktop.Notifications: there is no
+# mako, no dunst, no desktop shell that ships one. notify-send against a bus
+# with no such name fails with "The name is not activatable" and shows nothing,
+# so a script that reports only through it reports nothing at all.
+#
+# Rather than depend on a daemon that may or may not be there, the split below
+# is by how much the message matters. Progress goes through notify-send and is
+# allowed to vanish. An outcome the user has to see falls back to a fuzzel
+# window, which is the one output channel this script already knows it has.
+have_notifications() {
+    gdbus call --session \
+        --dest org.freedesktop.DBus \
+        --object-path /org/freedesktop/DBus \
+        --method org.freedesktop.DBus.NameHasOwner \
+        org.freedesktop.Notifications 2>/dev/null | grep -q true
+}
+
+readonly NOTIFICATIONS=$(have_notifications && echo yes || echo no)
+
+# Progress and confirmations. Success needs no window of its own: the menu is
+# redrawn straight after, and the new state is on it.
+notify() {
+    [[ $NOTIFICATIONS == yes ]] || return 0
+    notify-send --app-name="$APP_NAME" "$1" "${2-}"
+}
+
+# Failures, which the redrawn menu cannot express -- an unchanged menu looks
+# the same whether the action failed or was never attempted.
+report() {
+    if [[ $NOTIFICATIONS == yes ]]; then
+        # Critical, which is what stops the daemon expiring it. A failure the
+        # user looked away from is a failure they never saw, and the menu
+        # behind it looks identical either way.
+        notify-send --app-name="$APP_NAME" --urgency=critical "$1" "${2-}"
+        return 0
+    fi
+    pick "${1}${2:+ -- $2}" 'OK' >/dev/null
+}
+
+confirm() {
+    local choice
+    # Cancel first, so Enter on an unread menu is the harmless answer.
+    choice=$(pick "$1" 'Cancel' "$2") || return 1
+    [[ $choice == 1 ]]
+}
+
+# --- NetworkManager state ---------------------------------------------------
+
+# `nmcli -t` escapes a colon inside a value as `\:`, so a field that can hold
+# one has to be read last and the leading fields split off ahead of it. Every
+# helper below puts the SSID or the profile name at the end of -f for that
+# reason: the fields in front of it -- state, signal, security, type -- cannot
+# contain a colon at all.
+unescape() {
+    printf '%s' "${1//\\:/:}"
+}
+
+# `nmcli -g` puts every value of a multi-valued field on ONE line joined by
+# " | " rather than printing one per line. A field that can hold several --
+# addresses, DNS servers -- therefore has to be split before any of them can be
+# filtered or labelled, and reading it line by line silently treats the whole
+# joined run as a single value.
+# The trailing newline is not cosmetic: `read` returns non-zero at EOF on a
+# final line that has none, so its caller's loop drops that value. Without it a
+# single-valued field -- one address, one gateway -- produces nothing at all.
+split_values() {
+    printf '%s\n' "$1" | sed 's/ | /\n/g'
+}
+
+wifi_device() {
+    nmcli -t -f DEVICE,TYPE device status 2>/dev/null |
+        awk -F: '$2 == "wifi" { print $1; exit }'
+}
+
+radio_state() {
+    nmcli -t radio wifi 2>/dev/null
+}
+
+# The first IPv4 address on the wifi device, prefix length stripped. Empty when
+# the link is up but DHCP has not answered yet, which is a state worth being
+# able to see: the row then reads "connected" with no address after it.
+active_ip() {
+    local device=$1
+    nmcli -g IP4.ADDRESS device show "$device" 2>/dev/null |
+        head -1 | cut -d/ -f1
+}
+
+# ssid -> saved profile name, for every wifi profile NetworkManager holds.
+# The profile name is not required to equal the SSID -- nmcli only defaults it
+# that way -- so the mapping is read from each profile's ssid property rather
+# than assumed from its name.
+declare -A SAVED_BY_SSID=()
+declare -A SAVED_NAMES=()
+
+load_saved() {
+    SAVED_BY_SSID=()
+    SAVED_NAMES=()
+
+    local name ssid
+    while IFS= read -r name; do
+        [[ -n $name ]] || continue
+        name=$(unescape "$name")
+        SAVED_NAMES[$name]=1
+        ssid=$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null)
+        [[ -n $ssid ]] && SAVED_BY_SSID[$ssid]=$name
+    done < <(nmcli -t -f TYPE,NAME connection show 2>/dev/null |
+                 awk -F: '$1 == "802-11-wireless" { sub(/^[^:]*:/, ""); print }')
+}
+
+# --- menus ------------------------------------------------------------------
+
+# Store the passphrase on an existing profile without it ever being an
+# argument. `nmcli connection edit` is an interactive editor, and an
+# interactive editor reads its commands from stdin -- which is a pipe here.
+set_passphrase() {
+    local profile=$1 passphrase=$2
+
+    {
+        printf '%s\n' 'set wifi-sec.key-mgmt wpa-psk'
+        printf '%s\n' "set wifi-sec.psk $passphrase"
+        printf '%s\n' 'save'
+        printf '%s\n' 'quit'
+    } | nmcli connection edit "$profile" >/dev/null 2>&1
+}
+
+# Create a profile and bring it up. Returns non-zero if either step fails, and
+# in that case removes the profile it made: a wrong passphrase would otherwise
+# leave a saved network behind that fails silently on every later autoconnect.
+create_and_connect() {
+    local ssid=$1 security=$2 hidden=${3:-no}
+    local device passphrase
+
+    device=$(wifi_device)
+    [[ -n $device ]] || { report 'No Wi-Fi device'; return 1; }
+
+    if [[ $security == open ]]; then
+        notify "Connecting to $ssid"
+        nmcli device wifi connect "$ssid" ifname "$device" >/dev/null 2>&1 && return 0
+        report 'Could not connect' "$ssid"
+        return 1
+    fi
+
+    passphrase=$(prompt_password "$ssid:") || return 1
+
+    # autoconnect stays off until the passphrase is on the profile. Left on,
+    # NetworkManager would try to activate the profile the moment it is added
+    # and fail against a profile that has no key yet.
+    nmcli connection add type wifi con-name "$ssid" ifname "$device" \
+          ssid "$ssid" autoconnect no >/dev/null 2>&1 || {
+        report 'Could not create the profile' "$ssid"
+        return 1
+    }
+
+    [[ $hidden == yes ]] &&
+        nmcli connection modify "$ssid" 802-11-wireless.hidden yes >/dev/null 2>&1
+
+    set_passphrase "$ssid" "$passphrase"
+    nmcli connection modify "$ssid" connection.autoconnect yes >/dev/null 2>&1
+
+    notify "Connecting to $ssid"
+    if nmcli connection up "$ssid" >/dev/null 2>&1; then
+        notify 'Connected' "$ssid"
+        return 0
+    fi
+
+    nmcli connection delete "$ssid" >/dev/null 2>&1
+    report 'Could not connect' "$ssid -- wrong passphrase, or the network refused it."
+    return 1
+}
+
+show_info() {
+    local ssid=$1 signal=$2 security=$3 active=$4
+    local device
+    local -a lines=()
+
+    lines+=("SSID: $ssid")
+    lines+=("Signal: ${signal}%")
+    lines+=("Security: ${security:-open}")
+
+    if [[ -n ${SAVED_BY_SSID[$ssid]-} ]]; then
+        lines+=("Saved as: ${SAVED_BY_SSID[$ssid]}")
+    else
+        lines+=('Saved: no')
+    fi
+
+    if [[ $active == yes ]]; then
+        device=$(wifi_device)
+        lines+=("Interface: $device")
+
+        # nmcli -g takes the values without the field names, which is what lets
+        # these carry readable labels. -t would print "IP4.ADDRESS[1]:..." and
+        # leave the menu reading like a debug dump.
+        #
+        # Every field is repeated per stack rather than sharing a "Gateway:"
+        # row, because two unlabelled gateways one after the other cannot be
+        # told apart by anyone who does not already know which order they came
+        # in. Each stack is skipped whole when the link does not carry it.
+        local version field label value raw
+        for version in 4 6; do
+            raw=$(nmcli -g "IP${version}.ADDRESS" device show "$device" 2>/dev/null)
+            [[ -n $raw ]] || continue
+
+            for field in ADDRESS GATEWAY DNS; do
+                case $field in
+                    ADDRESS) label="IPv${version}" ;;
+                    GATEWAY) label="IPv${version} gateway" ;;
+                    DNS)     label="IPv${version} DNS" ;;
+                esac
+
+                raw=$(nmcli -g "IP${version}.${field}" device show "$device" 2>/dev/null)
+
+                # One line per value: a row holding three DNS servers runs past
+                # any width and truncates in the middle of an address. IPv6
+                # values arrive with their colons escaped as \: by -g, the same
+                # escaping the AP list has to undo.
+                while IFS= read -r value; do
+                    value=$(unescape "$value")
+                    [[ -n $value ]] || continue
+
+                    # The link-local address is on every IPv6 link by
+                    # construction and answers no question anyone opened this
+                    # screen to ask.
+                    [[ $field == ADDRESS && $value == fe80:* ]] && continue
+
+                    lines+=("${label}: $value")
+                done < <(split_values "$raw")
+            done
+        done
+    fi
+
+    lines+=('Back')
+
+    local WIDTH=$INFO_WIDTH
+    pick 'Info' "${lines[@]}" >/dev/null
+}
+
+network_menu() {
+    local ssid=$1 signal=$2 security=$3 active=$4
+    local profile
+
+    while true; do
+        load_saved
+        profile=${SAVED_BY_SSID[$ssid]-}
+
+        local -a labels=() actions=()
+
+        if [[ $active == yes ]]; then
+            labels+=('Disconnect'); actions+=('disconnect')
+        else
+            labels+=('Connect');    actions+=('connect')
+        fi
+
+        [[ -n $profile ]] && { labels+=('Forget'); actions+=('forget'); }
+
+        labels+=('Info'); actions+=('info')
+        labels+=('Back'); actions+=('back')
+
+        local index
+        index=$(pick "$ssid" "${labels[@]}") || return 0
+
+        case ${actions[index]} in
+            connect)
+                if [[ -n $profile ]]; then
+                    # A saved profile already holds the key, so this path never
+                    # asks for a passphrase -- which is why the prompt appears
+                    # once per network and not once per connect.
+                    notify "Connecting to $ssid"
+                    if nmcli connection up "$profile" >/dev/null 2>&1; then
+                        notify 'Connected' "$ssid"
+                        return 0
+                    fi
+                    report 'Could not connect' "$ssid"
+                elif [[ $security == *802.1X* ]]; then
+                    # Enterprise networks need an identity, a method, and often
+                    # a certificate. None of that fits a passphrase box, and
+                    # guessing at it would produce a profile that fails later
+                    # rather than here.
+                    report 'Not supported' \
+                        "$ssid is an 802.1X network -- add it with nmcli by hand."
+                else
+                    create_and_connect "$ssid" \
+                        "$([[ -z $security ]] && echo open || echo secured)" && return 0
+                fi
+                ;;
+            disconnect)
+                nmcli device disconnect "$(wifi_device)" >/dev/null 2>&1
+                notify 'Disconnected' "$ssid"
+                return 0
+                ;;
+            forget)
+                if confirm "Forget $ssid?" 'Forget'; then
+                    nmcli connection delete "$profile" >/dev/null 2>&1
+                    notify 'Forgotten' "$ssid"
+                    return 0
+                fi
+                ;;
+            info)
+                show_info "$ssid" "$signal" "$security" "$active"
+                ;;
+            back)
+                return 0
+                ;;
+        esac
+    done
+}
+
+hidden_network() {
+    local ssid index
+
+    ssid=$(prompt_text 'Hidden network SSID') || return 0
+
+    # A hidden network is not in the scan, so its security cannot be read off
+    # the AP list the way every other entry's is. Asking is the only way to
+    # know which of the two profiles to build.
+    index=$(pick "$ssid" 'WPA / WPA2 passphrase' 'Open, no passphrase') || return 0
+
+    if [[ $index == 0 ]]; then
+        create_and_connect "$ssid" secured yes
+    else
+        create_and_connect "$ssid" open yes
+    fi
+}
+
+saved_networks() {
+    while true; do
+        load_saved
+
+        local -a labels=() actions=()
+        local name
+
+        # Sorted, because this list is not ordered by anything the user can
+        # see -- unlike the scan, where signal and connected state give the
+        # order a meaning.
+        while IFS= read -r name; do
+            [[ -n $name ]] || continue
+            labels+=("$name")
+            actions+=("$name")
+        done < <(printf '%s\n' "${!SAVED_NAMES[@]}" | sort)
+
+        if [[ ${#labels[@]} -eq 0 ]]; then
+            labels+=('No saved networks')
+            actions+=('back')
+        fi
+
+        labels+=('Back'); actions+=('back')
+
+        local index
+        index=$(pick 'Saved networks' "${labels[@]}") || return 0
+        [[ ${actions[index]} == back ]] && return 0
+
+        name=${actions[index]}
+        if confirm "Forget $name?" 'Forget'; then
+            nmcli connection delete "$name" >/dev/null 2>&1
+            notify 'Forgotten' "$name"
+        fi
+    done
+}
+
+main_menu() {
+    local rescan=no
+
+    while true; do
+        local -a labels=() actions=() meta=()
+
+        if [[ $(radio_state) == enabled ]]; then
+            load_saved
+
+            local line inuse signal security ssid suffix active address
+            local -A seen=()
+
+            # SSID last for the escaping reason above. The in-use row sorts
+            # first and signal descending after it, so that when one SSID is
+            # broadcast by several access points the dedupe below keeps the
+            # connected one -- and otherwise the strongest one.
+            while IFS= read -r line; do
+                inuse=${line%%:*};    line=${line#*:}
+                signal=${line%%:*};   line=${line#*:}
+                security=${line%%:*}; ssid=${line#*:}
+                ssid=$(unescape "$ssid")
+
+                # An empty SSID is a hidden AP announcing itself without a
+                # name. There is nothing to connect to by name, so it is not a
+                # row; the "Hidden network" entry covers that case instead.
+                [[ -n $ssid ]] || continue
+                [[ -z ${seen[$ssid]-} ]] || continue
+                seen[$ssid]=1
+
+                active=no
+                [[ $inuse == '*' ]] && active=yes
+
+                if [[ $active == yes ]]; then
+                    # The address on the row rather than only behind Info:
+                    # "what is my IP" is a question asked at a glance, and a
+                    # drill-down answer to it is one keystroke too many.
+                    address=$(active_ip "$(wifi_device)")
+                    suffix="connected, ${signal}%${address:+, $address}"
+                elif [[ -n ${SAVED_BY_SSID[$ssid]-} ]]; then
+                    suffix="saved, ${signal}%"
+                elif [[ -z $security ]]; then
+                    suffix="open, ${signal}%"
+                else
+                    suffix="${signal}%"
+                fi
+
+                labels+=("$ssid  ($suffix)")
+                actions+=('network')
+                meta+=("$ssid"$'\x1f'"$signal"$'\x1f'"$security"$'\x1f'"$active")
+            done < <(nmcli -t -f IN-USE,SIGNAL,SECURITY,SSID device wifi list \
+                           --rescan "$rescan" 2>/dev/null |
+                         sort -t: -k1,1r -k2,2nr)
+
+            rescan=no
+
+            labels+=('Rescan');          actions+=('rescan');  meta+=('')
+            labels+=('Hidden network');  actions+=('hidden');  meta+=('')
+            labels+=('Saved networks');  actions+=('saved');   meta+=('')
+            labels+=('Wi-Fi off');       actions+=('off');     meta+=('')
+        else
+            labels+=('Wi-Fi on'); actions+=('on'); meta+=('')
+        fi
+
+        local index
+        index=$(pick 'Wi-Fi' "${labels[@]}") || return 0
+
+        case ${actions[index]} in
+            network)
+                local m_ssid m_signal m_security m_active
+                IFS=$'\x1f' read -r m_ssid m_signal m_security m_active \
+                    <<< "${meta[index]}"
+                network_menu "$m_ssid" "$m_signal" "$m_security" "$m_active"
+                ;;
+            rescan)
+                rescan=yes
+                ;;
+            hidden)
+                hidden_network
+                ;;
+            saved)
+                saved_networks
+                ;;
+            on)
+                nmcli radio wifi on >/dev/null 2>&1
+                notify 'Wi-Fi on'
+                ;;
+            off)
+                nmcli radio wifi off >/dev/null 2>&1
+                notify 'Wi-Fi off'
+                ;;
+        esac
+    done
+}
+
+main_menu

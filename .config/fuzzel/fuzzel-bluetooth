@@ -1,0 +1,348 @@
+#!/usr/bin/env bash
+#
+# Bluetooth manager driven by fuzzel's dmenu mode.
+#
+# The session has no blueman and no GNOME settings panel, so before this the
+# only pairing interface was `bluetoothctl` in a foot window -- which is what
+# the waybar module's on-click still opened. This replaces that with the
+# launcher the session already uses for everything else.
+#
+# Every menu is a fuzzel window. Selections come back as an index rather than
+# as text (`--index`), so a device whose name contains a tab, a dash, or a
+# parenthesis still maps back to exactly one array slot: nothing here parses a
+# label to recover a MAC.
+
+set -uo pipefail
+
+# bluetoothctl's scan is asynchronous and its non-interactive mode has no
+# "stop when you have found something" -- it runs until the timeout expires.
+# Ten seconds finds a device already in pairing mode and keeps the blocked
+# window short enough that it reads as a scan rather than as a hang.
+readonly SCAN_SECONDS=10
+
+# Pairing waits on the remote device to accept, which is slower than a connect
+# and slower than bluetoothctl's own default. Thirty seconds covers a headset
+# that wants a button held down; past that the device is not answering.
+readonly PAIR_SECONDS=30
+
+readonly APP_NAME='Bluetooth'
+
+# --- fuzzel plumbing --------------------------------------------------------
+
+# Show the arguments as a menu and echo the 0-based index of the choice.
+# Returns non-zero when the user cancels. --only-match rules out custom
+# entries: an index has no meaning for text that matches no row, and without
+# it a typo plus Enter would be indistinguishable from a cancel.
+pick() {
+    local prompt=$1
+    shift
+
+    local choice
+    choice=$(printf '%s\n' "$@" |
+        fuzzel --dmenu --index --only-match --prompt "$prompt " \
+               --lines 12 --width 46 --log-level=none 2>/dev/null)
+
+    [[ $choice =~ ^[0-9]+$ ]] || return 1
+    printf '%s' "$choice"
+}
+
+# Nothing in this session implements org.freedesktop.Notifications: there is no
+# mako, no dunst, no desktop shell that ships one. notify-send against a bus
+# with no such name fails with "The name is not activatable" and shows nothing,
+# so a script that reports only through it reports nothing at all.
+#
+# Rather than depend on a daemon that may or may not be there, the split below
+# is by how much the message matters. Progress goes through notify-send and is
+# allowed to vanish. An outcome the user has to see falls back to a fuzzel
+# window, which is the one output channel this script already knows it has.
+have_notifications() {
+    gdbus call --session \
+        --dest org.freedesktop.DBus \
+        --object-path /org/freedesktop/DBus \
+        --method org.freedesktop.DBus.NameHasOwner \
+        org.freedesktop.Notifications 2>/dev/null | grep -q true
+}
+
+readonly NOTIFICATIONS=$(have_notifications && echo yes || echo no)
+
+# Progress and confirmations. Success needs no window of its own: the menu is
+# redrawn straight after, and the new state is on it.
+notify() {
+    [[ $NOTIFICATIONS == yes ]] || return 0
+    notify-send --app-name="$APP_NAME" "$1" "${2-}"
+}
+
+# Failures, which the redrawn menu cannot express -- an unchanged menu looks
+# the same whether the action failed or was never attempted.
+report() {
+    if [[ $NOTIFICATIONS == yes ]]; then
+        # Critical, which is what stops the daemon expiring it. A failure the
+        # user looked away from is a failure they never saw, and the menu
+        # behind it looks identical either way.
+        notify-send --app-name="$APP_NAME" --urgency=critical "$1" "${2-}"
+        return 0
+    fi
+    pick "${1}${2:+ -- $2}" 'OK' >/dev/null
+}
+
+# --- adapter and device state ----------------------------------------------
+
+# One `bluetoothctl show` per redraw rather than one per field. The value is
+# the word after the colon; Powered and Discoverable are both plain yes/no.
+adapter_field() {
+    bluetoothctl show 2>/dev/null | awk -v key="$1:" '$1 == key { print $2; exit }'
+}
+
+# `bluetoothctl devices <filter>` prints "Device <MAC> <name>". Asking three
+# times -- Connected, Paired, Trusted -- costs three processes total, where
+# `bluetoothctl info` per device costs one per device and returns the same
+# three booleans.
+macs_matching() {
+    bluetoothctl devices "$1" 2>/dev/null | awk '$1 == "Device" { print $2 }'
+}
+
+device_name() {
+    bluetoothctl info "$1" 2>/dev/null |
+        awk -F': ' '$1 ~ /^\s*Alias$/ { print $2; exit }'
+}
+
+# --- menus ------------------------------------------------------------------
+
+confirm() {
+    local prompt=$1 action=$2 choice
+
+    # Cancel sits first so that Enter on an unread menu is the harmless answer.
+    choice=$(pick "$prompt" 'Cancel' "$action") || return 1
+    [[ $choice == 1 ]]
+}
+
+show_info() {
+    local mac=$1
+    local -a lines=()
+
+    mapfile -t lines < <(bluetoothctl info "$mac" 2>/dev/null | sed 's/^\s*//')
+    lines+=('Back')
+
+    pick 'Info' "${lines[@]}" >/dev/null
+}
+
+# Menu for one device. The entries offered depend on what the device currently
+# is: a paired device cannot be paired again, and an unpaired one cannot be
+# trusted, so listing every verb every time would mean listing verbs that
+# return an error when picked.
+device_menu() {
+    local mac=$1
+    local name connected paired trusted
+
+    while true; do
+        name=$(device_name "$mac")
+        [[ -n $name ]] || name=$mac
+
+        connected=no paired=no trusted=no
+        while IFS=': ' read -r key value; do
+            case $key in
+                Connected) connected=$value ;;
+                Paired)    paired=$value ;;
+                Trusted)   trusted=$value ;;
+            esac
+        done < <(bluetoothctl info "$mac" 2>/dev/null | sed 's/^\s*//')
+
+        local -a labels=() actions=()
+
+        if [[ $connected == yes ]]; then
+            labels+=('Disconnect');  actions+=('disconnect')
+        else
+            labels+=('Connect');     actions+=('connect')
+        fi
+
+        if [[ $paired == yes ]]; then
+            if [[ $trusted == yes ]]; then
+                labels+=('Untrust');  actions+=('untrust')
+            else
+                # Trusting is what stops the adapter asking again on every
+                # reconnect, so it is worth its own entry rather than being
+                # folded silently into Connect.
+                labels+=('Trust');    actions+=('trust')
+            fi
+        else
+            labels+=('Pair');         actions+=('pair')
+        fi
+
+        labels+=('Info');             actions+=('info')
+        labels+=('Remove');           actions+=('remove')
+        labels+=('Back');             actions+=('back')
+
+        local index
+        index=$(pick "$name" "${labels[@]}") || return 0
+
+        case ${actions[index]} in
+            connect)
+                notify "Connecting to $name"
+                if bluetoothctl connect "$mac" >/dev/null 2>&1; then
+                    notify "Connected" "$name"
+                else
+                    report "Could not connect" "$name"
+                fi
+                ;;
+            disconnect)
+                bluetoothctl disconnect "$mac" >/dev/null 2>&1
+                notify 'Disconnected' "$name"
+                ;;
+            pair)
+                notify "Pairing with $name" 'Put the device in pairing mode.'
+                if bluetoothctl --timeout "$PAIR_SECONDS" pair "$mac" >/dev/null 2>&1; then
+                    # A freshly paired device is trusted here without asking.
+                    # Pairing it at all is the statement that it is wanted;
+                    # leaving it untrusted only means the next reconnect
+                    # prompts for an authorisation this script cannot answer.
+                    bluetoothctl trust "$mac" >/dev/null 2>&1
+                    bluetoothctl connect "$mac" >/dev/null 2>&1
+                    notify 'Paired' "$name"
+                else
+                    # bluetoothctl pairs through whatever agent is registered
+                    # on the bus. A device that asks for a PIN or a passkey
+                    # confirmation has no agent here that can answer it, and
+                    # the attempt times out looking like a plain failure.
+                    report 'Pairing failed' \
+                        "$name -- if it asks for a PIN, pair it from bluetoothctl in a terminal."
+                fi
+                ;;
+            trust)
+                bluetoothctl trust "$mac" >/dev/null 2>&1
+                notify 'Trusted' "$name"
+                ;;
+            untrust)
+                bluetoothctl untrust "$mac" >/dev/null 2>&1
+                notify 'Untrusted' "$name"
+                ;;
+            info)
+                show_info "$mac"
+                ;;
+            remove)
+                if confirm "Remove $name?" 'Remove'; then
+                    bluetoothctl remove "$mac" >/dev/null 2>&1
+                    notify 'Removed' "$name"
+                    return 0
+                fi
+                ;;
+            back)
+                return 0
+                ;;
+        esac
+    done
+}
+
+scan() {
+    # The scan runs behind a window the user dismisses rather than in front of
+    # a blocked script. Run in the foreground it would be SCAN_SECONDS of an
+    # empty screen with no way to tell a scan from a hang -- and no way to
+    # stop early once the device has plainly not turned up.
+    bluetoothctl --timeout "$SCAN_SECONDS" scan on >/dev/null 2>&1 &
+    local scanner=$!
+
+    pick "Scanning ${SCAN_SECONDS}s -- put the device in pairing mode" 'Done' \
+        >/dev/null
+
+    # Dismissing early leaves the adapter discovering, because killing
+    # bluetoothctl is not the same as telling it to stop.
+    if kill -0 "$scanner" 2>/dev/null; then
+        kill "$scanner" 2>/dev/null
+        wait "$scanner" 2>/dev/null
+        bluetoothctl scan off >/dev/null 2>&1
+    fi
+
+    # Devices found stay in bluetoothctl's list, so the caller's redraw shows
+    # them whether the scan ran to its timeout or was cut short.
+}
+
+main_menu() {
+    local powered discoverable
+
+    while true; do
+        powered=$(adapter_field Powered)
+
+        local -a labels=() actions=()
+
+        if [[ $powered == yes ]]; then
+            local -A is_connected=() is_paired=()
+            local mac name suffix
+
+            while read -r mac; do is_connected[$mac]=1; done < <(macs_matching Connected)
+            while read -r mac; do is_paired[$mac]=1;    done < <(macs_matching Paired)
+
+            # Connected first, then paired, then everything the last scan saw.
+            # The order is the order the device list is likely to be wanted in,
+            # and it holds still between redraws: an entry does not move under
+            # the cursor because a scan finished.
+            local -a ordered=()
+            mapfile -t ordered < <(
+                macs_matching Connected
+                macs_matching Paired
+                bluetoothctl devices 2>/dev/null | awk '$1 == "Device" { print $2 }'
+            )
+
+            local -A seen=()
+            for mac in "${ordered[@]}"; do
+                [[ -n $mac && -z ${seen[$mac]-} ]] || continue
+                seen[$mac]=1
+
+                name=$(device_name "$mac")
+                [[ -n $name ]] || name=$mac
+
+                if [[ -n ${is_connected[$mac]-} ]]; then
+                    suffix='connected'
+                elif [[ -n ${is_paired[$mac]-} ]]; then
+                    suffix='paired'
+                else
+                    suffix='new'
+                fi
+
+                labels+=("$name  ($suffix)")
+                actions+=("device:$mac")
+            done
+
+            discoverable=$(adapter_field Discoverable)
+
+            labels+=("Scan for devices (${SCAN_SECONDS}s)");  actions+=('scan')
+            labels+=("Discoverable: $discoverable");          actions+=('discoverable')
+            labels+=('Power off');                            actions+=('power:off')
+        else
+            # With the radio off there is nothing to list and no device
+            # operation that would succeed, so the menu is the one verb that
+            # changes that.
+            labels+=('Power on');  actions+=('power:on')
+        fi
+
+        local index
+        index=$(pick 'Bluetooth' "${labels[@]}") || return 0
+
+        local action=${actions[index]}
+        case $action in
+            device:*)
+                device_menu "${action#device:}"
+                ;;
+            scan)
+                scan
+                ;;
+            discoverable)
+                if [[ $discoverable == yes ]]; then
+                    bluetoothctl discoverable off >/dev/null 2>&1
+                    notify 'Discoverable off'
+                else
+                    bluetoothctl discoverable on >/dev/null 2>&1
+                    notify 'Discoverable on' 'This machine is now visible to other devices.'
+                fi
+                ;;
+            power:on)
+                bluetoothctl power on >/dev/null 2>&1
+                notify 'Bluetooth on'
+                ;;
+            power:off)
+                bluetoothctl power off >/dev/null 2>&1
+                notify 'Bluetooth off'
+                ;;
+        esac
+    done
+}
+
+main_menu
