@@ -24,9 +24,23 @@ tab_bar_right = [
 tab_bar_right_separator = "·"
 
 [ui.toast]
-# "terminal" asks the outer terminal for a desktop notification, which under
-# WSL reaches nothing; "herdr" draws the toast inside herdr itself.
-delivery = "herdr"
+# Hand the notification to whatever owns org.freedesktop.Notifications on the
+# machine. Here that is mako, started with the session; ~/.config/mako/config
+# is where what happens to it is settled -- the session palette, three seconds
+# for an ordinary notification, and a failure that waits to be dismissed.
+#
+# The in-app toast this replaces was drawn inside the herdr window, which is
+# the one place it is not needed. An agent that goes blocked is worth reporting
+# precisely when herdr is not what is on screen, and a toast painted inside it
+# reaches nobody on another workspace or behind another window.
+#
+# One value has to serve every machine: herdr has no include, no local override
+# and no per-host section, and HERDR_CONFIG_PATH swaps the whole file or
+# nothing. This one names an intent rather than a mechanism, so a machine whose
+# system has no notification service answers it by putting notify-send on PATH
+# rather than by this file growing a second value -- the same way ~/.bashrc
+# asks whether direnv is installed rather than which system it is running on.
+delivery = "system"
 
 [keys]
 prefix = "ctrl+space"
