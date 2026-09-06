@@ -243,13 +243,46 @@ layout {
         // - RGB hex: "#rgb", "#rgba", "#rrggbb", "#rrggbbaa"
         // - CSS-like notation: "rgb(255, 127, 0)", rgba(), hsl() and a few others.
 
-        // Color of the ring on the active monitor.
-        active-color "#7fc8ff"
+        // Color of the ring on the active monitor. Catppuccin Mocha's blue,
+        // the same palette background-color above and .config/waybar/style.css
+        // draw from, carried at cc rather than swapped for a darker colour of
+        // its own. The suffix is what keeps the entry named and checkable
+        // against the other four files while still moving what lands on screen.
+        //
+        // niri's own #7fc8ff is chosen to be legible against a background it
+        // cannot know. The background here is declared and dark, so the default
+        // lands brighter than the job needs -- a saturated near-cyan line
+        // against the mantle is the loudest thing on the display, and it marks
+        // the window already being looked at. Solid Mocha blue was a step down
+        // from that and still read loud.
+        //
+        // Relative luminance runs 0.53 for niri's default, 0.45 for the solid
+        // entry, 0.30 here; contrast against the mantle 9.7:1, 8.3:1, 5.8:1.
+        // At cc the ring composites over the mantle to #7295cf -- measured on
+        // screen as #7193cc, the difference being the shadow it is drawn over
+        // at the window edge. Still blue, which is the point: the shadow is
+        // already the grey thing in the gap, and a marker separated from it by
+        // lightness alone would be no marker.
+        //
+        // The bar paints its focused workspace this same entry at full
+        // opacity. One palette colour answers "what has focus" in both places,
+        // and the ring is the quieter of the two because it is the larger
+        // surface -- a perimeter rather than a few glyphs.
+        //
+        // The suffix is the dial. Towards ff brings the ring back up, towards
+        // aa (#6380b3, 4.4:1) takes it further down. Record the composited
+        // value here when you move it.
+        active-color "#89b4facc"
 
         // Color of the ring on inactive monitors.
         //
         // The focus ring only draws around the active window, so the only place
         // where you can see its inactive-color is on other monitors.
+        //
+        // Unlike active-color above, this is still niri's default and off the
+        // palette. One output is attached, so nothing renders it and nobody has
+        // looked at it -- choosing a Mocha entry here would be stating a value
+        // sight unseen. Decide it when there is a second monitor to judge on.
         inactive-color "#505050"
 
         // You can also use gradients. They take precedence over solid colors.
