@@ -21,4 +21,4 @@
 ## 4. Close-out
 
 - [x] 4.1 Run `openspec validate adopt-colors-dark-section --strict` and verify it passes
-- [ ] 4.2 Verify `git status` names only `.config/foot/foot.ini` and the change's own files among the paths to be staged, then commit
+- [x] 4.2 Verify `git status` names only `.config/foot/foot.ini` and the change's own files among the paths to be staged, then commit
