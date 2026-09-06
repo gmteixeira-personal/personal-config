@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Wi-Fi
+GenericName=Wireless Network Manager
+Comment=Scan for and connect to wireless networks
+Exec=fuzzel-wifi
+Icon=fuzzel-wifi
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=wifi;wireless;network;wlan;internet;ssid;radio;

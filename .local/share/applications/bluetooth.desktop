@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Bluetooth
+GenericName=Bluetooth Manager
+Comment=Scan for, pair, and connect Bluetooth devices
+Exec=fuzzel-bluetooth
+Icon=fuzzel-bluetooth
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=bt;pair;connect;headset;mouse;keyboard;radio;
