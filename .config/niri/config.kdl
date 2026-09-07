@@ -274,15 +274,19 @@ layout {
         // value here when you move it.
         active-color "#89b4facc"
 
-        // Color of the ring on inactive monitors.
-        //
-        // The focus ring only draws around the active window, so the only place
-        // where you can see its inactive-color is on other monitors.
+        // Color of the ring on inactive monitors -- and, because border below
+        // is off, of every inactive tab in the tab-indicator further down. The
+        // ring itself only draws around the active window, so a monitor that
+        // does not hold focus is the only place the ring shows this value; a
+        // tabbed column shows it on every tab but one, on whichever monitor
+        // the column is on.
         //
         // Unlike active-color above, this is still niri's default and off the
-        // palette. One output is attached, so nothing renders it and nobody has
-        // looked at it -- choosing a Mocha entry here would be stating a value
-        // sight unseen. Decide it when there is a second monitor to judge on.
+        // palette. It was left that way on the grounds that choosing a Mocha
+        // entry for something nobody had looked at would be stating a value
+        // sight unseen. A tabbed column of more than one window puts it in
+        // front of the eye now, so it can be judged; it has not been decided
+        // yet.
         inactive-color "#505050"
 
         // You can also use gradients. They take precedence over solid colors.
@@ -356,6 +360,49 @@ layout {
 
         // You can also change the shadow color and opacity.
         color "#0007"
+    }
+
+    // The strip of tabs that a column in tabbed display mode draws beside
+    // itself, naming the windows stacked in it. Mod+W toggles the mode.
+    tab-indicator {
+        // Draw the strip inside the column rather than outside it, which is
+        // what niri does by default. Outside, the strip stands 9 logical
+        // pixels clear of the column -- a bar of width 4 held off by a gap of
+        // 5 -- and `gaps` above gives it 2, so it is drawn in space the column
+        // does not own, and what is in that space decides whether it can be
+        // seen. Against the edge of the output there is nothing there and the
+        // strip goes off-screen, which loses the tabs on exactly the column
+        // that most needs them: the one filling the output, or the one at the
+        // end of the scroll where the strip is the only thing saying how many
+        // windows are stacked in it. Anywhere else that space belongs to the
+        // next column along, so the strip is painted over that window's edge
+        // instead -- against the rule that the focus ring is the only thing
+        // drawn between two tiled windows beyond the gap it fills.
+        //
+        // Widening `gaps` to fit the strip is not the same fix. It would leave
+        // the strip somewhere to be drawn without making it the column's, so
+        // it would still vanish at the edge, and it would set the seam between
+        // every pair of windows in the session from the needs of a mode most
+        // columns are not in.
+        //
+        // Inside, the strip counts as part of the column when niri sizes it,
+        // so the window gives up those 9 logical pixels of width for as long
+        // as the column is tabbed. That is the price of the strip being
+        // visible and it is paid on purpose. width and gap stay at niri's 4
+        // and 5 and are the dials if 9 turns out to be too many; they are not
+        // brought down to the 2 this file uses for lines elsewhere, because
+        // that number is argued from the focus ring being the whole seam
+        // between two windows, and a strip of tabs is a list that has to stay
+        // readable as a list.
+        place-within-column
+
+        // No colour is stated here, and that is the decision rather than an
+        // omission. border above is off, so a strip carrying no colours of its
+        // own is painted from the focus ring: the active tab in #89b4facc and
+        // every other tab in #505050, both already stated once, directly
+        // above. Setting active-color here would put the same palette entry in
+        // this file twice and leave the two copies to be moved together by
+        // hand.
     }
 
     // Struts shrink the area occupied by windows, similarly to layer-shell panels.
