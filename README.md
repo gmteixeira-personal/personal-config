@@ -353,6 +353,21 @@ named; where nothing at all is printed, that is said outright.
   command suites, the skills, the hooks, and the status line. Without it those
   files are just text. Its plugins are declared rather than vendored — see
   **Claude Code plugins are declarative** below. *A per-user install.*
+- **`fd`** — `.claude/CLAUDE.md` names it as what an agent reaches for to locate
+  a file or a directory, in place of `find`, and states the differences a `find`
+  habit gets wrong. **Absence is silent**: the instruction stays in the file, the
+  first call reports `fd: command not found`, and the agent falls back to `find`.
+  What is lost is speed and noise — `find` walks `.git` and every ignored build
+  directory unless told not to — rather than the ability to do the work. *A
+  per-user cargo install, landing in `~/.cargo/bin`, which `env.fish` already has
+  on `PATH`.*
+- **`ast-grep`** — `.claude/CLAUDE.md` names it as what performs a multi-file
+  syntax-aware search or rewrite, and `ast-grep outline` as what maps a large
+  file's symbols before it is read. **Absence is silent** in the same way: a
+  rename across a repository becomes a per-file edit loop or a regular
+  expression over `sed`, both of which match text the syntax would have
+  excluded, and a large file is read whole to find out where two functions are.
+  *A per-user cargo install, landing in `~/.cargo/bin`.*
 - **The `openspec` CLI** — drives `openspec/`, where every change here is
   proposed, implemented, and archived. Without it the specs stay perfectly
   readable and the workflow around them does not run. *A per-user install
