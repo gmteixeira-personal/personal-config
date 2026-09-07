@@ -99,6 +99,13 @@
 # the package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
+# yazi's theme, and only its theme. `flavors/` and `package.toml` beside it stay
+# ignored: the first is a third-party tree fetched by yazi's own package manager
+# and the second is the record of that fetch, and nothing in the theme
+# references either -- it overrides three keys of yazi's shipped theme rather
+# than selecting a flavor. Tracking them would vendor a colour scheme this
+# configuration does not use.
+!/.config/yazi/theme.toml
 
 # Which application opens what, when a file is opened from outside a shell. Any
 # program that offers to become the default for a type rewrites this file in
