@@ -140,8 +140,12 @@ Without these, the tracked configuration does not work.
   `.config/mimeapps.list` is what says so: it names every type the shared MIME
   database files under `text/` except `text/html`, plus the source types filed
   under `application/`, and points them at
-  `.local/share/applications/nvim-foot.desktop`. That entry is tracked here
-  rather than being the packaged `nvim.desktop`, because the packaged one is
+  `.local/share/applications/nvim-foot.desktop`. The same file answers for
+  everything else a double-click can land on, each named in its own entry below:
+  images in Loupe, PDFs and e-books in Zathura, and office documents — the
+  OpenDocument and Microsoft Office formats both — in LibreOffice. That entry is
+  tracked here rather than being the packaged `nvim.desktop`, because the
+  packaged one is
   marked `Terminal=true` and GIO — the library that launches desktop entries for
   nautilus, for Chrome and for `xdg-open` — picks a terminal from a fixed list
   of `xdg-terminal-exec`, `gnome-terminal`, `konsole`, `ptyxis` and `tilix`.
@@ -286,6 +290,25 @@ Without these, the tracked configuration does not work.
   `image/tiff` and `image/svg+xml` — those are left with Loupe, since Zathura's
   image support exists to render pages rather than to be where a photo opens.
   Without either package PDFs fall back to Chrome. *System packages.*
+- **`libreoffice-writer`, `libreoffice-calc`, `libreoffice-impress`,
+  `libreoffice-draw` and `libreoffice-math`** — the office suite, and where every
+  office document opens: OpenDocument and Microsoft Office alike, `.odt` and
+  `.docx` in Writer, `.ods` and `.xlsx` in Calc, `.odp` and `.pptx` in Impress,
+  with Draw taking the drawing and vector formats — Visio, Publisher, CorelDRAW,
+  EMF and WMF — and Math the formula ones. `.config/mimeapps.list` names the five
+  component entries rather than `libreoffice-startcenter.desktop`, for the same
+  reason it names Zathura's backend entry: the Start Center declares only
+  `application/vnd.openofficeorg.extension` and the `x-scheme-handler/ms-*`
+  schemes, so naming it for `.docx` would claim a type its own entry does not.
+  Types these entries claim that this session already answers for are left where
+  they are — `text/plain` and every CSV and tab-separated spelling stay in
+  Neovim, `application/pdf` stays in Zathura, since Draw opens a PDF to edit it
+  rather than to read it. Without these packages the documents have no handler at
+  all: no window, no error and no journal line, which reads as the file manager
+  ignoring the double-click rather than as an absent program. Install only the
+  components you want and the rest of the mapping still resolves; the types of a
+  component that is not installed resolve to nothing, as they all did before.
+  *System packages, and `libreoffice-base` is deliberately not among them.*
 - **`greetd`** — the login manager, and what makes the machine reach the session
   at boot rather than sitting at a text console. Its configuration lives in
   `/etc/greetd/config.toml`, outside this repository's root, so the checkout
