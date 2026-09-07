@@ -163,13 +163,30 @@ layout {
     // step darker than the default it replaces.
     background-color "#181825"
 
-    // When to center a column when changing focus, options are:
-    // - "never", default behavior, focusing an off-screen column will keep at the left
-    //   or right edge of the screen.
-    // - "always", the focused column will always be centered.
-    // - "on-overflow", focusing a column will center it if it doesn't fit
-    //   together with the previously focused column.
-    center-focused-column "never"
+    // Centre a column when focus moves to it and it does not fit on the output
+    // together with the column that had focus before. Niri scrolls by the least
+    // amount that brings an off-screen column into view, which leaves the column
+    // just focused -- the one about to be read or typed into -- hard against a
+    // bezel, with the whole of the workspace piled on one side of it. That
+    // position is not chosen for the column's sake; it is what falls out of the
+    // scroll arithmetic. The scroll happens either way, so stopping it at the
+    // centre costs no motion that stopping at the edge did not.
+    //
+    // Niri offers three values here and the name of the chosen one does not say
+    // why the other two were not taken. "never" is the default and what this
+    // held before, by inheritance rather than by decision; it is the edge case
+    // described above. "always" also recentres the view when focus moves between
+    // columns that already share the output, so a workspace of narrow columns
+    // slides sideways on every focus change and a column that was perfectly
+    // readable moves only to end up equally readable somewhere else.
+    // "on-overflow" fires only where the view had to move regardless, so it adds
+    // no motion -- it only decides where motion already under way stops.
+    //
+    // Which focus changes overflow follows from the column widths set below: at
+    // the default half-width proportion two neighbours fit together and do not
+    // trigger it, and anything wider does. Mod+C (center-column) still centres
+    // on demand for the cases this leaves alone.
+    center-focused-column "on-overflow"
 
     // Centre the one column on a workspace that holds only one. Niri places
     // columns from the left edge rightwards because that is the direction the
@@ -187,10 +204,10 @@ layout {
     // Separate decision from center-focused-column above, which the names do
     // not make obvious. That one decides where a column lands when focus moves
     // to it -- a question a workspace only has once it holds more than one
-    // column -- and it stays at "never". Setting it to "always" would centre a
-    // lone column too, which makes the two look like alternatives; it would
-    // also recentre the view on every focus change, which is a different change
-    // and not one this asks for.
+    // column. A lone column has no previously focused column to be measured
+    // against, so no value of that setting decides where it sits, and this line
+    // is the only thing that does. The two never decide the same case, and
+    // setting either one says nothing about the other.
     always-center-single-column
 
     // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
