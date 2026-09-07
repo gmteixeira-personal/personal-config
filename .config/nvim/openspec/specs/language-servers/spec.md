@@ -280,7 +280,7 @@ Formatting SHALL be requested only through the formatting capability. No languag
 
 Documentation a server returns for hover and for signature help SHALL be rendered as formatted markdown rather than as the raw text of the response: headings, emphasis, and inline code SHALL be styled, and a fenced code block SHALL be highlighted as the language the fence names. Where the server names no language, the code block SHALL be highlighted as the filetype of the buffer the request came from.
 
-Documentation longer than the float SHALL be scrollable without the float closing, and the keys that scroll it SHALL be usable from the buffer, so that reading long documentation does not require moving focus into the float first. Pressing them when no such float is open SHALL leave their built-in page-scrolling behaviour intact.
+Documentation longer than the float SHALL be scrollable without the float closing, and the keys that scroll it SHALL be usable from the buffer, so that reading long documentation does not require moving focus into the float first. Pressing them when no such float is open SHALL scroll the buffer by a page as the `scrolling` capability defines a page, which is not the editor's built-in page scroll.
 
 Rendering SHALL be presentation only: the text displayed SHALL be the documentation the server sent, and no request, key, or buffer state changes because of how it is drawn. `K` SHALL remain bound as `language-servers` already requires, and the float SHALL still be dismissed by cursor movement.
 
@@ -301,7 +301,8 @@ Rendering SHALL be presentation only: the text displayed SHALL be the documentat
 #### Scenario: The scroll keys outside a float
 
 - **WHEN** no documentation float is open and the user presses the same key
-- **THEN** the buffer scrolls by a page as it always has
+- **THEN** the buffer scrolls by one page
+- **AND** the page is the whole window, as the `scrolling` capability requires
 
 #### Scenario: Dismissal is unchanged
 
