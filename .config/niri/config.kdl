@@ -599,7 +599,35 @@ binds {
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,
     // or do a four-finger swipe up on a touchpad.
-    Mod+O repeat=false { toggle-overview; }
+    //
+    // Two chords, one action, and the pair is the decision rather than either
+    // half of it. Mod+Tab is where the hand goes without being told, because
+    // every other desktop puts "show me everything open" there; Mod+O names
+    // the feature by its initial, which is a good way to write a binding down
+    // and a poor way to reach for one. Mod+O stays anyway -- an action costs
+    // nothing to bind twice, and taking a working chord away buys nothing.
+    // Keep them adjacent: if the action ever changes shape, both lines have to
+    // change, and side by side they cannot drift apart unnoticed.
+    //
+    // repeat=false on both, and it is not decoration. The action is a toggle
+    // and the keyboard repeats a held chord several times a second, so without
+    // it the Overview flickers open and closed for as long as the chord is
+    // down and its state on release depends on how long it was held.
+    //
+    // niri ships an example binding Mod+Tab to focus-workspace-previous. It
+    // used to sit commented out further down this block and is deleted rather
+    // than kept, because a chord bound twice is not a shadowed binding but a
+    // file that will not load -- `niri validate` answers "duplicate keybind
+    // later defined here" and the session carries on with the last good copy,
+    // silently. Nothing bound focus-workspace-previous, so nothing was lost;
+    // wanting it back means choosing it a free chord.
+    //
+    // In a nested session Mod+Tab is literally Alt+Tab -- see the note on Mod
+    // at the top of this block -- so the two chords coincide there. On a TTY,
+    // which is the session this file is for, Mod is Super and Alt+Tab stays
+    // unbound and reaches whichever window has focus.
+    Mod+O   repeat=false { toggle-overview; }
+    Mod+Tab repeat=false { toggle-overview; }
 
     Mod+Q repeat=false { close-window; }
 
@@ -738,9 +766,6 @@ binds {
 
     // Alternatively, there are commands to move just a single window:
     // Mod+Ctrl+1 { move-window-to-workspace 1; }
-
-    // Switches focus between the current and the previous workspace.
-    // Mod+Tab { focus-workspace-previous; }
 
     // The following binds move the focused window in and out of a column.
     // If the window is alone, they will consume it into the nearby column to the side.
