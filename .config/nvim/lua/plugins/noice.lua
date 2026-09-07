@@ -124,19 +124,31 @@ return {
     { "<leader>nd", "<cmd>Noice dismiss<cr>", desc = "Dismiss all messages" },
     { "<leader>ne", "<cmd>Noice errors<cr>", desc = "Errors" },
     -- Scroll a hover or signature float without moving focus into it. noice.lsp.scroll returns
-    -- false when no scrollable float is open, and the mapping then returns the key string itself --
-    -- expr = true is what makes that fallback a real <C-f>/<C-b> page scroll rather than a
-    -- recursive call back into this mapping. noice's documented recipe, and the only way to get
-    -- scroll-without-focus without shadowing <C-f>/<C-b> outright.
+    -- false when no scrollable float is open, and the mapping then returns a key string --
+    -- expr = true is what makes that fallback a real page scroll rather than a recursive call back
+    -- into this mapping. noice's documented recipe, and the only way to get scroll-without-focus
+    -- without shadowing <C-f>/<C-b> outright.
+    --
+    -- The fallback returns <PageDown>/<PageUp> rather than <C-f>/<C-b>, which is where the page
+    -- scroll itself is defined: scrolloff = 999 makes the built-in move the cursor two pages inside
+    -- the first and last screenful, so lua/config/keymaps.lua rewrites it, and <PageDown>/<PageUp>
+    -- are the names a general mapping is allowed to hold. <C-f> and <C-b> cannot be bound there --
+    -- lazy.nvim evaluates this spec after config.keymaps has run and would replace them -- so the
+    -- two chords stay here and delegate. remap = true is load-bearing: without it the returned key
+    -- goes to the built-in and the doubling comes back. A count typed before the chord is not
+    -- consumed by an expr mapping; it is prepended to the returned key and read by the mapping that
+    -- receives it, so 2<C-f> still moves two pages. In insert and select mode, where the general
+    -- mapping is not defined, <PageDown> is the built-in one, as <C-f> was before.
     {
       "<C-f>",
       function()
         if not require("noice.lsp").scroll(4) then
-          return "<C-f>"
+          return "<PageDown>"
         end
       end,
       mode = { "n", "i", "s" },
       expr = true,
+      remap = true,
       silent = true,
       desc = "Scroll documentation float forwards",
     },
@@ -144,11 +156,12 @@ return {
       "<C-b>",
       function()
         if not require("noice.lsp").scroll(-4) then
-          return "<C-b>"
+          return "<PageUp>"
         end
       end,
       mode = { "n", "i", "s" },
       expr = true,
+      remap = true,
       silent = true,
       desc = "Scroll documentation float backwards",
     },

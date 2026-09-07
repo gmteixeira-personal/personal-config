@@ -183,10 +183,23 @@ provider rather than testing for WSL, so a faster tool Neovim already chose is
 never replaced. The question is deferred a tick past startup because asking it
 costs about 60 ms there, which would otherwise more than double launch time.
 
-Two of these override a Neovim default in a way that can read as a malfunction:
+Three of these override a Neovim default in a way that can read as a malfunction:
 
 - **`scrolloff` is 999, not 0.** The cursor does not move down the screen as you
-  scroll; the text moves instead. This is deliberate.
+  scroll; the text moves instead. This is deliberate. Every page-scroll key is
+  remapped because of it: the built-ins move the cursor their distance and then
+  the centring pulls it back to the middle row, which costs nothing in the
+  middle of a file but doubles the distance inside the first and last screenful,
+  where the view has no room to take its share. From line 1 of a 23-row window
+  the stock `<C-d>` lands on line 23 rather than line 12. The mappings move the
+  cursor a fixed distance everywhere, measured in screen rows: half a window on
+  `<C-d>`/`<C-u>`, a whole one on `<C-f>`/`<C-b>` and `<PageDown>`/`<PageUp>`.
+  Each key moves exactly as far as its opposite, so a press and its reverse
+  cancel.
+- **A page is the whole window, not `height - 2`.** Vim keeps two rows of the
+  old screen so a reader can find their place after the jump; with the cursor
+  pinned to the middle row it is the landmark instead, and the overlap is two
+  lines a press for nothing. A 39-row window moves 39 lines.
 - **`hlsearch` stays on after a search completes.** Highlights persisting is the
   point — they show a term's spread through the file. `<Esc>` clears them.
 
@@ -203,7 +216,7 @@ that belong to the current buffer alone.
 
 ### Overrides of built-in keys
 
-These four take over keys Vim already uses. They are unprefixed because they are
+These ten take over keys Vim already uses. They are unprefixed because they are
 wanted constantly.
 
 `H` and `L` reach the ends of the line in two steps outward: `H` to the first
@@ -220,6 +233,12 @@ commands, so `''` no longer returns from one.
 |---|---|---|
 | `H` | n, x, o | First non-blank, then column zero |
 | `L` | n, x, o | Last non-blank, then end of line |
+| `<C-d>` | n, x | Half a page down, at the ends of the file too |
+| `<C-u>` | n, x | Half a page up, at the ends of the file too |
+| `<C-f>` | n, x | A page down — the float scroll first, if one is open |
+| `<C-b>` | n, x | A page up — the float scroll first, if one is open |
+| `<PageDown>` | n, x | A page down |
+| `<PageUp>` | n, x | A page up |
 | `<Esc>` | n | Clear search highlight |
 | `<C-s>` | n, i, v | Save buffer (from any editing mode) |
 

@@ -68,6 +68,88 @@ vim.keymap.set({ "n", "x", "o" }, "L", line_end, {
   desc = "Last non-blank, then end of line",
 })
 
+-- Page scrolling on <C-d>/<C-u> and <PageDown>/<PageUp>, in every part of the file. The built-ins
+-- move the topline by their distance -- 'scroll' for a half page, the window height less two for a
+-- whole one -- and the cursor by the same amount, and scrolloff = 999 then pulls the cursor back to
+-- the middle row. Away from the ends of the buffer that correction changes nothing, because the two
+-- moved together. Inside the FIRST screenful the topline is clamped at 1 and cannot take its share,
+-- so the cursor absorbs the remainder and travels twice the distance: from line 1 of a 23-row
+-- window <C-d> lands on line 23, not on line 12, and in a 38-row window <C-f> moves 54 lines rather
+-- than 36. The last screenful is the same statement mirrored, on <C-u> and <C-b>. These mappings
+-- make the cursor's distance the same wherever the view happens to sit.
+--
+-- A page here is the window's WHOLE height, not Vim's height-less-two. The two rows Vim keeps exist
+-- so a reader can find the place the text jumped from; with the cursor pinned to the middle row it
+-- is the landmark instead, and the overlap is two lines a press for nothing.
+--
+-- Functions that EXECUTE a motion, not expression mappings that return one as H and L do. Executing
+-- it is what sets curswant, so a page down and back up lands in the column it started in rather than
+-- in the column of some short line in between, and what lets a visual selection extend. An
+-- expression mapping could not take a count at all: the digits typed before it stay pending and are
+-- prepended to whatever it returns -- the same fusing described above H -- so a <C-d> returning
+-- `22gj` for 2<C-d> executes `222gj`. The keys are consequently not operator-pending motions, which
+-- they were not in stock Neovim either.
+--
+-- gj/gk rather than j/k, because 'wrap' is on for every buffer here and a page is a screen
+-- measurement; the built-ins are already screen-based under 'wrap'. j would mean one press in a
+-- buffer of long prose lines scrolls several screens.
+--
+-- Nothing here scrolls the window. The view follows the cursor from scrolloff = 999 alone.
+--
+-- One built-in behaviour is given up: {count}<C-d> no longer SETS 'scroll' for later presses. A
+-- count multiplies the distance instead, and :set scroll= still means the other thing.
+--
+-- <C-f> and <C-b> are NOT bound here. noice binds them so a hover float scrolls first, lazy.nvim
+-- evaluates that spec after this file has run, and a mapping written here would be silently
+-- replaced -- the same load-order trap the <M-k>/<M-j> comment below records for the arrow keys.
+-- Its fallback returns <PageDown>/<PageUp> into the mappings below instead.
+local function move_page(rows, down)
+  -- A counted motion past the end of the buffer ABORTS -- 11gj on the last line moves nothing --
+  -- where the built-ins clamp, so the rows actually available have to be known before the motion
+  -- runs. nvim_win_text_height reports a line range's rendered height with wrapping counted; the -1
+  -- drops the cursor's own row. On a wrapped line it under-counts the rows below the cursor, which
+  -- clamps to the last line slightly early and never overshoots.
+  local cursor, last = vim.fn.line("."), vim.fn.line("$")
+  local range = down and { start_row = cursor - 1, end_row = last - 1 }
+    or { start_row = 0, end_row = cursor - 1 }
+  local available = vim.api.nvim_win_text_height(0, range).all - 1
+
+  if rows >= available then
+    vim.cmd("normal! " .. (down and "G" or "gg"))
+  else
+    vim.cmd("normal! " .. rows .. (down and "gj" or "gk"))
+  end
+end
+
+-- 'scroll' is half the window and Neovim re-derives it on every resize, so a split needs no
+-- autocommand here and a deliberate :set scroll= is honoured.
+local function half_page(down)
+  return function()
+    move_page(vim.o.scroll * vim.v.count1, down)
+  end
+end
+
+-- The window's height, not vim.o.lines: lines counts the statusline and the command line, which
+-- belong to the screen rather than to the window being scrolled.
+local function full_page(down)
+  return function()
+    move_page(vim.api.nvim_win_get_height(0) * vim.v.count1, down)
+  end
+end
+
+vim.keymap.set({ "n", "x" }, "<C-d>", half_page(true), { desc = "Half a page down" })
+vim.keymap.set({ "n", "x" }, "<C-u>", half_page(false), { desc = "Half a page up" })
+vim.keymap.set({ "n", "x" }, "<PageDown>", full_page(true), { desc = "A page down" })
+vim.keymap.set({ "n", "x" }, "<PageUp>", full_page(false), { desc = "A page up" })
+
+-- The visual-mode half of <C-f>/<C-b>. noice claims them in n, i and s only -- a documentation
+-- float cannot be open with a selection active, so it has nothing to do here -- which left visual
+-- mode falling through to the built-in page scroll and its two-row overlap. Bound here rather than
+-- by widening noice's mode list, so the mapping that has nothing to do with a plugin is in the file
+-- that owns those, and x is free for this file to take: lazy.nvim replaces only what noice declares.
+vim.keymap.set("x", "<C-f>", full_page(true), { desc = "A page down" })
+vim.keymap.set("x", "<C-b>", full_page(false), { desc = "A page up" })
+
 -- Window focus. Unprefixed, because focus is adjusted constantly and a <C-w> per press is the
 -- cost this set exists to remove. Normal mode only: insert-mode <C-h> stays backspace, and
 -- <C-l>'s redraw remains reachable as :redraw!.
