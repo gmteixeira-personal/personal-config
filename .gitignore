@@ -99,6 +99,7 @@
 # the package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
+
 # Which application opens what, when a file is opened from outside a shell. Any
 # program that offers to become the default for a type rewrites this file in
 # place, so untracked it is whatever the last such prompt left behind and a
@@ -388,6 +389,14 @@ adbkey*
 !/.local/share/applications/lock.desktop
 !/.local/share/applications/poweroff.desktop
 !/.local/share/applications/reboot.desktop
+
+# The file manager's entry. yazi ships no desktop entry of its own -- it is a
+# cargo build under `~/.cargo/bin` and nothing in `/usr/share/applications`
+# mentions it -- so without this file tracked there is no way to start it except
+# from a terminal that is already open. It names no icon of its own: the glyph
+# is Adwaita's `system-file-manager`, which the icon theme already ships, so
+# there is nothing beside it to allow the way the six entries above have.
+!/.local/share/applications/yazi.desktop
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-lock.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-poweroff.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-reboot.svg

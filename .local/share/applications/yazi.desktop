@@ -1,0 +1,39 @@
+[Desktop Entry]
+Type=Application
+Name=yazi
+GenericName=File Manager
+Comment=Browse files in the session's terminal
+
+# yazi ships no desktop entry of its own -- it is a cargo build under
+# ~/.cargo/bin and nothing in /usr/share/applications mentions it -- so without
+# this file the launcher has nothing to offer and the only way to start it is to
+# type its name into a terminal that is already open.
+#
+# Terminal=true, and deliberately not the shape nvim-foot.desktop uses beside
+# this file. That entry sets Terminal=false and names footclient in its Exec
+# line, because a MIME association in .config/mimeapps.list makes it launchable
+# by GIO, and GIO picks a terminal from a fixed list this session installs none
+# of. yazi has no MIME association: the launcher is its only route in, and
+# .config/fuzzel/fuzzel.ini already answers the terminal question there with
+# terminal=footclient. Naming footclient here as well would be a second copy of
+# that answer with no way to notice when the first one changes.
+#
+# The trade is that this entry works from the launcher and from anything else
+# honouring Terminal=true, and not from GIO or xdg-open. That only matters for a
+# program a file type points at. If yazi is ever made the handler for
+# inode/directory, this is the line to revisit.
+#
+# TryExec is what hides the entry on a machine where yazi is not installed. A
+# launcher skips an entry whose TryExec binary is not on its path, so a checkout
+# elsewhere shows nothing rather than an entry that opens a window and closes it.
+#
+# Exec is the bare command, not an absolute path: ~/.cargo/bin is already on the
+# path foot-server runs with, and an absolute path would hard-code an install
+# location that differs per machine -- the same argument conf.d/env.fish makes
+# about assembling PATH rather than restating where things live.
+Terminal=true
+TryExec=yazi
+Exec=yazi
+Icon=system-file-manager
+Categories=System;FileTools;FileManager;
+Keywords=files;file;browse;browser;manager;explorer;directory;folder;terminal;
