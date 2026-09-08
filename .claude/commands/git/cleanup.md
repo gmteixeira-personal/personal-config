@@ -22,7 +22,7 @@ Find branches that are no longer needed, propose them, and delete only what the 
 
    Also list remote branches that are merged into the default branch, as a separate group.
 
-4. **Exclude unconditionally:** the current branch and the default branch, local and remote, even when they satisfy a reason.
+4. **Exclude unconditionally:** the current branch, the default branch, and `main` and `master` whether or not either is the default — local and remote, even when they satisfy a reason. A repository that integrates on `dev` still releases from `main`, and `main` reading as merged into `dev` is the normal state of a release branch, not a reason to propose it. Never list these, never ask about them.
 
 ## Approval
 
