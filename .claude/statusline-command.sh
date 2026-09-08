@@ -211,7 +211,8 @@ if [ -n "$p_ctx" ]; then
 fi
 
 # --- render ------------------------------------------------------------------
-# One line when it fits the terminal, two lines when it does not.
+# Two lines: location on the first, the /rename block and the badges on the
+# second. Only the location is elided, and only when it overruns the terminal.
 badges=""
 for part in "$git_state" "$cave" "$badge" "$ctx_badge"; do
   [ -n "$part" ] && badges="${badges:+$badges }$part"
@@ -223,15 +224,11 @@ case "$cols" in
 esac
 [ "$cols" -lt 20 ] && cols=80
 
-one_line="${sess}${location}${badges:+ $badges}"
-if [ "$(visible_len "$one_line")" -le "$cols" ]; then
-  printf '%s\n' "$one_line"
+if [ "$(visible_len "$location")" -le "$cols" ]; then
+  printf '%s\n' "$location"
 else
-  # The session name keeps its full width; only the location is elided.
-  sess_len=0
-  [ -n "$session" ] && sess_len=$((${#session} + 3))
-  avail=$((cols - sess_len))
-  [ "$avail" -lt 8 ] && avail=8
-  printf '%s%s\n' "$sess" "$(truncate_middle "$location" "$avail")"
-  [ -n "$badges" ] && printf '%s\n' "$badges"
+  printf '%s\n' "$(truncate_middle "$location" "$cols")"
 fi
+
+second="${sess}${badges}"
+[ -n "$second" ] && printf '%s\n' "$second"
