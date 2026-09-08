@@ -594,7 +594,22 @@ binds {
     Mod+T hotkey-overlay-title="Open a Terminal: foot" { spawn "footclient"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+Space hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
+    // Two chords lock the screen, the same arrangement as the terminal and the
+    // launcher above. Super+Alt+L is the one this file suggested; Ctrl+Alt+Escape
+    // is the Ctrl+Alt+Delete shape every other desktop trains, and it is typed
+    // with the left hand alone. It is free here: niri reserves Ctrl+Alt+F1..F12
+    // for switching VT and Escape is not among them.
+    //
+    // allow-inhibiting=false on both, and it is the point rather than a detail.
+    // A client that takes the keyboard-shortcuts inhibitor -- see Mod+Escape at
+    // the end of this block -- suppresses every bind without that property, and
+    // Mod+D and Mod+Space are among them, so the launcher's lock entry is
+    // suppressed with them. Without it the session cannot be locked at all while
+    // a remote-desktop client is up, which is exactly when locking is wanted.
+    // Both lines carry it: two lock chords that differ only under an inhibitor
+    // differ only in the case nobody tests.
+    Super+Alt+L     allow-inhibiting=false hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
+    Ctrl+Alt+Escape allow-inhibiting=false hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.

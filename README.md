@@ -192,7 +192,11 @@ Without these, the tracked configuration does not work.
   nothing. *A system package.*
 - **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, the launcher and the
   lock screen. `config.kdl` starts waybar with the session and binds `Mod+D` to
-  fuzzel and `Super+Alt+L` to swaylock. All three are configured here.
+  fuzzel and both `Super+Alt+L` and `Ctrl+Alt+Escape` to swaylock. The two lock
+  chords are the session's only binds an application cannot suppress: they carry
+  `allow-inhibiting=false`, so a remote-desktop client holding the
+  keyboard-shortcuts inhibitor cannot take the lock away with the rest of the
+  bindings. All three programs are configured here.
   `.config/swaylock/config` replaces the lock screen's light-grey default
   background with a dark one and restyles the unlock indicator, so locking the
   screen at night is not a flash of white. `.config/waybar/style.css` and
@@ -213,16 +217,16 @@ Without these, the tracked configuration does not work.
   often than any other surface here; it is set to the same Catppuccin Mocha the
   lock screen and the bar use, and it sets every colour fuzzel defines rather
   than only the background, so no state reached after typing is left light.
-  Without the three packages the session has no bar and those two keys do
+  Without the three packages the session has no bar and those keys do
   nothing. *System packages.*
 - **`swayidle`** — the idle manager, and the only thing that locks the screen
   without being asked. `config.kdl` starts it with the session and gives it its
   whole configuration on the one line: lock after 300 seconds without input, and
-  lock again before the system sleeps, both by running the same swaylock that
-  `Super+Alt+L` runs, so every way into the lock screen shows the same screen.
+  lock again before the system sleeps, both by running the same swaylock the two lock
+  chords run, so every way into the lock screen shows the same screen.
   The second event covers what the first cannot — a lid closed inside those five
   minutes would otherwise suspend and resume into an unlocked session. Without
-  it the session still locks on `Super+Alt+L` and nothing else changes, so its
+  it the session still locks on either lock chord and nothing else changes, so its
   absence is a degradation rather than a broken session: the screen simply never
   locks on its own. *A system package.*
 - **`xwayland-satellite`** — niri has no X11 support of its own and starts this
