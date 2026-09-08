@@ -243,157 +243,90 @@ application/epub+zip=org.pwmt.zathura-pdf-mupdf.desktop
 application/x-fictionbook=org.pwmt.zathura-pdf-mupdf.desktop
 application/x-mobipocket-ebook=org.pwmt.zathura-pdf-mupdf.desktop
 
-# Office documents, in LibreOffice. Each block is the MimeType= line of the
-# named component's own packaged entry at LibreOffice 26.2.6.1, less the types
-# this file already answers for — so the list cannot claim a format LibreOffice
-# will not open. The Start Center entry is deliberately not named: it declares
-# only application/vnd.openofficeorg.extension and the x-scheme-handler/ms-*
-# schemes, so naming it for .docx would claim a type its own entry does not.
+# Office documents, in OnlyOffice. The list is the MimeType= line of
+# onlyoffice-desktopeditors.desktop, less the types this file already answers
+# for, so the list cannot claim a format OnlyOffice will not open.
 #
-# application/clarisworks is declared by Writer, Calc and Draw, and
-# application/vnd.ms-works by Writer and Calc; both are listed once, under
-# Writer. A type under two entries records no decision — the resolver answers
-# with whichever line it read last.
+# There is one block rather than one per component. OnlyOffice ships a single
+# desktop entry for the whole suite and picks the editor from the opened file's
+# type inside one process, so there is no per-component entry to name — where
+# LibreOffice needed five, this needs one, and the document still arrives in the
+# right kind of editor.
 #
-# Five types appear that no MimeType= line lists: application/x-docbook+xml,
-# application/vnd.stardivision.writer, application/vnd.dbf, image/emf and
-# image/wmf. The entries list only the aliases of these, and
-# /usr/share/mime/aliases gives these as the canonical names — the same reason
-# Markdown appears twice above, since glob resolution and content resolution
-# can return different names for one file.
-
-# Word processor documents, in LibreOffice Writer. text/plain and
-# application/x-extension-txt are claimed by this entry and left with Neovim
-# above: a .txt file belongs in the editor.
-application/clarisworks=libreoffice-writer.desktop
-application/docbook+xml=libreoffice-writer.desktop
-application/macwriteii=libreoffice-writer.desktop
-application/msword=libreoffice-writer.desktop
-application/prs.plucker=libreoffice-writer.desktop
-application/rtf=libreoffice-writer.desktop
-application/vnd.apple.pages=libreoffice-writer.desktop
-application/vnd.lotus-wordpro=libreoffice-writer.desktop
-application/vnd.ms-word=libreoffice-writer.desktop
-application/vnd.ms-word.document.macroEnabled.12=libreoffice-writer.desktop
-application/vnd.ms-word.template.macroEnabled.12=libreoffice-writer.desktop
-application/vnd.ms-works=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text-flat-xml=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text-master=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text-master-template=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text-template=libreoffice-writer.desktop
-application/vnd.oasis.opendocument.text-web=libreoffice-writer.desktop
-application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop
-application/vnd.openxmlformats-officedocument.wordprocessingml.template=libreoffice-writer.desktop
-application/vnd.palm=libreoffice-writer.desktop
-application/vnd.stardivision.writer=libreoffice-writer.desktop
-application/vnd.stardivision.writer-global=libreoffice-writer.desktop
-application/vnd.sun.xml.writer=libreoffice-writer.desktop
-application/vnd.sun.xml.writer.global=libreoffice-writer.desktop
-application/vnd.sun.xml.writer.template=libreoffice-writer.desktop
-application/vnd.wordperfect=libreoffice-writer.desktop
-application/wordperfect=libreoffice-writer.desktop
-application/x-abiword=libreoffice-writer.desktop
-application/x-aportisdoc=libreoffice-writer.desktop
-application/x-doc=libreoffice-writer.desktop
-application/x-docbook+xml=libreoffice-writer.desktop
-application/x-fictionbook+xml=libreoffice-writer.desktop
-application/x-hwp=libreoffice-writer.desktop
-application/x-iwork-pages-sffpages=libreoffice-writer.desktop
-application/x-mswrite=libreoffice-writer.desktop
-application/x-pocket-word=libreoffice-writer.desktop
-application/x-sony-bbeb=libreoffice-writer.desktop
-application/x-starwriter=libreoffice-writer.desktop
-application/x-starwriter-global=libreoffice-writer.desktop
-application/x-t602=libreoffice-writer.desktop
-text/rtf=libreoffice-writer.desktop
-
-# Spreadsheets, in LibreOffice Calc. Every CSV and tab-separated spelling this
-# entry claims — text/csv and its two aliases, text/comma-separated-values,
-# application/csv, text/spreadsheet, text/tab-separated-values and
-# application/tab-separated-values — is left with Neovim above, so a CSV opens
-# in one program whichever name the caller resolved it to.
-application/excel=libreoffice-calc.desktop
-application/msexcel=libreoffice-calc.desktop
-application/vnd.apache.parquet=libreoffice-calc.desktop
-application/vnd.apple.numbers=libreoffice-calc.desktop
-application/vnd.dbf=libreoffice-calc.desktop
-application/vnd.lotus-1-2-3=libreoffice-calc.desktop
-application/vnd.ms-excel=libreoffice-calc.desktop
-application/vnd.ms-excel.sheet.binary.macroEnabled.12=libreoffice-calc.desktop
-application/vnd.ms-excel.sheet.macroEnabled.12=libreoffice-calc.desktop
-application/vnd.ms-excel.template.macroEnabled.12=libreoffice-calc.desktop
-application/vnd.oasis.opendocument.chart=libreoffice-calc.desktop
-application/vnd.oasis.opendocument.chart-template=libreoffice-calc.desktop
-application/vnd.oasis.opendocument.spreadsheet=libreoffice-calc.desktop
-application/vnd.oasis.opendocument.spreadsheet-flat-xml=libreoffice-calc.desktop
-application/vnd.oasis.opendocument.spreadsheet-template=libreoffice-calc.desktop
-application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=libreoffice-calc.desktop
-application/vnd.openxmlformats-officedocument.spreadsheetml.template=libreoffice-calc.desktop
-application/vnd.stardivision.calc=libreoffice-calc.desktop
-application/vnd.stardivision.chart=libreoffice-calc.desktop
-application/vnd.sun.xml.calc=libreoffice-calc.desktop
-application/vnd.sun.xml.calc.template=libreoffice-calc.desktop
-application/x-123=libreoffice-calc.desktop
-application/x-dbase=libreoffice-calc.desktop
-application/x-dbf=libreoffice-calc.desktop
-application/x-dos_ms_excel=libreoffice-calc.desktop
-application/x-excel=libreoffice-calc.desktop
-application/x-gnumeric=libreoffice-calc.desktop
-application/x-iwork-numbers-sffnumbers=libreoffice-calc.desktop
-application/x-ms-excel=libreoffice-calc.desktop
-application/x-msexcel=libreoffice-calc.desktop
-application/x-quattropro=libreoffice-calc.desktop
-application/x-starcalc=libreoffice-calc.desktop
-application/x-starchart=libreoffice-calc.desktop
-
-# Presentations, in LibreOffice Impress.
-application/mspowerpoint=libreoffice-impress.desktop
-application/vnd.apple.keynote=libreoffice-impress.desktop
-application/vnd.ms-powerpoint=libreoffice-impress.desktop
-application/vnd.ms-powerpoint.presentation.macroEnabled.12=libreoffice-impress.desktop
-application/vnd.ms-powerpoint.slideshow.macroEnabled.12=libreoffice-impress.desktop
-application/vnd.ms-powerpoint.template.macroEnabled.12=libreoffice-impress.desktop
-application/vnd.oasis.opendocument.presentation=libreoffice-impress.desktop
-application/vnd.oasis.opendocument.presentation-flat-xml=libreoffice-impress.desktop
-application/vnd.oasis.opendocument.presentation-template=libreoffice-impress.desktop
-application/vnd.openxmlformats-officedocument.presentationml.presentation=libreoffice-impress.desktop
-application/vnd.openxmlformats-officedocument.presentationml.slide=libreoffice-impress.desktop
-application/vnd.openxmlformats-officedocument.presentationml.slideshow=libreoffice-impress.desktop
-application/vnd.openxmlformats-officedocument.presentationml.template=libreoffice-impress.desktop
-application/vnd.stardivision.impress=libreoffice-impress.desktop
-application/vnd.sun.xml.impress=libreoffice-impress.desktop
-application/vnd.sun.xml.impress.template=libreoffice-impress.desktop
-application/x-iwork-keynote-sffkey=libreoffice-impress.desktop
-application/x-starimpress=libreoffice-impress.desktop
-
-# Drawings and the vector formats nothing else here opens, in LibreOffice Draw.
-# application/pdf is claimed by this entry and stays with Zathura above: Draw
-# opens a PDF to edit it, not to read it.
-application/vnd.corel-draw=libreoffice-draw.desktop
-application/vnd.ms-publisher=libreoffice-draw.desktop
-application/vnd.oasis.opendocument.graphics=libreoffice-draw.desktop
-application/vnd.oasis.opendocument.graphics-flat-xml=libreoffice-draw.desktop
-application/vnd.oasis.opendocument.graphics-template=libreoffice-draw.desktop
-application/vnd.quark.quarkxpress=libreoffice-draw.desktop
-application/vnd.stardivision.draw=libreoffice-draw.desktop
-application/vnd.sun.xml.draw=libreoffice-draw.desktop
-application/vnd.sun.xml.draw.template=libreoffice-draw.desktop
-application/vnd.visio=libreoffice-draw.desktop
-application/x-pagemaker=libreoffice-draw.desktop
-application/x-stardraw=libreoffice-draw.desktop
-application/x-wpg=libreoffice-draw.desktop
-image/emf=libreoffice-draw.desktop
-image/wmf=libreoffice-draw.desktop
-image/x-emf=libreoffice-draw.desktop
-image/x-freehand=libreoffice-draw.desktop
-image/x-wmf=libreoffice-draw.desktop
-
-# Formulas, in LibreOffice Math.
-application/mathml+xml=libreoffice-math.desktop
-application/vnd.oasis.opendocument.formula=libreoffice-math.desktop
-application/vnd.oasis.opendocument.formula-template=libreoffice-math.desktop
-application/vnd.stardivision.math=libreoffice-math.desktop
-application/vnd.sun.xml.math=libreoffice-math.desktop
-application/x-starmath=libreoffice-math.desktop
-text/mathml=libreoffice-math.desktop
+# Seven types the entry declares are left where they already were:
+# application/pdf, application/oxps and application/epub+zip stay in Zathura,
+# and text/plain, text/csv, text/markdown and text/tab-separated-values stay in
+# Neovim. text/csv-schema is Neovim's alone — OnlyOffice does not declare it.
+#
+# FictionBook stays in Zathura too, and is the one exclusion that is not a
+# straight overlap. Zathura holds application/x-fictionbook; OnlyOffice declares
+# application/x-fictionbook+xml, which /usr/share/mime/aliases gives as the
+# canonical name of that same type. It is one format, so it keeps one handler,
+# and an e-book belongs with the document viewer.
+#
+# application/vnd.ms-xpsdocument is here while application/oxps stays with
+# Zathura, which reads like an oversight and is not: XPS and OpenXPS are
+# different types, and each entry declares only its own. image/vnd.djvu is here
+# for the same reason — this build of Zathura declares no DjVu type at all.
+#
+# What LibreOffice answered for and nothing now does: the legacy word processor
+# and spreadsheet formats it carried import filters for — WordPerfect, AbiWord,
+# Lotus 1-2-3, StarOffice, dBASE, Gnumeric, Parquet, the iWork sidecar types and
+# the ODF master documents — the formula formats Math opened, and every drawing
+# format but .odg and the Visio family. Those 81 types are not mapped here.
+# Pointing them at OnlyOffice would trade a double-click that does nothing for
+# an error dialog from a program that never claimed the format; both fail, and
+# only one of them fails honestly.
+application/msword=onlyoffice-desktopeditors.desktop
+application/msword-template=onlyoffice-desktopeditors.desktop
+application/rtf=onlyoffice-desktopeditors.desktop
+application/vnd.apple.keynote=onlyoffice-desktopeditors.desktop
+application/vnd.apple.numbers=onlyoffice-desktopeditors.desktop
+application/vnd.apple.pages=onlyoffice-desktopeditors.desktop
+application/vnd.ms-excel=onlyoffice-desktopeditors.desktop
+application/vnd.ms-excel.sheet.binary.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-excel.sheet.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-excel.template.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-powerpoint=onlyoffice-desktopeditors.desktop
+application/vnd.ms-powerpoint.presentation.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-powerpoint.slideshow.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-powerpoint.template.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.drawing.macroEnabled.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.drawing.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.stencil.macroEnabled.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.stencil.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.template.macroEnabled.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-visio.template.main+xml=onlyoffice-desktopeditors.desktop
+application/vnd.ms-word.document.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-word.template.macroEnabled.12=onlyoffice-desktopeditors.desktop
+application/vnd.ms-xpsdocument=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.graphics=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.presentation=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.presentation-flat-xml=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.presentation-template=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.spreadsheet=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.spreadsheet-flat-xml=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.spreadsheet-template=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.text=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.text-flat-xml=onlyoffice-desktopeditors.desktop
+application/vnd.oasis.opendocument.text-template=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.presentationml.presentation=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.presentationml.slideshow=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.presentationml.template=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.spreadsheetml.template=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=onlyoffice-desktopeditors.desktop
+application/vnd.openxmlformats-officedocument.wordprocessingml.template=onlyoffice-desktopeditors.desktop
+application/vnd.sun.xml.calc=onlyoffice-desktopeditors.desktop
+application/vnd.sun.xml.impress=onlyoffice-desktopeditors.desktop
+application/vnd.sun.xml.writer=onlyoffice-desktopeditors.desktop
+application/vnd.sun.xml.writer.template=onlyoffice-desktopeditors.desktop
+application/wps-office.dps=onlyoffice-desktopeditors.desktop
+application/wps-office.dpt=onlyoffice-desktopeditors.desktop
+application/wps-office.et=onlyoffice-desktopeditors.desktop
+application/wps-office.ett=onlyoffice-desktopeditors.desktop
+application/wps-office.wps=onlyoffice-desktopeditors.desktop
+application/wps-office.wpt=onlyoffice-desktopeditors.desktop
+application/x-hwp=onlyoffice-desktopeditors.desktop
+image/vnd.djvu=onlyoffice-desktopeditors.desktop
+x-scheme-handler/oo-office=onlyoffice-desktopeditors.desktop

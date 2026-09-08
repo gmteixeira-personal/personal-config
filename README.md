@@ -143,7 +143,7 @@ Without these, the tracked configuration does not work.
   `.local/share/applications/nvim-foot.desktop`. The same file answers for
   everything else a double-click can land on, each named in its own entry below:
   images in Loupe, PDFs and e-books in Zathura, and office documents — the
-  OpenDocument and Microsoft Office formats both — in LibreOffice. That entry is
+  OpenDocument and Microsoft Office formats both — in OnlyOffice. That entry is
   tracked here rather than being the packaged `nvim.desktop`, because the
   packaged one is
   marked `Terminal=true` and GIO — the library that launches desktop entries for
@@ -290,25 +290,38 @@ Without these, the tracked configuration does not work.
   `image/tiff` and `image/svg+xml` — those are left with Loupe, since Zathura's
   image support exists to render pages rather than to be where a photo opens.
   Without either package PDFs fall back to Chrome. *System packages.*
-- **`libreoffice-writer`, `libreoffice-calc`, `libreoffice-impress`,
-  `libreoffice-draw` and `libreoffice-math`** — the office suite, and where every
-  office document opens: OpenDocument and Microsoft Office alike, `.odt` and
-  `.docx` in Writer, `.ods` and `.xlsx` in Calc, `.odp` and `.pptx` in Impress,
-  with Draw taking the drawing and vector formats — Visio, Publisher, CorelDRAW,
-  EMF and WMF — and Math the formula ones. `.config/mimeapps.list` names the five
-  component entries rather than `libreoffice-startcenter.desktop`, for the same
-  reason it names Zathura's backend entry: the Start Center declares only
-  `application/vnd.openofficeorg.extension` and the `x-scheme-handler/ms-*`
-  schemes, so naming it for `.docx` would claim a type its own entry does not.
-  Types these entries claim that this session already answers for are left where
-  they are — `text/plain` and every CSV and tab-separated spelling stay in
-  Neovim, `application/pdf` stays in Zathura, since Draw opens a PDF to edit it
-  rather than to read it. Without these packages the documents have no handler at
-  all: no window, no error and no journal line, which reads as the file manager
-  ignoring the double-click rather than as an absent program. Install only the
-  components you want and the rest of the mapping still resolves; the types of a
-  component that is not installed resolve to nothing, as they all did before.
-  *System packages, and `libreoffice-base` is deliberately not among them.*
+- **`onlyoffice-desktopeditors`** — the office suite, and where every office
+  document opens: OpenDocument and Microsoft Office alike, `.odt` and `.docx`,
+  `.ods` and `.xlsx`, `.odp` and `.pptx`, along with `.odg`, the Visio types and
+  the WPS Office ones. Unlike LibreOffice before it, the suite ships a single
+  desktop entry for all of it and picks the editor from the opened file's type
+  inside one process, so `.config/mimeapps.list` names
+  `onlyoffice-desktopeditors.desktop` once for all 53 types rather than one entry
+  per component. Types its entry claims that this session already answers for are
+  left where they are — `text/plain`, `text/csv`, `text/markdown` and
+  `text/tab-separated-values` stay in Neovim, `application/pdf`,
+  `application/oxps` and `application/epub+zip` stay in Zathura, and FictionBook
+  stays there too, since OnlyOffice declares the canonical
+  `application/x-fictionbook+xml` of the `application/x-fictionbook` Zathura
+  already holds and one format keeps one handler. Without the package the
+  documents have no handler at all: no window, no error and no journal line,
+  which reads as the file manager ignoring the double-click rather than as an
+  absent program. It comes from `onlyoffice-repo`, which adds
+  `/etc/yum.repos.d/onlyoffice.repo` and the `RPM-GPG-KEY-ONLYOFFICE` key; the
+  repository fetches over plain HTTP and relies on `gpgcheck=1` for
+  authenticity. *System packages.*
+- **`libSM` and `libICE`** — required by OnlyOffice and not requested by it. Its
+  RPM declares `libX11`, `libxcb` and four `xcb-util-*` packages, but its own
+  bundled `/opt/onlyoffice/desktopeditors/platforms/libqxcb.so` links against
+  `libSM.so.6` and `libICE.so.6` as well, and neither is named in the package's
+  requirements. On a machine where nothing else pulled them in, OnlyOffice exits
+  with `This application failed to start because it could not find or load the Qt
+  platform plugin "xcb"` — while listing `xcb` among the plugins it says are
+  available — and dumps core. A bare `ldd` on that plugin is a red herring: it
+  reports the bundled `libQt5Core.so.5` and friends as missing because the suite
+  resolves them through `RPATH $ORIGIN` on its main binary, so run it with
+  `LD_LIBRARY_PATH=/opt/onlyoffice/desktopeditors` to see the real gap.
+  *System packages.*
 - **`greetd`** — the login manager, and what makes the machine reach the session
   at boot rather than sitting at a text console. Its configuration lives in
   `/etc/greetd/config.toml`, outside this repository's root, so the checkout
@@ -422,6 +435,21 @@ Cloning gives you these. Installing them separately is unnecessary.
 
 ### Must not be installed
 
+- **`libreoffice-*`** — retired, and required to stay that way:
+  `openspec/specs/retired-tooling/spec.md` wants no package installed, no
+  configuration tracked, no state or cache directory left behind, and no line in
+  `.config/mimeapps.list` naming one of its desktop entries. OnlyOffice serves
+  the session as the office suite instead. This retirement is not like the others
+  in this list: the rest were duplicates of something already here and cost
+  nothing, while this one cost real capability. The formula formats Math opened,
+  and every drawing format but `.odg` and the Visio family, now have no handler
+  at all, as do the legacy import filters — WordPerfect, AbiWord, Lotus 1-2-3,
+  StarOffice, dBASE, Gnumeric, Parquet, the iWork sidecar types and the ODF
+  master documents. Keeping one component was not an option worth taking:
+  `libreoffice-core` is 288 MB of the suite's 378 MB and every component requires
+  it. Bringing any of it back is a deliberate change that supersedes that
+  requirement, and one that has to settle which suite answers for each type so
+  the mapping keeps a single answer per type.
 - **`alacritty`** — retired, and required to stay that way:
   `openspec/specs/retired-tooling/spec.md` wants the package absent, no
   configuration tracked, no allowlist entry naming it, and no state or cache

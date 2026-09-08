@@ -22,5 +22,6 @@ if status is-interactive
     abbr grb 'git rebase'
     abbr grs 'git restore --staged'
 
+    alias cls clear
     alias e nvim
 end
