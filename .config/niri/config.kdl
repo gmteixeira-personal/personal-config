@@ -70,8 +70,16 @@ input {
         // drag false
         // drag-lock
         natural-scroll
-        // accel-speed 0.2
-        // accel-profile "flat"
+
+        // No accel-profile here on purpose. The touchpad keeps libinput's
+        // default "adaptive", which moves the cursor further for a fast swipe
+        // than for a slow one of the same length. The mouse below is set to
+        // "flat" for the opposite reason and the argument does not carry across:
+        // a touchpad is a few centimetres of surface that has to reach the whole
+        // screen, so at a constant ratio it either cannot cross the screen in
+        // one swipe or is too coarse to aim with. That is the case adaptive
+        // exists for, and it is not the mouse's case.
+
         // scroll-method "two-finger"
         // disabled-on-external-mouse
     }
@@ -79,8 +87,32 @@ input {
     mouse {
         // off
         // natural-scroll
-        // accel-speed 0.2
-        // accel-profile "flat"
+
+        // Move the cursor by a fixed multiple of how far the mouse moved,
+        // whatever speed it moved at. libinput's default profile is "adaptive",
+        // which raises that multiple as the hand goes faster, so one physical
+        // distance lands the cursor somewhere different every time it is
+        // crossed. Nothing about the movement can be learned then: every aim is
+        // an overshoot followed by a correction rather than a single movement.
+        // "flat" is the only value that removes the speed dependency --
+        // lowering accel-speed under "adaptive" shifts the whole curve down
+        // without flattening it, so the pointer overshoots by less and still
+        // cannot be aimed from memory.
+        //
+        // accel-speed stays commented out deliberately. Under "flat" its
+        // default of 0 is the unscaled 1:1 mapping, which leaves the mouse's
+        // own reported resolution deciding how far the cursor travels -- one
+        // factor between hand and cursor instead of two. If the pointer proves
+        // too slow or too fast, this is where that gets fixed, because the
+        // other layer is not reachable: the HP 420 is a programmable mouse, but
+        // only from HP's Windows software, and libratbag carries no driver for
+        // it, so its hardware resolution cannot be set from this machine.
+        //
+        // The touchpad above keeps "adaptive" for reasons of its own -- see the
+        // comment there. niri configures the two separately and has no setting
+        // covering every pointer at once, which is as it should be here.
+        accel-profile "flat"
+
         // scroll-method "no-scroll"
     }
 
