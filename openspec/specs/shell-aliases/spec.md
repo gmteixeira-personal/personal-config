@@ -81,29 +81,26 @@ This SHALL hold in bash and in fish alike. The reflex is trained on the name, no
 - **WHEN** a script invokes `cls`
 - **THEN** the shell SHALL report it as an unknown command, since the shorthand is interactive-only
 
-### Requirement: `cat` shows highlighted output
+### Requirement: `cat` and `bat` stay separate names
 
-At an interactive prompt on a machine where `bat` is installed, `cat` SHALL print a file with syntax highlighting rather than as plain text. This is a deliberate override of `cat` under the rule above, taken because reading a file at the prompt is what the name is reached for and highlighting is what that reading wants.
+`cat` and `bat` are both wanted, for different jobs, and SHALL be reachable under their own names. `cat` SHALL print the file and nothing else: this configuration SHALL NOT bind it to `bat` or to any other replacement, and SHALL NOT decorate its output with highlighting, line numbers, git markers, or a pager.
 
-Where `bat` is not installed, `cat` SHALL be the original `cat`, unchanged and unannounced.
+Highlighted output SHALL be obtained by asking for `bat`. The two names mean two different things, and keeping them distinct is what lets either be chosen deliberately — a `cat` that sometimes highlights is surprising where its output is being read as plain text, and a `bat` that has to be reached through a second name is not being used at all.
 
-#### Scenario: Reading a source file
+This is a standing decision, not an absence. The configuration bound `cat` to `bat` once and withdrew it; this requirement records the withdrawal so the binding is not proposed again as though the question were open.
 
-- **WHEN** `cat` is given a source file at an interactive prompt on a machine with `bat` installed
-- **THEN** the file's contents SHALL be printed with syntax highlighting
+#### Scenario: Printing a source file
 
-#### Scenario: Without bat installed
+- **WHEN** `cat` is given a source file at an interactive prompt
+- **THEN** the file's contents SHALL be printed as plain text
+- **AND** no highlighting, line number, git marker, or pager SHALL be applied
 
-- **WHEN** an interactive shell starts on a machine where `bat` is absent
-- **THEN** `cat` SHALL run the original executable
-- **AND** the shell SHALL print nothing about `bat`
+#### Scenario: `cat` is the real executable
 
-#### Scenario: Reaching the original
+- **WHEN** `cat` is invoked by name in an interactive shell under this configuration
+- **THEN** it SHALL resolve to the `cat` executable on `PATH`, not to a shorthand or function of the same name
 
-- **WHEN** the caller invokes `cat` through the shell's shorthand-bypassing mechanism
-- **THEN** the original `cat` SHALL run
+#### Scenario: Highlighting on request
 
-#### Scenario: Not defined for scripts
-
-- **WHEN** a script invokes `cat`
-- **THEN** the original `cat` SHALL run, since the override is interactive-only
+- **WHEN** highlighted output is wanted at an interactive prompt
+- **THEN** `bat` SHALL be available under its own name to provide it
