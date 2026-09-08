@@ -192,7 +192,7 @@ Without these, the tracked configuration does not work.
   nothing. *A system package.*
 - **`waybar`**, **`fuzzel`**, **`swaylock`** — the bar, the launcher and the
   lock screen. `config.kdl` starts waybar with the session and binds `Mod+D` to
-  fuzzel and both `Super+Alt+L` and `Ctrl+Alt+Escape` to swaylock. The two lock
+  fuzzel and both `Super+Alt+L` and `Mod+Escape` to swaylock. The two lock
   chords are the session's only binds an application cannot suppress: they carry
   `allow-inhibiting=false`, so a remote-desktop client holding the
   keyboard-shortcuts inhibitor cannot take the lock away with the rest of the
