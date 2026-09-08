@@ -32,7 +32,7 @@ truncate_middle() {
 # current_usage object, so a brace-scoped match stops short of the field, and
 # rate_limits has a "used_percentage" of its own that a bare match would win.
 meta=$(printf '%s' "$input" | python3 -c '
-import json, sys
+import json, sys, os, glob
 
 def dig(d, *keys):
     for k in keys:
@@ -49,6 +49,27 @@ except Exception:
     j = {}
 if not isinstance(j, dict):
     j = {}
+def session_name(j):
+    # Only a name the user set with /rename is shown. Claude Code also derives
+    # a name for every session, and the payload session_name field does not say
+    # which kind it is; the session registry does, via nameSource, so it is the
+    # only source consulted.
+    sid = j.get("session_id") or ""
+    if sid:
+        cfg = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+        for path in glob.glob(os.path.join(cfg, "sessions", "*.json")):
+            try:
+                with open(path) as fh:
+                    meta = json.load(fh)
+            except Exception:
+                continue
+            if not isinstance(meta, dict) or meta.get("sessionId") != sid:
+                continue
+            if meta.get("nameSource") == "user":
+                return meta.get("name") or ""
+            return ""
+    return ""
+
 ws = j.get("workspace") if isinstance(j.get("workspace"), dict) else {}
 wt = j.get("worktree") if isinstance(j.get("worktree"), dict) else {}
 vals = [
@@ -59,11 +80,12 @@ vals = [
     dig(j, "context_window", "used_percentage"),
     wt.get("name") or ws.get("git_worktree") or "",
     wt.get("branch") or "",
+    session_name(j),
 ]
 print("\n".join(str(v).replace("\n", " ") for v in vals))
 ' 2>/dev/null)
 
-p_cwd=""; p_model=""; p_effort=""; p_fast=""; p_ctx=""; p_wt=""; p_wtbranch=""
+p_cwd=""; p_model=""; p_effort=""; p_fast=""; p_ctx=""; p_wt=""; p_wtbranch=""; p_session=""
 if [ -n "$meta" ]; then
   {
     IFS= read -r p_cwd
@@ -73,6 +95,7 @@ if [ -n "$meta" ]; then
     IFS= read -r p_ctx
     IFS= read -r p_wt
     IFS= read -r p_wtbranch
+    IFS= read -r p_session
   } <<< "$meta"
 fi
 
@@ -88,6 +111,7 @@ effort="$p_effort"
 [ -z "$effort" ] && effort=$(printf '%s' "$input" | grep -o '"effort"[[:space:]]*:[[:space:]]*{[^}]*}' | grep -o '"level"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"$/\1/')
 fast="$p_fast"
 [ -z "$fast" ] && fast=$(printf '%s' "$input" | grep -o '"fast_mode"[[:space:]]*:[[:space:]]*true')
+session="$p_session"
 
 # --- location ----------------------------------------------------------------
 dir=$(basename "$cwd")
@@ -107,6 +131,13 @@ fi
 location="$dir"
 [ -n "$repo" ] && location="$repo/$dir"
 [ -n "$branch" ] && location="$location:$branch"
+
+# --- session name ------------------------------------------------------------
+# Set by /rename; the payload omits session_name entirely when unnamed.
+sess=""
+if [ -n "$session" ]; then
+  sess=$(printf '\033[38;5;141m[%s]\033[0m ' "$session")
+fi
 
 # --- caveman badge -----------------------------------------------------------
 # Mirror plugin's statusline logic, always render (even when off).
@@ -192,10 +223,15 @@ case "$cols" in
 esac
 [ "$cols" -lt 20 ] && cols=80
 
-one_line="${location}${badges:+ $badges}"
+one_line="${sess}${location}${badges:+ $badges}"
 if [ "$(visible_len "$one_line")" -le "$cols" ]; then
   printf '%s\n' "$one_line"
 else
-  printf '%s\n' "$(truncate_middle "$location" "$cols")"
+  # The session name keeps its full width; only the location is elided.
+  sess_len=0
+  [ -n "$session" ] && sess_len=$((${#session} + 3))
+  avail=$((cols - sess_len))
+  [ "$avail" -lt 8 ] && avail=8
+  printf '%s%s\n' "$sess" "$(truncate_middle "$location" "$avail")"
   [ -n "$badges" ] && printf '%s\n' "$badges"
 fi
