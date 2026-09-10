@@ -28,4 +28,5 @@ Positioning alone is expressible in the compositor's own configuration, and was:
 - Adds a dependency on `kanshi`, which is packaged in Fedora and speaks `zwlr_output_manager_v1` — a protocol the compositor already implements.
 - `~/.config/kanshi/config` is new and holds the profiles.
 - `~/.config/niri/config.kdl` loses its `output` blocks and gains `kanshi` in its startup spawns, alongside the bar, the notification daemon and the idle manager.
+- `.gitignore` gains an allowlist entry naming `~/.config/kanshi/config`. The repository is rooted at `$HOME` and denies by default, so a configuration file that is not named is not merely untracked but invisible — it does not appear in `git status` at all, and the profiles would have been left behind on the machine that wrote them.
 - No change to how windows are laid out on any one screen, to which workspace they open on, or to any keybinding. The directional monitor actions already bound to `Mod+Shift+<direction>` gain a meaningful "down" at the desk, where before every screen was in one row.

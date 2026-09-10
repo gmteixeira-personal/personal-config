@@ -13,7 +13,11 @@
 - [x] 3.1 Remove the `output` blocks from `~/.config/niri/config.kdl`, leaving a comment that names `~/.config/kanshi/config` as where geometry now lives and why it is not in both, and verify `niri validate` reports the config valid
 - [x] 3.2 Add `spawn-at-startup "kanshi"` alongside the existing bar, notification daemon and idle manager spawns, and verify `niri validate` still passes and `grep` finds the line
 
-## 4. Verification
+## 4. Repository tracking
 
-- [x] 4.1 Verify the pointer crosses down into the laptop from a point on either external within x 1280..2560, and stops at the bottom edge outside that range
-- [x] 4.2 Verify `Mod+Shift+Down` moves focus to the laptop from either external regardless of pointer position
+- [x] 4.1 Add an allowlist entry for `~/.config/kanshi/config` to `.gitignore`, placed with the other Wayland session entries and carrying a comment in the same style, and verify `git status` then lists the file as untracked rather than omitting it
+
+## 5. Verification
+
+- [x] 5.1 Verify the pointer crosses down into the laptop from a point on either external within x 1280..2560, and stops at the bottom edge outside that range
+- [x] 5.2 Verify `Mod+Shift+Down` moves focus to the laptop from either external regardless of pointer position
