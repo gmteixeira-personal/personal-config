@@ -82,6 +82,12 @@
 # wholesale, and a block 3 entry cannot re-include a file whose parent directory
 # block 4 excludes.
 !/.config/niri/brightness-step
+# The output geometry -- every screen's scale and position, one profile per set
+# of connected screens. It lives here rather than in config.kdl because the
+# scale the laptop wants depends on which other screens are attached, and the
+# compositor's configuration language has no conditionals. kanshi is spawned by
+# the compositor at startup and applies the matching profile on hotplug.
+!/.config/kanshi/config
 !/.config/foot/foot.ini
 !/.config/swaylock/config
 !/.config/waybar/style.css

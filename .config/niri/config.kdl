@@ -135,42 +135,20 @@ input {
     // focus-follows-mouse max-scroll-amount="0%"
 }
 
-// You can configure outputs by their name, which you can find
-// by running `niri msg outputs` while inside a niri instance.
-// The built-in laptop monitor is usually called "eDP-1".
-// Find more information on the wiki:
-// https://niri-wm.github.io/niri/Configuration:-Outputs
-// Remember to uncomment the node by removing "/-"!
-/-output "eDP-1" {
-    // Uncomment this line to disable this output.
-    // off
-
-    // Resolution and, optionally, refresh rate of the output.
-    // The format is "<width>x<height>" or "<width>x<height>@<refresh rate>".
-    // If the refresh rate is omitted, niri will pick the highest refresh rate
-    // for the resolution.
-    // If the mode is omitted altogether or is invalid, niri will pick one automatically.
-    // Run `niri msg outputs` while inside a niri instance to list all outputs and their modes.
-    mode "1920x1080@120.030"
-
-    // You can use integer or fractional scale, for example use 1.5 for 150% scale.
-    scale 2
-
-    // Transform allows to rotate the output counter-clockwise, valid values are:
-    // normal, 90, 180, 270, flipped, flipped-90, flipped-180 and flipped-270.
-    transform "normal"
-
-    // Position of the output in the global coordinate space.
-    // This affects directional monitor actions like "focus-monitor-left", and cursor movement.
-    // The cursor can only move between directly adjacent outputs.
-    // Output scale and rotation has to be taken into account for positioning:
-    // outputs are sized in logical, or scaled, pixels.
-    // For example, a 3840×2160 output with scale 2.0 will have a logical size of 1920×1080,
-    // so to put another output directly adjacent to it on the right, set its x to 1920.
-    // If the position is unset or results in an overlap, the output is instead placed
-    // automatically.
-    position x=1280 y=0
-}
+// No output blocks live here. The desk's geometry depends on which screens are
+// attached -- the laptop wants a larger scale, and a position centred under the
+// externals, only while all three are connected -- and this file cannot express
+// that. An output block has one scale and one position, applied whenever the
+// output is present, docked or not.
+//
+// kanshi holds it instead, one profile per connected set, in
+// ~/.config/kanshi/config. It is spawned at startup further down and drives
+// niri over zwlr_output_manager_v1. Anything written here would be applied at
+// startup and then overridden by kanshi a moment later, so the geometry stays
+// in one file rather than two that disagree.
+//
+// A set with no matching profile -- the laptop plus a single external, say --
+// leaves kanshi idle and niri auto-places the outputs left to right.
 
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
@@ -490,6 +468,13 @@ spawn-at-startup "mako"
 // barrier rather than a race. Both locks read ~/.config/swaylock/config, the
 // same file Super+Alt+L uses, so every way in shows the same screen.
 spawn-at-startup "swayidle" "-w" "timeout" "300" "swaylock -f" "before-sleep" "swaylock -f"
+
+// The output manager. It watches for screens coming and going and applies the
+// matching profile from ~/.config/kanshi/config, which is where this session's
+// output scales and positions live -- see the note where the output blocks
+// would otherwise be. Spawned here rather than through its systemd user unit so
+// it inherits this niri instance, the same reason waybar is spawned here.
+spawn-at-startup "kanshi"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"

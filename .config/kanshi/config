@@ -1,0 +1,33 @@
+# Output geometry for the desk lives here rather than in niri's config.kdl,
+# because it has to depend on which screens are attached and niri's KDL has no
+# conditionals -- one output block, one scale, applied docked or not.
+#
+# kanshi drives niri through zwlr_output_manager_v1 and picks the first profile
+# whose output list matches the connected set exactly.
+#
+# The externals are matched by make, model and serial because they are the same
+# monitor model and the pair can come back on swapped connectors after a
+# redock, which a DP-7/DP-8 match would silently mirror. eDP-1 is matched by
+# connector name: it is soldered in and that name never moves.
+
+# Two externals side by side, laptop centred underneath:
+#
+#     x:  0        1280      1920      2560      3840
+#         |──── DP-8 ───────|──── DP-7 ───────|        y 0..1080
+#                   |─ eDP-1 ─|                        y 1080..1880
+#
+# The laptop runs at 1.5 here, a fifth larger than the 1.25 it uses alone,
+# because it sits lower and further away than the externals. Scale is what
+# decides its logical width -- 1920 / 1.5 = 1280 -- so the centring offset is
+# tied to it: (3840 - 1280) / 2 = 1280. Change the scale and this x changes
+# with it, or the panel drifts off centre.
+profile docked {
+	output "Microstep MSI MP275G PC3M535500128" enable position 0,0
+	output "Microstep MSI MP275G PC3M536301924" enable position 1920,0
+	output eDP-1 enable scale 1.5 position 1280,1080
+}
+
+# Laptop alone. Back to 1.25, the panel's own comfortable scale, at the origin.
+profile mobile {
+	output eDP-1 enable scale 1.25 position 0,0
+}
