@@ -27,6 +27,25 @@ profile docked {
 	output eDP-1 enable scale 1.5 position 1280,1080
 }
 
+# One ultrawide standing above the laptop, laptop centred underneath:
+#
+#     x:  0          952        2488            3440
+#         |────────── DP-3 ──────────────────────|   y 0..1440
+#                     |── eDP-1 ──|                  y 1440..2240
+#
+# Unlike the docked profile, the laptop keeps its own 1.25 here: the ultrawide
+# stands directly above it rather than across the desk, so the panel is close
+# enough to read at its comfortable scale. That gives a logical width of
+# 1920 / 1.25 = 1536, and the centring offset follows from it --
+# (3440 - 1536) / 2 = 952. Change the scale and this x changes with it, or the
+# panel drifts off centre. The ultrawide runs at scale 1; 3440 px across 800 mm
+# is about 109 DPI, which needs no scaling. Its mode is pinned because the panel
+# advertises two modes as preferred and only 159.962 Hz is the one worth having.
+profile ultrawide {
+	output "LG Electronics LG ULTRAWIDE 403NTBKA4421" enable mode 3440x1440@159.962 position 0,0
+	output eDP-1 enable scale 1.25 position 952,1440
+}
+
 # Laptop alone. Back to 1.25, the panel's own comfortable scale, at the origin.
 profile mobile {
 	output eDP-1 enable scale 1.25 position 0,0

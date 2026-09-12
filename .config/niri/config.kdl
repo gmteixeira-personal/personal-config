@@ -147,7 +147,7 @@ input {
 // startup and then overridden by kanshi a moment later, so the geometry stays
 // in one file rather than two that disagree.
 //
-// A set with no matching profile -- the laptop plus a single external, say --
+// A set with no matching profile -- every screen at once, say, or a projector --
 // leaves kanshi idle and niri auto-places the outputs left to right.
 
 // Settings that influence how windows are positioned and sized.
