@@ -244,8 +244,10 @@
     // The script runs for the life of the bar and prints a line only when the
     // lock changes, so there is no interval here: an interval would re-run it
     // from the start every tick and throw away the process that is already
-    // watching. restart-interval is the guard for the other case, the script
-    // exiting -- which it does when no capslock LED exists at all.
+    // watching. The script does not exit on its own -- it re-resolves the LED
+    // nodes on every pass, so a keyboard arriving or leaving is not a reason to
+    // restart it -- and restart-interval is left as the guard for the script
+    // dying for a reason this config does not anticipate.
     "custom/capslock": {
         "exec": "waybar-capslock",
         "return-type": "json",

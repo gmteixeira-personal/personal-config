@@ -25,36 +25,60 @@ set -uo pipefail
 # Fast enough that the indicator appears with the keypress rather than after it.
 readonly INTERVAL=0.1
 
-main() {
-    local node state last=''
+# The lock as the kernel reports it, in the global `lock`: 1 for on, 0 for off.
+#
+# The set of LED nodes is resolved on every pass rather than once at startup.
+# Every keyboard publishes its own capslock LED, and a keyboard that arrives
+# over Bluetooth -- including a mouse that advertises a keyboard interface,
+# which the HP 420 here does -- is a new inputNN on each reconnect. The node
+# this resolved to a minute ago can be gone now, and the replacement is at a
+# path that did not exist then. The names also sort as strings and not as
+# numbers, which puts input20::capslock ahead of input2::capslock, so picking
+# the first one tends to pick the device least likely to stay.
+#
+# They all carry the one lock, so any node that reads answers for the machine
+# and the rest only agree with it. Only an explicit 1 turns the indicator on:
+# a node that vanished mid-pass, a machine with no capslock LED at all, and a
+# brightness that does not parse all read as off. An indicator that cannot see
+# the lock has to say nothing, never that the lock is on -- that is the failure
+# that leaves CAPS on the bar with no way to clear it.
+read_lock() {
+    local node state
 
-    # Every keyboard publishes its own capslock LED and they all carry the one
-    # lock, so whichever is found first answers for the machine.
-    node=$(ls -d /sys/class/leds/*::capslock 2>/dev/null | head -1)
-    if [[ -z $node ]]; then
-        printf '%s\n' '{"text":"","tooltip":"no capslock LED found"}'
-        return 1
-    fi
+    lock=0
+    for node in /sys/class/leds/*::capslock; do
+        [[ -r $node/brightness ]] || continue
+        state=$(< "$node/brightness")
+        [[ $state == 1 ]] && lock=1
+    done
+}
+
+main() {
+    local lock last=''
 
     # A `sleep` in the loop would fork a process ten times a second for as long
     # as the session lasts. Reading with a timeout from a file descriptor that
     # never delivers anything waits exactly as well and forks once, here. The
     # descriptor is opened read-write so the pipe keeps a writer and the read
     # blocks for the timeout instead of returning end-of-file immediately.
+    #
+    # read_lock is called and not substituted for the same reason: `$(...)`
+    # forks, `$(< file)` inside it does not, so the state arrives in a global
+    # and the loop stays fork-free.
     local waitfd
     exec {waitfd}<> <(:)
 
     while :; do
-        state=$(< "$node/brightness")
-        if [[ $state != "$last" ]]; then
-            if [[ $state == 0 ]]; then
+        read_lock
+        if [[ $lock != "$last" ]]; then
+            if [[ $lock == 0 ]]; then
                 # Empty text collapses the widget, so the bar carries the
                 # indicator only while the lock is on.
                 printf '%s\n' '{"text":""}'
             else
                 printf '%s\n' '{"text":"CAPS","class":"on","tooltip":"Caps Lock is on"}'
             fi
-            last=$state
+            last=$lock
         fi
         read -rt "$INTERVAL" -u "$waitfd" || true
     done
