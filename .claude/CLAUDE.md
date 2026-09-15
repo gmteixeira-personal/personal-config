@@ -1,60 +1,27 @@
 # Tooling
 
-## ast-grep
+All installed. Prefer each over the default it replaces; no need to check first.
 
-`ast-grep` is installed (`~/.cargo/bin/ast-grep`, also aliased `sg`). Prefer it over
-per-file `Edit` calls or regex `sed`/`grep` for any multi-file, syntax-aware search or
-rewrite: renames, call-pattern changes, argument reordering, API migrations.
+| Tool | Use for | Over |
+|---|---|---|
+| `fd` | find files by name | `find` |
+| `rg` | search file contents | `grep -r` |
+| `ast-grep` (`sg`) | syntax-aware search/rewrite: renames, call-pattern changes, API migrations; `ast-grep outline F` maps a big file's symbols before reading it | regex `sed`/`grep`, per-file `Edit` |
+| `sd` | literal string replace in place | `sed -i` |
+| `difft` | syntax-aware diff; wired as git `diff.external` | |
+| `tokei` | per-language line counts, to orient in an unfamiliar tree | |
+| `bat -pn` | read a file with line numbers for `file:line` citations | |
+| `jq` | query and edit JSON | |
+| `shellcheck` / `shfmt` | lint and format shell before handing it over | |
+| `gitleaks` | secret scan: `gitleaks git .`, or `--staged` | |
+| `semgrep` | rule-based cross-file scan when ast-grep patterns get unwieldy | |
+| `gh` | PRs, issues, CI status, GitHub API | |
+| `tree-sitter` | inspect the AST when an ast-grep pattern won't match | |
 
-Search:
+Gotchas that cause failed commands:
 
-```sh
-ast-grep run -p 'OldName($$$ARGS)' -l csharp
-```
+- `fd`: pattern first, directory second — `fd . -e md docs/`. `find`'s order is rejected.
+- `ast-grep`: `$VAR` captures one node, `$$$VAR` many. Run without `--update-all` first, review, then re-run with it. `-l` sets the language.
+- `git diff` renders through `difft`. Add `--no-ext-diff` whenever the output must be parsed or applied.
 
-Rewrite in place across the repo:
-
-```sh
-ast-grep run -p 'OldName($$$ARGS)' -r 'NewName($$$ARGS)' -l csharp --update-all
-```
-
-Map the symbols of a large file before reading it, so only the interesting ranges get
-read:
-
-```sh
-ast-grep outline path/to/File.cs
-```
-
-Notes:
-
-- `$VAR` captures one node, `$$$VAR` captures zero or more (arguments, statements).
-- Run without `--update-all` first to review the matches, then re-run with it.
-- `-l` sets the language (`csharp`, `rust`, `python`, `ts`, `tsx`, `go`, ...).
-- Reach for plain `grep` only when the target is not syntax (comments, strings, config
-  files, log output).
-
-## fd
-
-`fd` is installed (`~/.cargo/bin/fd`). Prefer it over `find` for every file and
-directory lookup. It skips `.gitignore`d paths and `.git` by default, so its output is
-already scoped to the working tree.
-
-```sh
-fd '\.cs$'                  # regex match on the file name
-fd -g '*.config.js'         # glob match instead
-fd . -e md -e txt docs/     # by extension, under a directory
-fd -H -I secrets            # include hidden and ignored files
-fd -e py -x wc -l           # run a command once per match
-```
-
-Notes:
-
-- The pattern is a regex by default and matches the file name, not the whole path;
-  use `-p` to match against the full path.
-- A directory to search in is a second positional, after the pattern: `fd . -e md
-  docs/`. `find`'s order does not work — a lone `docs/` is read as the pattern, and
-  `fd` refuses it because it holds a path separator.
-- `-t f` / `-t d` restrict to files or directories.
-- `-x cmd` runs `cmd` once per match, `-X cmd` once with all matches appended.
-- Reach for `find` only when a predicate `fd` lacks is needed (`-newer`, `-perm`,
-  complex `-prune` logic).
+Skip TUIs — `lazygit`, `yazi`, `tig`, `gitui`, `btm`, `jless`, interactive `fzf`. Not drivable from a non-interactive shell.
