@@ -89,6 +89,13 @@
 # the compositor at startup and applies the matching profile on hotplug.
 !/.config/kanshi/config
 !/.config/foot/foot.ini
+# Neovide's font, and nothing else. The GUI editor is a cargo build that reads
+# this file at startup, and without it its built-in default family and point
+# size render the same buffer visibly larger than foot does beside it. The two
+# values restate the halves of foot.ini's font line above, which is why the
+# entry sits here: nothing ties the two files together but that adjacency and
+# the comment each of them carries.
+!/.config/neovide/config.toml
 !/.config/swaylock/config
 !/.config/waybar/style.css
 !/.config/waybar/config.jsonc
@@ -423,6 +430,15 @@ adbkey*
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-lock.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-poweroff.svg
 !/.local/share/icons/hicolor/scalable/apps/fuzzel-reboot.svg
+
+# The editor's GUI entry. Neovide is a cargo build from git under
+# `~/.cargo/bin`, and `cargo install` copies out the binary alone, so the
+# desktop entry and icon the upstream repository carries never reach this
+# machine -- the same gap yazi.desktop above fills, for the same reason. It
+# names no icon of its own: the glyph is `nvim`, which the packaged Neovim
+# already installs into the hicolor theme, so there is nothing beside it to
+# allow the way the six power and menu entries have.
+!/.local/share/applications/neovide.desktop
 
 # The symbolic links that put those three scripts on PATH. They are tracked, not
 # derived, because the desktop entries above and the bar's click handlers name

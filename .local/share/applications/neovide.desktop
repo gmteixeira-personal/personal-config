@@ -1,0 +1,48 @@
+[Desktop Entry]
+Type=Application
+Name=Neovide
+GenericName=Text Editor
+Comment=Edit text files in Neovim, in its own window
+
+# Neovide ships no desktop entry of its own here. It is a cargo build from git
+# under ~/.cargo/bin, and `cargo install` copies out the binary and nothing
+# else, so the assets the upstream repository carries -- icon and desktop entry
+# among them -- never reach this machine. Without this file the launcher has
+# nothing to offer and the only way to start it is to type its name into a
+# terminal that is already open. That is the same gap yazi.desktop fills beside
+# this file, for the same reason.
+#
+# Terminal=false, and here that is simply true rather than a decision: Neovide
+# draws its own Wayland window and does not want a terminal wrapped around it.
+# The question nvim-foot.desktop and yazi.desktop both have to answer -- which
+# terminal this session runs -- does not arise.
+#
+# TryExec is what hides the entry on a machine where Neovide is not installed.
+# A launcher skips an entry whose TryExec binary is not on its path, so a
+# checkout elsewhere shows nothing rather than an entry that fails silently.
+#
+# Exec is the bare command, not an absolute path: ~/.cargo/bin is already on
+# the path, and an absolute path would hard-code an install location that
+# differs per machine.
+#
+# %F passes the files a caller supplies, which Neovide appends to the Neovim
+# arguments. No MimeType is declared, so nothing routes a file type here on its
+# own -- the field only matters when something like a file manager's "open
+# with" list offers Neovide explicitly. nvim-foot.desktop remains the MIME
+# handler, through .config/mimeapps.list.
+#
+# Icon=nvim is the packaged Neovim icon at
+# /usr/share/icons/hicolor/128x128/apps/nvim.png. Neovide's own icon is not
+# installed, for the reason given above, and pointing at a name no theme
+# provides would leave the entry blank in the launcher.
+#
+# StartupWMClass matches the app_id Neovide sets on its Wayland window, which
+# `niri msg windows` reports as "neovide". It ties the window back to this
+# entry for anything that groups windows by application.
+Terminal=false
+TryExec=neovide
+Exec=neovide %F
+Icon=nvim
+StartupWMClass=neovide
+Categories=Utility;TextEditor;Development;
+Keywords=Text;editor;vim;neovim;neovide;gui;

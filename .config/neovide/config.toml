@@ -1,0 +1,42 @@
+# Neovide's font, kept in step with foot.ini.
+#
+# Without this file Neovide falls back to its built-in default,
+# "Source Code Pro,DejaVu Sans Mono,Courier New,monospace" at its default size.
+# None of those is the font foot runs, and the default size is larger than
+# foot's, so the same buffer rendered side by side in the two shows visibly
+# different text. This file removes that difference: `normal` and `size` below
+# are the two halves of foot.ini's `font=JetBrainsMono Nerd Font Mono:size=11`,
+# written in Neovide's own syntax, and `hinting` and `edging` restate what
+# fontconfig tells foot about how to rasterize it.
+#
+# The pairing is the thing to preserve. If foot.ini's font line changes, this
+# file changes with it -- there is no mechanism tying them together, only this
+# note.
+#
+# `normal` is a list because Neovide treats it as a fallback chain, walked per
+# glyph. One entry is enough here: the Nerd Font build already carries the
+# powerline and devicon glyphs the statusline draws, so nothing falls through
+# to a second family.
+#
+# hinting and edging are the halves Neovide cannot get from fontconfig. foot
+# rasterizes through FreeType and so inherits this machine's fontconfig answer,
+# which `fc-match -v` reports as hintstyle 1 -- hintslight -- with antialias on
+# and no rgba subpixel order, meaning greyscale. Neovide rasterizes through
+# Skia, which reads none of that and defaults to full hinting with subpixel
+# antialiasing. The same glyph at the same size therefore came out visibly
+# heavier than foot's. These two lines say in Skia's vocabulary what fontconfig
+# already says to FreeType. They are the pair to revisit if fontconfig's
+# defaults are ever overridden in .config/fontconfig/conf.d/.
+#
+# Padding is not here, and not for want of trying: a `[padding]` table in this
+# file is accepted and then ignored -- Neovide reads unknown tables without
+# complaint -- and its padding lives in `vim.g.neovide_padding_*` instead. It is
+# set to foot's `pad=8x8` in .config/nvim/lua/config/options.lua, in the one
+# `if vim.g.neovide` block that file carries, and that block's comment says why
+# the exception is made.
+
+[font]
+normal = ["JetBrainsMono Nerd Font Mono"]
+size = 11
+hinting = "slight"
+edging = "antialias"

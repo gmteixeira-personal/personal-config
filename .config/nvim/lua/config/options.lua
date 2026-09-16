@@ -47,6 +47,30 @@ vim.opt.breakindent = true -- continuation rows align with the wrapped line's ow
 
 vim.opt.autoread = true -- a file changed on disk is reloaded when Neovim next checks it, unless the buffer has unsaved changes
 
+-- Neovide
+--
+-- Everything else about the GUI lives in .config/neovide/config.toml, which is where the font and
+-- its rasterization are set. Padding cannot: Neovide reads a `[padding]` table in that file without
+-- complaint and then ignores it, and these four globals are the only interface it has. So the one
+-- Neovide setting that cannot live with the rest of them lives here, guarded, rather than being
+-- lost.
+--
+-- 8 on every side, which is foot.ini's `pad=8x8`. Neovide has no padding by default, so in a niri
+-- tile of 957x1052 it fitted a 108x52 grid against foot's 104x51 and put the whole leftover -- the
+-- pixels below the last full row, since neither fits a whole number of rows -- in one band under
+-- the status line. With these set the grid area matches foot's to the pixel, Neovide reports 51
+-- rows as foot does, and the leftover is framed the same way rather than pooled at the bottom.
+--
+-- The remaining two columns of difference (106 against foot's 104) are not padding: foot rounds its
+-- cell width up to a whole pixel and Neovide does not, so Neovide's cells are about 2% narrower and
+-- two more of them fit. There is no setting for that, and at this size it is not visible.
+if vim.g.neovide then
+  vim.g.neovide_padding_top = 8
+  vim.g.neovide_padding_bottom = 8
+  vim.g.neovide_padding_left = 8
+  vim.g.neovide_padding_right = 8
+end
+
 -- Clipboard
 vim.opt.clipboard = "unnamedplus" -- routes yank and delete through + without the register having to be named
 

@@ -55,8 +55,10 @@ return {
     },
 
     -- The cmdline, messages, popupmenu and notify option tables are deliberately absent: all four
-    -- are enabled by default and the presets above are the only shaping they need. No `routes`
-    -- entry either, but NOT because the defaults already display everything: msg_showmode -- the
+    -- are enabled by default and the presets above are the only shaping they need.
+    --
+    -- The `routes` table below carries one entry, and it is worth saying what it is NOT for. The
+    -- defaults do not display everything: msg_showmode -- the
     -- event carrying `recording @q` -- is in noice's default route table matched with
     -- opts = { skip = true }, which sends it to no view at all. With the last row freed, nothing
     -- would show a recording in progress.
@@ -67,6 +69,39 @@ return {
     -- it, through noice.api.status.mode, and message-ui's "a recording stays visible" requirement
     -- is met there rather than here. Adding a route to re-display it would be a second mechanism
     -- for one message.
+
+    routes = {
+      -- Drops noice's own "You're using a GUI that uses ext_cmdline / ext_messages" errors, and
+      -- only under Neovide.
+      --
+      -- noice polls its own health check once a second -- lua/noice/health.lua, switched by
+      -- `health.checker`, on by default -- and raises these two through vim.notify whenever
+      -- nvim_list_uis() reports a UI with ext_cmdline, ext_popupmenu or ext_messages set. Under
+      -- Neovide they arrive as a pair at startup, sharing a timestamp, and then never repeat,
+      -- which is what a one-off race during UI attach looks like rather than a standing conflict.
+      -- Sampling nvim_list_uis() forty times from launch onward reports all three false every
+      -- time, and `:checkhealth noice` inside the running GUI answers "You're using a GUI that
+      -- should work ok".
+      --
+      -- Scoped with `cond` rather than written unconditionally, because the warning is only known
+      -- to be wrong here. Under a GUI that genuinely drives the cmdline itself noice really is
+      -- broken and should still be able to say so.
+      --
+      -- This skips the notification, not the check: the poller keeps running and its other
+      -- findings -- 'lazyredraw', the missing regex and bash parsers -- still surface. Anything
+      -- routed away here is still in `:checkhealth noice`, which is where to look if these two
+      -- ever start meaning something.
+      {
+        filter = {
+          event = "notify",
+          find = "Noice can't work when the GUI has",
+          cond = function()
+            return vim.g.neovide ~= nil
+          end,
+        },
+        opts = { skip = true },
+      },
+    },
 
     views = {
       -- How long a transient overlay is held before it clears itself. 1500 ms, against
