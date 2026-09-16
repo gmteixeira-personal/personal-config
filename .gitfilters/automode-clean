@@ -1,0 +1,43 @@
+#!/bin/sh
+# automode-clean — worktree -> index, for .claude/settings.json.
+#
+# `autoMode` is user-scope and machine-specific: it names the trusted repo, its
+# branch policy and this machine's internal hostnames, and the remote for this
+# repository is public. The rest of settings.json is worth versioning, so the
+# file cannot simply be untracked.
+#
+# Claude Code reads autoMode only from userSettings, flagSettings and
+# policySettings -- it discards the key in projectSettings and localSettings
+# with "settings autoMode in ... ignored ... (repo-controllable)". That rules
+# out .claude/settings.local.json, which is otherwise where machine-local
+# settings belong. autoMode has to sit in the tracked file, so it is stripped
+# on the way into the index instead.
+#
+# Registered by .gitattributes and .git/config; see README step 3.
+#
+# Side effect, deliberate: the key this strips is mirrored to $mirror, which is
+# what automode-smudge restores on checkout. Without the mirror write, editing
+# autoMode through Claude Code's own UI -- which writes settings.json, not the
+# mirror -- would leave a stale copy that the next checkout silently restored
+# over the new one. Refreshing on every clean keeps the mirror current, because
+# the worktree file is the source of truth and this runs on every status, diff
+# and add of that path.
+#
+# jq failure is not swallowed. A non-zero exit aborts the add rather than
+# letting unstripped content reach the index.
+
+mirror="${HOME}/.claude/automode.local.json"
+input=$(cat)
+
+# Mirror only a present key: a worktree file with no autoMode means smudge
+# passed through on a machine that never had one, not that the key was removed.
+if printf '%s' "$input" | jq -e 'has("autoMode")' >/dev/null 2>&1; then
+    tmp="${mirror}.$$"
+    if printf '%s' "$input" | jq --indent 2 '{autoMode}' > "$tmp" 2>/dev/null; then
+        mv -f "$tmp" "$mirror"
+    else
+        rm -f "$tmp"
+    fi
+fi
+
+printf '%s' "$input" | jq --indent 2 'del(.autoMode)'

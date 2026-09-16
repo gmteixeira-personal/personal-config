@@ -1,0 +1,24 @@
+#!/bin/sh
+# automode-smudge — index -> worktree, for .claude/settings.json.
+#
+# The inverse of automode-clean: puts this machine's `autoMode` back into the
+# file git is about to write. Without it, `git checkout -- .claude/settings.json`,
+# a hard reset, or any branch switch that touches the blob would overwrite the
+# working file with the stripped version and this machine's auto mode rules
+# would be gone with no copy anywhere.
+#
+# Degrades quietly rather than loudly, which is the opposite of the clean side.
+# A missing mirror means a machine that has no autoMode yet -- a fresh clone, or
+# one that never opted in -- and that is not an error. A missing jq must not
+# make a checkout fail. Both fall through to `cat`, which writes the stripped
+# file: correct for a machine with nothing to restore.
+#
+# Registered by .gitattributes and .git/config; see README step 3.
+
+mirror="${HOME}/.claude/automode.local.json"
+
+command -v jq >/dev/null 2>&1 || exec cat
+[ -f "$mirror" ] || exec cat
+
+exec jq --indent 2 --slurpfile m "$mirror" \
+    'if ($m[0].autoMode // null) == null then . else . + {autoMode: $m[0].autoMode} end'

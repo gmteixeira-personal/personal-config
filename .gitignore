@@ -147,6 +147,15 @@
 # helpers differ per machine and per user. Set those locally instead.
 !/.githooks/**
 
+# The filter driver that keeps `autoMode` out of this repository, and the
+# .gitattributes line binding it to .claude/settings.json. Both halves of the
+# driver are tracked; its registration in .git/config is not, for the same
+# reason core.hooksPath is not -- git clones neither -- so README names both as
+# one bootstrap step. The stripped key is mirrored to .claude/automode.local.json,
+# which block 4's `.claude/*.json` entry already ignores.
+!/.gitattributes
+!/.gitfilters/**
+
 # tool configs
 # direnv: the files, not `/.config/direnv/**`. Only the helper that project
 # .envrc files call and direnv's own settings are tracked. direnv's approval

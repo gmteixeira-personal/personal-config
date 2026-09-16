@@ -1,0 +1,12 @@
+# Filter drivers for this repository.
+#
+# The driver itself is defined in .git/config, which git does not clone, so a
+# fresh checkout sees this line, finds no `automode` filter, and passes the
+# content through untouched. That is a safe default -- the file arrives stripped,
+# which is what an unconfigured machine should get -- but it is also silent, so
+# the two `git config` commands are a named bootstrap step in README.
+#
+# .gitfilters/automode-clean strips `autoMode` on the way into the index and
+# .gitfilters/automode-smudge restores it on the way out. Both carry their own
+# explanation of why the key cannot live in .claude/settings.local.json instead.
+/.claude/settings.json filter=automode

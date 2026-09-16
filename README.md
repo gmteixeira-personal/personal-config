@@ -9,7 +9,7 @@ world-readable, because it is.
 
 ## Bootstrap a new machine
 
-These three steps need only `git`. What the tracked configuration itself expects
+These five steps need only `git`. What the tracked configuration itself expects
 of the machine is listed under **Software this configuration expects**, below —
 a finished bootstrap is not yet a working environment.
 
@@ -53,7 +53,36 @@ commits had already landed, or because `.githooks/pre-commit` lost its
 executable bit. It prints nothing once the guard is active, so an untouched
 prompt is the confirmation.
 
-**3. Set your identity.** It is deliberately not tracked — machines and
+**3. Register the `autoMode` filter.** Same reason as step 2 — git clones
+neither hooks nor repository-local config:
+
+```sh
+git config filter.automode.clean  .gitfilters/automode-clean
+git config filter.automode.smudge .gitfilters/automode-smudge
+```
+
+`.claude/settings.json` is tracked, but its `autoMode` key must not be: it names
+this machine's trusted repository, its branch policy and its internal hostnames,
+and the remote here is public. Claude Code reads `autoMode` only from user, flag
+and managed settings — it discards the key in project and local settings, with
+`settings autoMode in localSettings ignored ... (repo-controllable)` — so it
+cannot simply be moved to `.claude/settings.local.json`, where machine-local
+settings otherwise belong. The filter strips it on the way into the index and
+restores it from `.claude/automode.local.json` on the way out, so the working
+file keeps the key and `git status` stays quiet.
+
+Verify:
+
+```sh
+git status --short                                    # must not list .claude/settings.json
+git show :.claude/settings.json | grep -c autoMode    # must print 0
+```
+
+Skipping this step is not a leak — `.githooks/pre-commit` rejects a staged
+`autoMode` outright — but it leaves the file permanently modified and awkward to
+stage, which is the state the filter exists to remove.
+
+**4. Set your identity.** It is deliberately not tracked — machines and
 accounts differ, and `~/.gitconfig` would carry one machine's answers to every
 other. Set it per repository:
 
@@ -66,7 +95,7 @@ Without this, `git commit` fails with exit 128 before the hook even runs. Use
 the GitHub noreply address: commit objects are published even though
 `.gitconfig` is not.
 
-**4. Authenticate, so you can push.** Step 1 clones over HTTPS deliberately —
+**5. Authenticate, so you can push.** Step 1 clones over HTTPS deliberately —
 a fresh machine has no keys yet, and an SSH clone would fail before you could
 make one. Pushing is a different matter: with no credential helper configured,
 the first `git push` fails with
@@ -109,7 +138,7 @@ do not run it on a machine with more than one account.
 
 ## Software this configuration expects
 
-The four bootstrap steps above need only `git` and an SSH client. Everything the tracked
+The five bootstrap steps above need only `git` and an SSH client. Everything the tracked
 configuration itself reaches for is below, in three groups: what has to be
 there, what is tolerated when absent, and what the repository already carries so
 you do not go installing it. Each entry says where it comes from, but not with
