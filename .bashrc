@@ -334,3 +334,7 @@ fi
 if command -v fzf >/dev/null 2>&1; then
   eval "$(fzf --bash)"
 fi
+
+# YCRM:BEGIN
+[ -f "/home/gmteixeira/.local/share/bash-completion/completions/ycrm" ] && source "/home/gmteixeira/.local/share/bash-completion/completions/ycrm"
+# YCRM:END
