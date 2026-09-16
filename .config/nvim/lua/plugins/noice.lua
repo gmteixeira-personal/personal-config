@@ -113,37 +113,43 @@ return {
     },
   },
 
-  -- Silences noice's own "You're using a GUI that uses ext_cmdline / ext_messages. Noice can't
-  -- work when the GUI has ext_cmdline enabled." pair, under Neovide and nowhere else.
+  -- Everything Neovide needs, and nothing that applies to a terminal.
   --
-  -- The claim is wrong by the time anything can check it. nvim_list_uis() reports ext_cmdline,
-  -- ext_popupmenu and ext_messages false on every sample taken from launch onward, including
-  -- through the desktop entry, and `:checkhealth noice` inside the running GUI answers "You're
-  -- using a GUI that should work ok". noice does load and does run: Config.is_running() is true
-  -- and the floating cmdline works. The window the check catches is during Neovide's UI attach,
-  -- which is exactly when noice.setup() runs its one ungated health check (noice/init.lua, before
-  -- the deferred load), so the report is raised once per session at the only moment it could
-  -- ever be true.
+  -- Neovide attaches its UI with ext_cmdline and ext_messages enabled and turns both off again
+  -- about a tick later. Measured with a --cmd probe: they read true at --cmd time, at VimEnter
+  -- and at UIEnter, and false from roughly 100ms after that onwards. noice reads them exactly
+  -- inside that window, twice, and both reads do damage:
   --
-  -- Neither obvious lever reaches it, and both are worth recording because both look right:
-  --   * A `routes` filter cannot see it. noice's Util.notify calls require("notify").notify
-  --     directly rather than vim.notify, so the message never enters noice's router.
-  --   * `health = { checker = false }` only stops the once-a-second re-check. The report comes
-  --     from the setup-time call, which that option does not gate -- verified: with the checker
-  --     off, both messages still arrive.
+  --   * noice.ui.setup() takes a widget the GUI says it externalises as a widget noice must not
+  --     touch, so it attached with { ext_popupmenu = true } alone. cmdline and msg handlers were
+  --     false, which is why `:` dropped to the bottom row like a stock Neovim while the same
+  --     configuration in foot opened the floating input.
+  --   * The health check noice.setup runs before deferring its load reads the same flags and
+  --     reports that the GUI has them enabled and noice cannot work. That report was correct.
   --
-  -- What is left is noice's own de-duplication. Util.notify_once keys _once by level .. message
-  -- and skips a message already in it, so seeding the three keys before setup runs suppresses
-  -- exactly these messages and nothing else. The health check still runs, on the timer as well,
-  -- and every other finding it makes -- 'lazyredraw', the missing regex and bash parsers --
-  -- still surfaces unprompted. `:checkhealth noice` reports all of them on demand, in the GUI as
-  -- in a terminal, and is where to look if the GUI ever starts behaving as the check claims.
-  --
-  -- The two costs, stated rather than hidden: this reaches into a private table, so a rename
-  -- upstream turns the suppression off and the messages come back -- visibly, not silently. And
-  -- under a GUI that genuinely did drive the cmdline itself, noice would be broken and this
-  -- would hide it. Neither is true of Neovide today, and the guard keeps both confined to it.
+  -- The two blocks below fix the first and then silence the second, in that order, because the
+  -- second is only safe to silence once the first is true. An earlier attempt had the suppression
+  -- without the re-attach and hid a real regression for a day.
   config = function(_, opts)
+    -- Silence the two "Noice can't work when the GUI has ext_cmdline enabled" reports.
+    --
+    -- The claim is true when it is made and false by the time it is read: the re-attach below
+    -- runs as soon as Neovide clears the flags, so noice is driving the cmdline and the messages
+    -- before the notification has finished fading. What is left on screen is a report of a state
+    -- that no longer holds, on every single launch.
+    --
+    -- Seeding is the only lever that reaches it, and the two that look right do not:
+    --   * A `routes` filter cannot see it. noice raises its health reports through Util.notify,
+    --     which calls require("notify").notify directly, so they never enter noice's router.
+    --   * `health = { checker = false }` only stops the once-a-second re-check. This comes from
+    --     the ungated check in noice.setup -- verified: with the checker off, both still arrive.
+    --
+    -- Util.notify_once keys _once by level .. message and skips anything already there, so
+    -- seeding the three keys suppresses exactly these messages. The check still runs, on the
+    -- timer as well, and every other finding it makes still surfaces unprompted. :checkhealth
+    -- noice reports all of them on demand and is the place to look if the GUI's behaviour ever
+    -- changes. The cost, stated rather than hidden: _once is private, so a rename upstream brings
+    -- the messages back -- visibly, which is the right direction for this kind of dependency.
     if vim.g.neovide then
       local Util = require("noice.util")
       for _, ext in ipairs({ "ext_cmdline", "ext_popupmenu", "ext_messages" }) do
@@ -151,29 +157,67 @@ return {
         Util._once[vim.log.levels.ERROR .. msg] = true
       end
     end
+
     require("noice").setup(opts)
 
-    -- Put the command line back at zero rows under Neovide.
-    --
-    -- This configuration runs with cmdheight at 0: the floating cmdline replaces the last screen
-    -- row and nothing is drawn there. Neovide reads cmdheight at startup and writes it back
-    -- afterwards, and it does so twice, both writes landing after the value has settled at 0.
-    -- The result is a 20-pixel row of empty command line under the status line that the same
-    -- configuration in foot does not have -- foot reports cmdheight=0, Neovide 1 -- and above the
-    -- grid's own leftover that makes the gap at the bottom more than twice foot's.
-    --
-    -- Corrected on the option rather than after a fixed delay, because a delay would be a guess
-    -- about Neovide's startup: OptionSet fires on each of its writes and this sets the value
-    -- back. Setting it to 0 re-enters the callback with option_new "0", which is what the test is
-    -- there to stop.
-    --
-    -- The watch is torn down after three seconds. That number is an upper bound on how long
-    -- Neovide's startup can be, not a guess at when it writes -- the correction itself is
-    -- event-driven and does not depend on it. Dropping the autocmd afterwards is what keeps this
-    -- from policing cmdheight for the rest of the session: a deliberate `:set cmdheight=2` later
-    -- is left alone. The first attempt removed the autocmd after one correction and did not
-    -- survive Neovide's second write.
     if vim.g.neovide then
+      -- Re-attach noice's UI once Neovide has cleared the flags.
+      --
+      -- noice.ui.enable() re-runs noice.ui.setup(), which is the function that reads
+      -- nvim_list_uis() and decides which widgets to take. Detaching and enabling again is
+      -- therefore the whole fix: the second read sees ext_cmdline and ext_messages false and
+      -- noice attaches all three handlers. Verified by hand before it was written here --
+      -- _handlers goes from { cmdline = false, msg = false, popupmenu = true } to all three true.
+      --
+      -- Polled rather than hooked to an event, because there is no event: Neovide clears the
+      -- flags from its own side and Neovim raises nothing when a UI option changes. The poll is
+      -- cheap, stops on the first clear reading, and gives up after five seconds so a Neovide
+      -- that never clears them leaves noice as it found it rather than spinning.
+      --
+      -- What is given up: the startup messages noice would have captured between VimEnter and the
+      -- re-attach. They go to the bottom row and are not in the history. That is a tick of
+      -- messages against a cmdline that works, and nothing was being captured before this anyway
+      -- -- the msg handler was false for the whole session.
+      local timer = vim.uv.new_timer()
+      local tries = 0
+      timer:start(
+        50,
+        50,
+        vim.schedule_wrap(function()
+          tries = tries + 1
+          local ui = vim.api.nvim_list_uis()[1]
+          local clear = ui and not ui.ext_cmdline and not ui.ext_messages
+          if clear or tries > 100 then
+            timer:stop()
+            timer:close()
+            if clear then
+              local Ui = require("noice.ui")
+              Ui.disable()
+              Ui.enable()
+            end
+          end
+        end)
+      )
+
+      -- Put the command line back at zero rows.
+      --
+      -- This configuration runs with cmdheight at 0: the floating cmdline replaces the last
+      -- screen row and nothing is drawn there. Neovide reads cmdheight at startup and writes it
+      -- back twice, both writes landing after the value has settled. That left a 20-pixel row of
+      -- empty command line under the status line that foot does not have -- foot reports
+      -- cmdheight=0, Neovide 1 -- above the grid's own 16-pixel leftover and the 8 of padding,
+      -- which is what made the gap at the bottom more than twice foot's.
+      --
+      -- Corrected on the option rather than after a fixed delay, because a delay would be a guess
+      -- about Neovide's startup: OptionSet fires on each of its writes and this sets the value
+      -- back. Setting it to 0 re-enters the callback with option_new "0", which is what the test
+      -- is there to stop. The first attempt removed the autocmd after one correction and did not
+      -- survive the second write.
+      --
+      -- The watch is torn down after three seconds. That is an upper bound on startup, not an
+      -- estimate of when the writes land, and dropping it is what keeps this from policing
+      -- cmdheight for the rest of the session: a deliberate `:set cmdheight=2` later is left
+      -- alone.
       local id = vim.api.nvim_create_autocmd("OptionSet", {
         pattern = "cmdheight",
         callback = function()
