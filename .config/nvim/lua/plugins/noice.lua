@@ -288,12 +288,36 @@ return {
     },
   },
 
-  -- Tree-sitter: noice highlights its views with the markdown, markdown_inline, vim and lua parsers
-  -- bundled with Neovim 0.12, and probes for them through vim.treesitter.language.add rather than
-  -- through nvim-treesitter -- so no parser plugin is needed and none is added. The two noice also
-  -- asks for, regex and bash, are not bundled and are deliberately not installed: :checkhealth
-  -- noice reports both missing, and the whole effect is unhighlighted search patterns in the search
-  -- input and unhighlighted :! shell commands. Dropping the two .so files into
-  -- ~/.local/share/nvim/site/parser/, where this machine's extra parsers already live, fixes it
-  -- without a plugin.
+  -- Tree-sitter: noice highlights its views and its cmdline input with the markdown,
+  -- markdown_inline, vim and lua parsers bundled with Neovim 0.12, and probes for them through
+  -- vim.treesitter.language.add rather than through nvim-treesitter -- so no parser plugin is
+  -- needed and none is added. Neovim 0.12 gained vim.pack and ships seven parsers; it does not
+  -- ship a parser manager, and nvim-treesitter is still a plugin whichever manager installs it.
+  --
+  -- The two noice also asks for, regex for the `/` and `?` input and bash for `:!`, are not
+  -- bundled. They are installed by hand on this machine, outside the repository, because a
+  -- compiled parser is not a thing to track:
+  --
+  --   ~/.local/share/nvim/site/parser/{regex,bash}.so
+  --   ~/.local/share/nvim/site/queries/{regex,bash}/highlights.scm
+  --
+  -- Both halves are required, which is the part worth writing down: noice/text/treesitter.lua
+  -- asks for the language's `highlights` query and returns early when there is none, so a parser
+  -- on its own changes nothing. Neovim ships queries only for the seven languages it ships
+  -- parsers for.
+  --
+  -- To rebuild them, at the revisions nvim-treesitter pins so the queries below match the
+  -- grammar's node names:
+  --
+  --   git clone https://github.com/tree-sitter/tree-sitter-regex   # b2ac15e27fce703d2f37a79ccd94a5c0cbe9720b
+  --   git clone https://github.com/tree-sitter/tree-sitter-bash    # a06c2e4415e9bc0346c6b86d401879ffb44058f7
+  --   tree-sitter build -o ~/.local/share/nvim/site/parser/<lang>.so
+  --   curl -o ~/.local/share/nvim/site/queries/<lang>/highlights.scm \
+  --     https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/main/runtime/queries/<lang>/highlights.scm
+  --
+  -- The revisions are the pairing to keep: nvim-treesitter's query is written against its pinned
+  -- grammar, and a newer grammar can rename a node and leave the query matching nothing. The
+  -- editor's ABI range is 13 to 15 and the tree-sitter CLI builds 15, so a rebuild is only needed
+  -- when one of those moves. A machine without them is not broken -- `:checkhealth noice` reports
+  -- both missing and the search input and `:!` render unhighlighted.
 }
