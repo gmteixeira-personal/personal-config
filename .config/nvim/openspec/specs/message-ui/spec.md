@@ -299,51 +299,6 @@ Everything this capability needs — the component, its notification backend, it
 - **AND** no error is raised
 - **AND** every other mapping behaves as it did
 
-### Requirement: A self-diagnosis this capability raises about its host is not shown where the claim is demonstrably false
-
-Where the component providing this capability reports that it cannot work under the graphical front end this session runs, and that report is contradicted by what the editor itself reports about that front end, the report SHALL NOT be put in front of the user. The check that produces it SHALL keep running, and its findings SHALL remain reachable through the editor's own health report.
-
-This is narrower than it may read, and deliberately so. It covers one thing: a claim this capability makes about its own environment, which the environment can be asked about directly and answers the other way. It does not cover an error raised by anything else, and it does not cover this capability failing to load — the requirement that a startup error still reaches the user stands untouched, because that requirement is about the editor reporting its own failures, not about this capability diagnosing its host.
-
-The suppression SHALL be scoped to the front end where the claim is known to be wrong. Under a front end that genuinely drives the command line or the message area itself, this capability really is broken, and it SHALL still be able to say so.
-
-The suppression SHALL NOT be taken to work because a message-routing filter matches the report. This capability's component raises its own health reports by calling the notification backend directly rather than through the editor's notify function, so such a report never reaches the routing layer and no filter offered there can act on it. Whether the suppression works SHALL be established at the surface the user sees.
-
-The configuration SHALL record the evidence that the claim is false, so that the suppression can be re-examined rather than inherited: what the editor reports about the front end's extension flags, what the health report answers, and that the report is raised once per session because the component de-duplicates by message text rather than because the condition it names has passed.
-
-#### Scenario: The false report is not shown
-
-- **WHEN** the editor is started under the graphical front end this session runs
-- **AND** the component providing this capability raises its "cannot work under this GUI" report
-- **THEN** no notification of that report SHALL be shown
-
-#### Scenario: The suppression is verified where the user would see it
-
-- **WHEN** the suppression is checked
-- **THEN** it SHALL be checked against the notifications the backend actually holds after a start under that front end
-- **AND** a filter matching the report's text SHALL NOT be accepted as evidence on its own
-
-#### Scenario: The finding is still reachable
-
-- **WHEN** the editor's health report for this capability is run under that front end
-- **THEN** it SHALL still report what the check found
-
-#### Scenario: Another front end is not covered
-
-- **WHEN** the same report would be raised outside that front end
-- **THEN** it SHALL be shown as it was before
-
-#### Scenario: Unrelated errors are unaffected
-
-- **WHEN** this capability raises any other error
-- **THEN** it SHALL be shown as it was before
-
-#### Scenario: The evidence is recorded
-
-- **WHEN** the configuration carrying the suppression is read
-- **THEN** it SHALL state what was measured
-- **AND** it SHALL state that the check itself is not disabled
-
 ### Requirement: The command line keeps its zero rows under a front end that writes the option back
 
 Where the graphical front end this session runs restores the command-line height it read at startup, and that restoration lands after this capability has set the height to zero, the configuration SHALL set it back.
@@ -373,3 +328,73 @@ The correction SHALL be driven by the option changing rather than by a delay cho
 - **WHEN** the editor is started in a terminal
 - **THEN** the correction SHALL do nothing
 - **AND** the command-line height SHALL be what it was before
+
+### Requirement: The command line and the messages are taken under a front end that claims them only while it starts
+
+Where the graphical front end this session runs attaches its UI declaring that it externalises the command line or the messages, and then stops declaring it, this capability SHALL take those widgets once the declaration is withdrawn.
+
+The component decides which widgets to take by reading the front end's declaration once, as it attaches, and a widget it sees claimed is a widget it does not take for the rest of the session. The front end's declaration stands for roughly the first tenth of a second and is gone afterwards, which is inside the window where that single read happens. The outcome is not a degraded command line but the editor's built-in one: the floating input never appears, the bottom screen row comes back, and nothing reports it, because from the component's point of view it did as it was told.
+
+Re-taking SHALL be driven by the declaration actually being withdrawn rather than by a delay chosen to outlast the front end's startup, SHALL stop once it has been withdrawn, and SHALL give up rather than wait indefinitely if it never is. Giving up SHALL leave the capability as it was found.
+
+#### Scenario: The floating command line appears under the front end
+
+- **WHEN** the editor has started under that front end and `:` is pressed
+- **THEN** the command line SHALL be drawn as a floating input
+- **AND** it SHALL NOT be drawn on the bottom screen row
+
+#### Scenario: The widgets are actually held
+
+- **WHEN** the capability is inspected after startup under that front end
+- **THEN** it SHALL report that it holds the command-line and message widgets
+- **AND** what it reports SHALL match what it reports in a terminal
+
+#### Scenario: A front end that keeps the claim is left alone
+
+- **WHEN** the front end does not withdraw its declaration
+- **THEN** the capability SHALL stop trying
+- **AND** it SHALL be left in the state the front end's declaration produced
+
+#### Scenario: The terminal is unaffected
+
+- **WHEN** the editor is started in a terminal
+- **THEN** the capability SHALL take the same widgets it took before
+- **AND** nothing SHALL be re-taken
+
+### Requirement: A self-diagnosis is silenced only after the condition it names has been corrected
+
+Where the component providing this capability reports that it cannot work under the front end this session runs, that report SHALL NOT be silenced on the grounds that a later reading of the same state disagrees with it. It MAY be silenced only once the configuration corrects the condition the report names, and only because the report is then describing a state that no longer holds.
+
+The distinction is the whole requirement. A report raised inside a window and a reading taken after that window has closed are not the same measurement, and the second is not evidence about the first. Treating it as evidence is what turned a correct report into a suppressed one and left the capability inert under the front end with nothing saying so.
+
+The silencing SHALL be scoped to the front end where the correction is applied, and SHALL NOT be reachable without it: whatever carries the correction and whatever carries the silencing SHALL be read as one thing, and the configuration SHALL state that the second is not a substitute for the first.
+
+The check that produces the report SHALL keep running, and its findings SHALL remain reachable through the editor's health report. The silencing SHALL be established against the notifications the notification backend actually holds after a start under that front end; a message-routing filter matching the report's text SHALL NOT be accepted as evidence, because the component raises these reports by calling the backend directly and they never reach the routing layer.
+
+#### Scenario: The condition is corrected first
+
+- **WHEN** the configuration silencing the report is read
+- **THEN** it SHALL name the correction that makes the report stale
+- **AND** it SHALL state that the silencing does not stand without it
+
+#### Scenario: The report is not shown once corrected
+
+- **WHEN** the editor is started under that front end
+- **THEN** no notification of the report SHALL be shown
+- **AND** the capability SHALL hold the widgets the report said it could not
+
+#### Scenario: Verified at the surface the user sees
+
+- **WHEN** the silencing is checked
+- **THEN** it SHALL be checked against the notifications the backend holds after a start under that front end
+- **AND** a filter matching the report's text SHALL NOT be accepted as evidence on its own
+
+#### Scenario: The check still runs
+
+- **WHEN** the editor's health report for this capability is run under that front end
+- **THEN** it SHALL still report what the check found
+
+#### Scenario: Unrelated errors are unaffected
+
+- **WHEN** this capability raises any other error
+- **THEN** it SHALL be shown as it was before
