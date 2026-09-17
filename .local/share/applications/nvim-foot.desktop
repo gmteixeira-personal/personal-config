@@ -16,7 +16,12 @@ Comment=Edit text files in Neovim, in the session's terminal
 # entry beside it, not an override of it. NoDisplay keeps the launcher from
 # showing a second "Neovim" — fuzzel opens the packaged entry correctly through
 # its own terminal=footclient setting, so nothing is lost by hiding this one.
-# It is reached by MIME association from .config/mimeapps.list, not from a menu.
+# Nothing points at it at present. .config/mimeapps.list named it for every text
+# type until neovide.desktop beside it took those over, opening a file from
+# outside a shell in Neovide's own window instead of in a terminal. It is kept,
+# and kept explained, because Neovide is a cargo build that a given machine may
+# not have -- where it is missing, this is what the type falls back to, and the
+# GIO limitation above is still why that fallback cannot be the packaged entry.
 #
 # --no-wait detaches footclient so it exits as soon as the window exists. GIO
 # does not care either way, but xdg-open execs this line as its own child:

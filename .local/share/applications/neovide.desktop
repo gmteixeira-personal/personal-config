@@ -26,10 +26,17 @@ Comment=Edit text files in Neovim, in its own window
 # differs per machine.
 #
 # %F passes the files a caller supplies, which Neovide appends to the Neovim
-# arguments. No MimeType is declared, so nothing routes a file type here on its
-# own -- the field only matters when something like a file manager's "open
-# with" list offers Neovide explicitly. nvim-foot.desktop remains the MIME
-# handler, through .config/mimeapps.list.
+# arguments. No MimeType is declared and none is needed: .config/mimeapps.list
+# names this entry under [Default Applications] for every text and source type,
+# and GIO honours that naming whether or not the entry itself declares the type
+# -- `gio mime text/plain` reports neovide.desktop. Declaring the field would
+# only add Neovide to a file manager's "open with" list, which is a separate
+# question from which entry opens a double-click.
+#
+# TryExec is what makes that routing safe to state unconditionally. On a machine
+# without Neovide, GIO skips this entry and falls through to the registered
+# applications for the type, so a text file still opens rather than failing --
+# nvim-foot.desktop is tracked beside this file for exactly that case.
 #
 # Icon=nvim is the packaged Neovim icon at
 # /usr/share/icons/hicolor/128x128/apps/nvim.png. Neovide's own icon is not

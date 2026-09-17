@@ -165,26 +165,33 @@ Without these, the tracked configuration does not work.
   prerequisites — see **Neovim** below, and `.config/nvim/README.md`.
 
   Neovim is also what a text file opens in when it is opened from outside a
-  shell — from nautilus, from a Chrome download, or through `xdg-open`.
-  `.config/mimeapps.list` is what says so: it names every type the shared MIME
-  database files under `text/` except `text/html`, plus the source types filed
-  under `application/`, and points them at
-  `.local/share/applications/nvim-foot.desktop`. The same file answers for
-  everything else a double-click can land on, each named in its own entry below:
-  images in Loupe, PDFs and e-books in Zathura, and office documents — the
-  OpenDocument and Microsoft Office formats both — in OnlyOffice. That entry is
-  tracked here rather than being the packaged `nvim.desktop`, because the
-  packaged one is
-  marked `Terminal=true` and GIO — the library that launches desktop entries for
-  nautilus, for Chrome and for `xdg-open` — picks a terminal from a fixed list
-  of `xdg-terminal-exec`, `gnome-terminal`, `konsole`, `ptyxis` and `tilix`.
-  None of them is installed here and foot is not on the list, so the packaged
-  entry fails with no window and nothing logged. Unlike fuzzel, which has the
-  `terminal=footclient` setting described above, GIO cannot be told which
-  terminal to use — so the tracked entry declares `Terminal=false` and opens
-  `footclient` itself, which makes it depend on the same `foot-server` units the
-  **`foot`** entry above requires. The packaged `nvim.desktop` is left in place
-  and still what the launcher lists.
+  shell — from nautilus, from a Chrome download, or through `xdg-open`, which
+  is to say from a graphical session. `.config/mimeapps.list` is what says so:
+  it names every type the shared MIME database files under `text/` except
+  `text/html`, plus the source types filed under `application/`, and points them
+  at `.local/share/applications/neovide.desktop` — Neovim in its own window,
+  since a caller that is not a shell has no terminal to hand it. The same file
+  answers for everything else a double-click can land on, each named in its own
+  entry below: images in Loupe, PDFs and e-books in Zathura, and office
+  documents — the OpenDocument and Microsoft Office formats both — in
+  OnlyOffice.
+
+  Neovide is a cargo build from git under `~/.cargo/bin` and a given machine may
+  not have it. That costs nothing here: `neovide.desktop` declares `TryExec`, so
+  GIO skips the entry where the binary is absent and falls through to the
+  registered applications for the type. `.local/share/applications/nvim-foot.desktop`
+  is tracked for that case — Neovim in a foot window, and the reason it exists
+  rather than the packaged `nvim.desktop` being named instead. The packaged one
+  is marked `Terminal=true`, and GIO — the library that launches desktop entries
+  for nautilus, for Chrome and for `xdg-open` — picks a terminal from a fixed
+  list of `xdg-terminal-exec`, `gnome-terminal`, `konsole`, `ptyxis` and
+  `tilix`. None of them is installed here and foot is not on the list, so the
+  packaged entry fails with no window and nothing logged. Unlike fuzzel, which
+  has the `terminal=footclient` setting described above, GIO cannot be told
+  which terminal to use — so the tracked entry declares `Terminal=false` and
+  opens `footclient` itself, which makes it depend on the same `foot-server`
+  units the **`foot`** entry above requires. The packaged `nvim.desktop` is left
+  in place and still what the launcher lists.
 - **JetBrains Mono Nerd Font** — `.config/foot/foot.ini` names
   `JetBrainsMono Nerd Font Mono` outright, and the prompt's segment icons and
   Neovim's filetype and status-line glyphs both come from that font's Nerd Font
