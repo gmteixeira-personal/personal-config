@@ -22,12 +22,42 @@
 -- reaches it, so blink.cmp's capabilities apply without a line here.
 return {
   "seblyng/roslyn.nvim",
-  ft = { "cs", "razor" }, -- .razor and .cshtml both resolve to `razor`; Neovim detects them
-  -- already, so no ftdetect is needed. Lazy per filetype rather than on an event, because the
-  -- server is expensive to start and most sessions never open a C# file.
+  lazy = false, -- NOT ft-lazy, and the difference is load ORDER rather than cost. lazy.nvim
+  -- sources a plugin's plugin/ directory before it applies `opts`, and roslyn.nvim's
+  -- plugin/roslyn.lua calls vim.lsp.enable("roslyn"), which on 0.12 also applies to buffers that
+  -- already exist. Under `ft` both steps land inside the same FileType event, so the first .cs
+  -- buffer of a session is resolved with `opts` not yet set -- choose_target below is nil, the
+  -- target is ambiguous, and a SECOND rootless client attaches alongside the real one. Loading
+  -- at startup puts setup ahead of any C# buffer and there is only ever one client.
+  --
+  -- The cost is one small Lua file sourced at startup. It is not the cost the `ft` was avoiding:
+  -- vim.lsp.enable only registers the server, and the expensive part -- the roslyn process
+  -- itself -- still starts on the first cs or razor buffer and never in a session without one.
+  -- .razor and .cshtml both resolve to `razor`, which Neovim detects already, so no ftdetect is
+  -- needed either way.
   ---@module 'roslyn.config'
   ---@type RoslynNvimConfig
   opts = {
+    -- `./ycrm gen` writes three solutions into the yCRM repository root: Crm.slnx and the
+    -- Crm.Client.slnx / Crm.Server.slnx halves. Every csproj named by a half is also named by the
+    -- whole, so a .cs file under src/Crm.Server resolves to two targets, the plugin reports
+    -- "Multiple potential target files found" and starts NO server. Nothing then attaches, so the
+    -- LspAttach block in lsp.lua never runs and gd falls back to its built-in text search --
+    -- which is the symptom: a symbol defined in another file is simply not found.
+    --
+    -- Preferring the widest solution answers that once per session instead of requiring `:Roslyn
+    -- target` by hand. Crm.slnx contains every project both halves do, so loading it costs
+    -- nothing the halves would have saved, and it is the only target under which a client file
+    -- can navigate into a server contract.
+    --
+    -- Returning nil when no name matches is deliberate: any other repository with several
+    -- solutions keeps the plugin's own prompt rather than having one silently chosen for it.
+    choose_target = function(targets)
+      return vim.iter(targets):find(function(target)
+        return vim.fs.basename(target) == "Crm.slnx"
+      end)
+    end,
+
     -- broad_search is left at its default false on purpose. It widens the hunt for a .sln into
     -- parent directories, which is the shape of the problem the tailwindcss root_dir override in
     -- lsp.lua exists to prevent: $HOME is a git repository here, and a server that walks up out of
