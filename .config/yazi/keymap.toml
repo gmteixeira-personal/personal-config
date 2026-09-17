@@ -1,0 +1,61 @@
+# Drag files out of yazi with ripdrag.
+#
+# Why. A terminal window is not a drag source. Wayland hands a drag to the
+# compositor from a real surface, and a terminal grid has none to offer, so the
+# path from "this file, here in yazi" to "that file, dropped in Chrome" ran
+# through a second file manager or a copied path. ripdrag supplies the missing
+# surface: a small GTK4 window holding the files, which is a drag source the
+# compositor understands. The files are command-line arguments, so the window
+# opens already holding them and nothing is ever dropped into it.
+#
+# `%s` is every selected file, and the hovered file when the selection is empty,
+# so one key covers both. yazi substitutes each path as its own argument and
+# quotes it, so a name with a space arrives as one file rather than two.
+#
+# `--` ends yazi's own options: everything after it is the command, raw, with no
+# quoting to escape twice. Note that this is yazi 26's syntax. The older `shell
+# '<cmd> "$@"'` form passed files as shell positional parameters, and a keymap
+# written that way still runs -- it just runs with no files, which looks like
+# ripdrag ignoring the selection rather than like a stale config.
+#
+# `--orphan` keeps ripdrag alive after yazi exits. Without it, quitting yazi
+# kills the window the drag is in flight from -- and closing yazi to uncover the
+# window you are dropping into is exactly what people do.
+#
+# ripdrag flags used here, to tune the binding:
+#   -x  close the window after the first successful drag
+#   -n  clicking a row does not open the file, only dragging does anything
+#   -a  add a "drag all" button below the list
+# Swap `-a` for `-A` to get a compact "N items" box with no list, or add `-i`
+# for icons without filenames.
+
+[[mgr.prepend_keymap]]
+on   = "<C-n>"
+run  = "shell --orphan -- ripdrag -x -n -a %s"
+desc = "Drag selected files out with ripdrag"
+
+# Drag files into yazi with ripdrag, the same trick run backwards.
+#
+# `-t` makes the window a drop target instead of a drag source: drop files on it
+# from Chrome, Nautilus or another app and ripdrag prints one path per line on
+# stdout, then exits on the first drop because of `-x`. The paths are piped into
+# `cp`, which is why this binding does not take `--orphan` -- the pipeline has to
+# outlive the drop, and quitting yazi mid-drop cancels the copy.
+#
+# yazi runs a shell command with the current directory as its working directory
+# (measured, not assumed), so `-t .` copies into whatever directory is on screen.
+# yazi is watching that directory, so the files appear without a refresh.
+#
+# `--backup=numbered` is what keeps this from being a file-losing key. A drop of
+# a name that already exists here renames the existing one to `name.~1~` rather
+# than writing over it. `xargs -r` does nothing when the window is closed with
+# no drop, and `-d '\n'` keeps names with spaces in one piece.
+#
+# Dropping from a browser can yield a URL rather than a path -- an image dragged
+# straight off a web page has no local file yet. `cp` then fails with "No such
+# file or directory", which yazi reports. Save the file first, then drag it.
+
+[[mgr.prepend_keymap]]
+on   = "<C-t>"
+run  = "shell -- ripdrag -t -x | xargs -d '\\n' -r cp -r --backup=numbered -t ."
+desc = "Drop files into this directory with ripdrag"

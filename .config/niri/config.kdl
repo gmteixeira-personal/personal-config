@@ -533,6 +533,17 @@ window-rule {
     open-floating true
 }
 
+// Float the drag window ripdrag opens for files dragged out of yazi.
+// It is a throwaway window that lives for the length of one drag, and tiling it
+// would push every other column aside for those few seconds and then push them
+// back. Floating also keeps it above the window being dropped into.
+// The full app-id is "it.catboy.ripdrag"; app-id here is an unanchored regex,
+// so the bare name is enough.
+window-rule {
+    match app-id="ripdrag"
+    open-floating true
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {

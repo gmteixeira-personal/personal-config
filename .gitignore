@@ -122,7 +122,14 @@
 # so this tracks a three-line call and installs nothing.
 !/.config/yazi/init.lua
 
-# `flavors/` and `package.toml` beside those two stay ignored: the first is a
+# yazi's keymap, which prepends two bindings and leaves the rest of yazi's
+# defaults alone. They open a ripdrag window to drag the selected files out to
+# another application, and to take a drop back into the directory on screen --
+# a terminal grid is not a drag source, so without them yazi can show a file and
+# not hand it to anything. Both keys need `ripdrag` on PATH.
+!/.config/yazi/keymap.toml
+
+# `flavors/` and `package.toml` beside those three stay ignored: the first is a
 # third-party tree fetched by yazi's own package manager and the second is the
 # record of that fetch. Neither file above references either -- tracking them
 # would vendor a colour scheme this configuration does not use.
