@@ -112,13 +112,20 @@
 # the package ships as Solarized Light in a session that is dark everywhere else.
 !/.config/fuzzel/fuzzel.ini
 
-# yazi's theme, and only its theme. `flavors/` and `package.toml` beside it stay
-# ignored: the first is a third-party tree fetched by yazi's own package manager
-# and the second is the record of that fetch, and nothing in the theme
-# references either -- it overrides three keys of yazi's shipped theme rather
-# than selecting a flavor. Tracking them would vendor a colour scheme this
-# configuration does not use.
+# yazi's theme. It overrides three keys of yazi's shipped theme rather than
+# selecting a flavor, which is why there is no `[flavor]` line in it.
 !/.config/yazi/theme.toml
+
+# yazi's Lua entry point, which turns on sharing the yank list between yazi
+# windows -- without it a file yanked in one window cannot be pasted in another,
+# because yazi holds that list per process. The setting is a built-in plugin's,
+# so this tracks a three-line call and installs nothing.
+!/.config/yazi/init.lua
+
+# `flavors/` and `package.toml` beside those two stay ignored: the first is a
+# third-party tree fetched by yazi's own package manager and the second is the
+# record of that fetch. Neither file above references either -- tracking them
+# would vendor a colour scheme this configuration does not use.
 
 # Which application opens what, when a file is opened from outside a shell. Any
 # program that offers to become the default for a type rewrites this file in

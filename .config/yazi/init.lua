@@ -1,0 +1,48 @@
+-- yazi's Lua entry point, read once per process at startup. It configures one
+-- thing: the yank list is shared between every yazi window this user has open
+-- on this machine.
+--
+-- Why. yazi holds its yank list per process, and two windows are two processes,
+-- so a file yanked in one is invisible to the other and there is nothing to
+-- paste. The move a file manager exists for -- see a file here, put it there --
+-- is the one move two windows could not make together, and the way out was to
+-- close the second window and walk the first one to both places in turn.
+--
+-- `session` is compiled into the yazi binary; nothing under flavors/ or in
+-- package.toml is involved and neither needs to gain an entry for this. The
+-- plugin publishes the list over the DDS socket instances of one user already
+-- share. `sync_yanked` is off by yazi's default, which is why this file exists.
+--
+-- What is shared. The whole yank list, cut included -- they are one list in the
+-- program. So a cut left pending in a window nobody is looking at is a move
+-- that a paste in any other window completes. That is the feature rather than a
+-- defect in it: one shared list cannot distinguish the window that made the
+-- yank from the window that acts on it.
+--
+-- The list is written to disk, and this setting is what puts it there. yazi
+-- keeps the shared message in ~/.local/state/yazi/.dds and reloads it at
+-- startup, so a yank outlives every window closing and outlives a reboot. That
+-- file stays empty with `sync_yanked` off; turning it on is what makes a
+-- pending yank durable. Measured, not assumed: with this file absent the file
+-- held nothing after a yank, and with it present the yank was in there.
+--
+-- What that costs. A cut nobody remembers making is still pending days later,
+-- and the next `p` in any window completes it. Press `Esc` to clear a pending
+-- yank -- that clears the stored copy too. To see whether one is pending
+-- without opening yazi, read ~/.local/state/yazi/.dds: an `@yank` line with
+-- `"cut":true` is a move waiting to happen.
+--
+-- Already-running windows are not part of this. yazi reads this file when a
+-- process starts, so a window that was open before the file was written shares
+-- nothing until it is restarted -- which looks exactly like the setting not
+-- working, and is the reason people go looking for a plugin to install.
+--
+-- This calls setup unguarded. On a yazi too old to carry `session` it raises at
+-- startup rather than failing quietly, which is the loud failure and the one
+-- worth having: a pcall here would buy a yazi that starts and does not sync,
+-- and no way to tell that from the setting being wrong. This session runs
+-- 26.9.1.
+
+require("session"):setup {
+	sync_yanked = true,
+}
