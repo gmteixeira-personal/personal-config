@@ -318,6 +318,12 @@ adbkey*
 .claude/tasks/
 .claude/plans/
 .claude/ide/
+# Skills pulled down from the account rather than written here. Block 3's
+# `!/.claude/skills/**` is meant for the skills this repository authors, and it
+# catches this cache too -- 4.1 MB under a directory named by a pair of UUIDs
+# that mean nothing outside the machine that synced them. Tracking it would
+# vendor someone else's skills and re-vendor them on every sync.
+.claude/skills/synced/
 # /safe-clear writes its handoff notes here when the state does not fit in the
 # resume line. One session's in-flight work, described in this machine's paths.
 .claude/handoff/
