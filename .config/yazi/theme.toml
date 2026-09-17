@@ -1,23 +1,25 @@
 # Overrides on top of yazi's shipped dark theme. There is no [flavor] line: the
 # Catppuccin Mocha flavor under flavors/ is installed but not selected, so what
-# follows is the shipped theme with three keys replaced.
+# follows is the shipped theme with five keys replaced.
 #
 # Why this file exists at all. yazi's theme names ANSI palette slots -- "blue",
 # "gray" -- and .config/foot/foot.ini deliberately leaves those sixteen slots at
 # foot's own defaults, on the reasoning recorded there that they are reachable
 # only by a program choosing its own colours. yazi is that program, so "blue" is
 # foot's #24acd4 and "gray" its #e6e6e6, and nothing in this session chose
-# either. Worse, two status-bar elements state a background and no foreground,
-# so their text falls through to foot's `foreground=aaaaaa` -- a colour picked
-# for ordinary text on a near-black ground, painted here over a mid-blue.
+# either. Worse, the mode badge and the active tab state a background and no
+# foreground, so their text falls through to foot's `foreground=aaaaaa` -- a
+# colour picked for ordinary text on a near-black ground, painted here over a
+# mid-blue.
 #
 # Repainting foot's slots is not the fix and was measured before being ruled
 # out. With the foreground unset the text stays #aaaaaa whatever the background
 # becomes: 1.10:1 over Mocha blue, 1.23:1 over Mocha sapphire, against the
 # 1.14:1 being fixed. The foreground has to be stated here, where yazi reads it.
 #
-# Every value chosen below is 24-bit for that reason. The one exception is
-# marked where it appears.
+# Every value chosen below is 24-bit for that reason. The two exceptions are the
+# blues this file keeps rather than picks, and both are marked where they
+# appear.
 #
 # The row under the cursor is deliberately absent from this file. It measures
 # 7.08:1 -- the best-contrasted thing in the window -- so a change made in the
@@ -28,19 +30,19 @@
 [mode]
 # The mode badge. Shipped as `{ bg = "blue", bold = true }` -- no foreground, so
 # its text was foot's #aaaaaa over #24acd4 at 1.14:1, legible only at the
-# anti-aliased edges of the glyphs. White takes it to 2.65:1.
+# anti-aliased edges of the glyphs.
 #
-# 2.65:1 is BELOW the 4.5:1 threshold for readable text. It is recorded here as
-# a known position rather than a passed check: it is more than double what it
-# replaces, and the badge is three glyphs of bold text rather than a paragraph.
-# The better number is dark rather than white -- #11111b over the same blue is
-# 7.08:1, which is what the cursor row already gets -- and that is the value to
-# put here if the white reads thin in use.
+# #11111b -- crust from Catppuccin Mocha -- over the same blue is 7.08:1, which
+# is what the cursor row already gets and comfortably over the 4.5:1 threshold
+# for readable text. White was measured first and reached only 2.65:1, under the
+# threshold, so dark text on this blue is the value that passes rather than the
+# one that merely improves.
 #
-# `bg = "blue"` is the one slot name left in this file, and it is retained
-# rather than chosen: it is the colour already on screen, the change is not
-# about it, and naming a literal would mean picking a blue nobody decided on.
-normal_main = { fg = "#ffffff", bg = "blue", bold = true }
+# `bg = "blue"` is one of the two slot names left in this file -- [tabs] active
+# carries the other, and carries it for this reason -- and it is retained rather
+# than chosen: it is the colour already on screen, the change is not about it,
+# and naming a literal would mean picking a blue nobody decided on.
+normal_main = { fg = "#11111b", bg = "blue", bold = true }
 
 # The pale chip beside the badge -- the file size on the left, the scroll
 # position on the right. Shipped as `{ fg = "blue", bg = "gray" }`, which is
@@ -54,5 +56,28 @@ normal_alt = { fg = "blue", bg = "#313244" }
 [status]
 # The position badge at the right end. Shipped as `{ bold = true }` -- the same
 # missing foreground as the mode badge, over the same background, so the same
-# 1.14:1 and the same 2.65:1 after.
-progress_label = { fg = "#ffffff", bold = true }
+# 1.14:1 before and the same 7.08:1 after.
+progress_label = { fg = "#11111b", bold = true }
+
+[tabs]
+# The tab bar at the top. Shipped as `active = { bg = "blue", bold = true }` and
+# `inactive = { fg = "blue", bg = "gray" }` -- which is, key for key, what the
+# status bar ships: the active tab has the mode badge's missing foreground and
+# its 1.14:1, and the inactive tab has the pale chip's 2.12:1. One fault, two
+# places, and only the status bar had been fixed.
+#
+# So the two values below are not a new choice. They are [mode]'s, restated:
+# active takes normal_main's dark-on-blue at 7.08:1, inactive takes normal_alt's
+# blue-on-surface0 at 4.75:1. The active foreground is shared with [mode] and
+# [status] on purpose -- the tab bar and the status bar frame the same window
+# and are meant to read as one -- so a change to one of the three is a change to
+# all three.
+#
+# `bg = "blue"` here is kept rather than chosen, on the grounds already recorded
+# for [mode]: it is the colour on screen, the change is not about it, and naming
+# a literal would mean picking a blue nobody decided on.
+#
+# sep_inner and sep_outer, the rounded caps around each tab, are left shipped.
+# yazi draws them from the tab styles above, so they follow without being named.
+active   = { fg = "#11111b", bg = "blue", bold = true }
+inactive = { fg = "blue", bg = "#313244" }
