@@ -59,10 +59,17 @@ Lua, Python and shell formatting survive all of this: `stylua`, `ruff` and
 | Requirement | Why | Without it |
 |---|---|---|
 | `ripgrep` | `<leader>fg` greps the working tree with it, and has no fallback | live grep finds nothing; every other picker still works |
+| `yazi` | `<leader>e` is the file explorer, and it runs the binary directly rather than through a plugin | `<leader>e` reports the missing program and changes nothing; `nvim <directory>` opens an empty buffer. Everything else works |
 | A Nerd Font in the terminal | filetype and status-line glyphs come from one | icons render as replacement boxes |
 
 `fd` is deliberately absent from this list. Telescope prefers it for finding
 files and falls back to ripgrep, which is required above already.
+
+`yazi` is on this list rather than installed on launch because mason installs
+language servers and formatters and nothing else — `yazi` is neither, and
+`lua/config/file-explorer.lua` runs whatever copy is on `PATH` so that the
+editor's file manager is the same one, with the same `~/.config/yazi/`, as the
+one in a terminal.
 
 ### Checking a machine
 
@@ -90,9 +97,10 @@ Everything else arrives on its own:
 
 | Path | What lives there |
 |---|---|
-| `init.lua` | three `require` calls and nothing else; load order is the only thing it decides |
+| `init.lua` | four `require` calls and nothing else; load order is the only thing it decides |
 | `lua/config/options.lua` | editor options that apply with no plugin installed |
 | `lua/config/keymaps.lua` | mappings that work with no plugin installed |
+| `lua/config/file-explorer.lua` | the `<leader>e` explorer: suppresses netrw and runs `yazi` in the focused window |
 | `lua/config/lazy.lua` | the plugin manager: bootstrap, then the imports |
 | `lua/plugins/` | one file per plugin, imported wholesale |
 | `lua/plugins/themes/` | the colorschemes and the switcher that applies them |
@@ -309,7 +317,7 @@ bang that throws the work away.
 | `<leader>fh` | Find help tags | telescope |
 | `<leader>fs` / `<leader>fS` | Document / workspace symbols | telescope |
 | `<leader>ft` | Find colorscheme | themery |
-| `<leader>e` | Toggle the file explorer | oil |
+| `<leader>e` | Open the file explorer; leave it with yazi's own `q` | yazi |
 
 Inside a telescope prompt, `<C-j>`/`<C-k>` move through the results, `<Esc>`
 closes, and `<C-d>` deletes the selected buffers from the buffer picker.
@@ -426,7 +434,13 @@ keypress.
 
 ## Plugins
 
-Thirty-one plugin files, grouped by the job each does.
+Thirty plugin files, grouped by the job each does.
+
+The file explorer is not among them. `<leader>e` runs the `yazi` binary in the
+focused window from `lua/config/file-explorer.lua`, reading `~/.config/yazi/`,
+so it is the same file manager with the same keys as the one in a terminal —
+`d` trashes, `D` deletes permanently, both after a confirmation. It is listed
+under [Requirements](#requirements) instead, because nothing here installs it.
 
 ### Language support
 
@@ -480,8 +494,6 @@ when reviewing a change as a whole.
   symbols, and the repository.
 - **flash** — reaches any position visible on screen: type what is there, press
   the label that appears beside it.
-- **oil** — presents a directory as an ordinary buffer, so renaming a file is
-  editing a line. **A delete here is a real delete, not a move to trash.**
 
 ### Editing
 

@@ -57,9 +57,17 @@ return {
     -- auto_save, auto_restore, auto_create on -- the whole point: the first exit in a new project
     -- produces a session without the user remembering to ask for one.
     --
-    -- close_unsupported_windows on -- what keeps a non-float Oil window (from `nvim <directory>`)
-    -- out of a save, so a restore cannot stand an empty explorer window up in place of a file.
-    -- Floating windows are not recorded by :mksession at all, which covers <leader>e.
+    -- close_unsupported_windows on -- what keeps a window running the file explorer out of a save,
+    -- so a restore cannot stand a dead terminal up in place of a file. The explorer is yazi in a
+    -- terminal buffer (lua/config/file-explorer.lua), and the cull drops any window whose buffer is
+    -- not a readable file, which a terminal is not.
+    --
+    -- That is the second of two mechanisms, and the first one is why this rarely has to fire: the
+    -- explorer's buffer is created unlisted, and :mksession records only listed buffers. So a
+    -- session written while the explorer is open carries neither the buffer nor the window. Both
+    -- are stated because either alone would be enough and neither is obviously present -- the
+    -- unlisted flag is set in a different file, and this option is the only thing here that looks
+    -- like it is doing the work.
     --
     -- No require("telescope").load_extension(...) call: :SessionSearch finds Telescope on its own
     -- and falls back to vim.ui.select without it. Neither file depends on the other, and the picker

@@ -377,8 +377,9 @@ map("n", "<leader>bd", "<cmd>confirm bdelete<CR>", "Delete buffer")
 
 -- The two bulk deletions name the buffers they delete rather than taking a range. % on :bdelete is
 -- the line range 1,$ read as buffer *numbers*, so it covers every buffer that exists -- including
--- the unlisted scratch buffers plugins keep alive (smear-cursor's pooled floats, oil:// directories,
--- blink.cmp's menu, telescope's previewer, which-key's popup, help, quickfix). :bnext and the
+-- the unlisted scratch buffers held open elsewhere (smear-cursor's pooled floats, the file
+-- explorer's term:// buffer running yazi, blink.cmp's menu, telescope's previewer, which-key's
+-- popup, help, quickfix). :bnext and the
 -- telescope picker both mean the buffer list instead, so :%bd reported "18 buffers deleted" in a
 -- session showing two. No range modifier filters on 'buflisted'; getbufinfo does.
 --
