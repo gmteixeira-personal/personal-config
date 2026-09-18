@@ -1,8 +1,4 @@
-## Purpose
-
-Lets the user browse and manipulate the filesystem from inside the editor, reachable from a single keystroke, by running the same file manager they use outside it -- with their own configuration -- in the focused window rather than over the whole editor.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: `<leader>e` opens the file explorer in the current window
 
@@ -91,6 +87,20 @@ The explorer SHALL be the same file manager program the user runs outside the ed
 - **WHEN** the file manager is configured to share state between its running instances
 - **THEN** the instance the editor starts takes part in that sharing on the same terms as any other
 
+### Requirement: A missing file manager is reported, not crashed into
+
+The explorer depends on an external program that this configuration does not install. Where that program is not on `PATH`, pressing `<leader>e` SHALL report that it is missing, naming it, and SHALL leave the window untouched. It SHALL NOT open a window, replace a buffer, or surface the failure as a job or terminal error.
+
+#### Scenario: The program is absent
+
+- **WHEN** the external file manager is not installed
+- **AND** the user presses `<leader>e`
+- **THEN** a message names the missing program
+- **AND** the current window still shows the buffer it showed before
+- **AND** no terminal buffer is created
+
+## MODIFIED Requirements
+
 ### Requirement: The explorer displays icons
 
 Each entry in the listing SHALL be shown with an icon distinguishing files from directories and indicating a file's type. The icons SHALL come from the file manager's own theme rather than from the editor's icon provider, so that the listing looks the same inside the editor as outside it.
@@ -124,14 +134,22 @@ Opening a directory path SHALL show the explorer rather than Neovim's built-in n
 - **WHEN** the editor has been started on a directory
 - **THEN** no buffer named for that directory remains listed
 
-### Requirement: A missing file manager is reported, not crashed into
+## REMOVED Requirements
 
-The explorer depends on an external program that this configuration does not install. Where that program is not on `PATH`, pressing `<leader>e` SHALL report that it is missing, naming it, and SHALL leave the window untouched. It SHALL NOT open a window, replace a buffer, or surface the failure as a job or terminal error.
+### Requirement: `<leader>e` toggles the file explorer in the current window
 
-#### Scenario: The program is absent
+**Reason**: The explorer becomes a terminal user interface with its own key handling, and a program that owns the keyboard cannot be closed by a key the editor is watching for. `<leader>e` is `<Space>e`; to close on it, the editor would have to intercept `<Space>` inside the explorer and hold it for `timeoutlen` before passing it on, which would degrade the explorer's own use of `<Space>` for selecting entries. The toggle is therefore withdrawn rather than reimplemented badly.
 
-- **WHEN** the external file manager is not installed
-- **AND** the user presses `<leader>e`
-- **THEN** a message names the missing program
-- **AND** the current window still shows the buffer it showed before
-- **AND** no terminal buffer is created
+**Migration**: `<leader>e` still opens the explorer, and its opening behaviour is unchanged — same window, same full-window listing, same untouched layout — under the requirement "`<leader>e` opens the file explorer in the current window". Closing is now the file manager's own `q`, which restores the previous buffer with its cursor and scroll position intact, exactly as the second press of `<leader>e` used to. That is specified by "Leaving the explorer either opens a file or restores the window", which also covers the case the old requirement had no answer for: leaving by choosing a file.
+
+### Requirement: The directory listing is an editable buffer
+
+**Reason**: The listing stops being a buffer at all. The explorer is a terminal user interface that draws its own listing and applies file operations directly, so there is no text to edit and no write to confirm. This is the deliberate trade in this change: editing a directory as text is given up in exchange for preview, filtering, and the file manager the user already runs everywhere else.
+
+**Migration**: The operations the editable buffer provided are still available, as the file manager's own keys, applied when pressed rather than on a write. Creating is `a`, renaming is `r`, deleting is `d`, and moving is a yank with `y` followed by `p` in the destination — which no longer requires the source and the destination to be on screen together. Renaming many entries at once, the case the editable buffer was best at, remains available as the file manager's bulk rename: select the entries, press `r`, and their names open in `$EDITOR` as text to edit and write. Because operations are no longer staged, there is no longer a point at which unwritten edits leave the filesystem untouched; the guard against a mistaken delete is the confirmation on the delete key and the trash it goes to, covered below.
+
+### Requirement: Deleting an entry removes it permanently
+
+**Reason**: The requirement exists to make a deletion's irreversibility explicit rather than inherited from a default. The new explorer's default is the opposite — a delete goes to the trash, and a separate key deletes permanently — and rebinding it would make the file manager behave differently inside the editor than outside it, which is the thing this change is trying to stop. The requirement is withdrawn rather than enforced, and it is the weaker guarantee that is given up: a deletion made here is now recoverable.
+
+**Migration**: `d` moves the entry to the system trash, from which it can be restored. `D` deletes permanently, with no trash and no undo. Both keys prompt for confirmation before acting. Neither is rebound by this configuration, so both behave exactly as they do when the file manager is run from a terminal.
