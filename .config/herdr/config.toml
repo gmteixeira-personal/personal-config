@@ -56,6 +56,12 @@ focus_agent = "prefix+shift+1..9"
 new_tab = "prefix+t"
 new_workspace = "prefix+c"
 
+# Step through the workspace list in the sidebar: u moves down to the next
+# workspace, i moves up to the previous one. herdr ships both actions unbound,
+# and nothing claims prefix+u or prefix+i by default.
+next_workspace = "prefix+u"
+previous_workspace = "prefix+i"
+
 # Closing is paired: the bare letter takes the smaller object, the shift the
 # larger one. q closes a pane and shift+q its tab; d closes a workspace and
 # shift+d detaches from the session entirely. This displaces the shipped keys —
